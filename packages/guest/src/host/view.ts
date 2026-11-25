@@ -2,9 +2,9 @@ import type { ViewProblem, ViewProblemSaid } from "./problems.js";
 import { imageRefusedWords } from "./open-judge.js";
 import { keepClicked } from "./clicked.js";
 import { guestPlacesOf } from "./links-words.js";
-import { actingAs, seatPersonOf, type AnySchema, type AppVideo, type FileValue, type HostFiles, type PagesArrangement, type Principal, type SignIn, type Store, type ViewerState } from "@graview/core";
+import { type AnySchema, type AppVideo, type FileValue, type HostFiles, type PagesArrangement, type Principal, type SignIn, type Store, type ViewerState } from "@graview/core";
 import { readsOnlyUnseen, unseenOf, viewKinds } from "./unseen.js";
-import { createMine, keptForTheVisit, visitOf } from "./mine.js";
+import { createMine, keptForTheVisit, viewerOf, visitOf } from "./mine.js";
 import { storedFilesOf } from "./marks.js";
 import { retryingImport } from "@graview/core/retry";
 import type { GuestDomEvent, GuestPlace, GuestProps, GuestTheme } from "../protocol.js";
@@ -1258,8 +1258,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
    * problem says no value. Never the graph's.
    */
   const hostState = options.draft ? undefined : options.viewerState?.();
-  /* A seat, as a binding names it (`seatPersonOf`): a profile is its own viewer; a seat whose id holds a `~` has none, and is still nobody else, never falling to the key of a seat with no id. */
-  const viewer = seatPersonOf(options.principal) ?? actingAs(options.principal).id ?? options.principal.visitorKey ?? "";
+  const viewer = viewerOf(options.principal);
   const mine = createMine({
     view: manifest.name,
     viewer,
@@ -1494,6 +1493,8 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     }
     for (const one of shadow.querySelectorAll("graview-video, [data-lightbox]")) marksMedia(one);
     recordsMoved();
+    /* What another of the viewer's devices kept meanwhile. */
+    if (hostState) mine.reread();
     refreshing = changed || pending.size > 0;
     options.onContentHeight?.(contentHeight);
     /* Pushed whether or not its records moved: its pictures, the app's stylesheet and its faces may have (`dress`). */

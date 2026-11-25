@@ -1,4 +1,4 @@
-import type { ViewerState, ViewerStateAnswer } from "@graview/core";
+import { actingAs, seatPersonOf, type Principal, type ViewerState, type ViewerStateAnswer } from "@graview/core";
 import { mineRefusal, type GuestMineAnswer } from "../protocol.js";
 
 /** The most values a view keeps for one viewer for a visit, and the bytes they hold: what a host's own caps would stop. */
@@ -53,6 +53,8 @@ export interface Mine {
   values(): Readonly<Record<string, string>>;
   get(key: string): Promise<GuestMineAnswer<string | null>>;
   set(key: unknown, value: unknown): Promise<ViewerStateAnswer>;
+  /** Ask the host again, and push what it says where that has moved: a drawing gone back to. */
+  reread(): void;
   /** This drawing has gone: a write it asked for still lands, and it hears no more. */
   dispose(): void;
 }
@@ -114,6 +116,73 @@ interface Shared {
   last?: Map<string, string>;
   lastRead?: number;
   reads?: number;
+  /** A read of the host under way, or asked ahead of the page that will want it and not taken yet. */
+  asked?: Asked | undefined;
+}
+
+/** One ask of the host: what it answers, and what was written since it was asked. */
+interface Asked {
+  readonly turn: number;
+  readonly at: number;
+  readonly answer: Promise<Map<string, string>>;
+  readonly landed: Map<string, string | null>;
+  settled: boolean;
+  /** A drawing has it. */
+  taken: boolean;
+}
+
+/** How long values asked ahead of a page wait for it: past it they are asked again. */
+export const AHEAD_MS = 10_000;
+/** How long an ask under way is joined: past it the host has gone quiet, and the next drawing asks for itself. */
+const JOIN_MS = 1_500;
+
+/** Who is looking, as what a view keeps is kept by: a seat as a binding names it (`seatPersonOf`); a profile is its own viewer; a seat whose id holds a `~` has none, and is still nobody else, never falling to the key of a seat with no id. */
+export const viewerOf = (principal: Principal): string => seatPersonOf(principal) ?? actingAs(principal).id ?? principal.visitorKey ?? "";
+
+/**
+ * ASKED ONCE, AND SHARED: drawings of one view for one viewer take the one
+ * ask under way, and the first of them one made ahead (`readAhead`). A viewer
+ * with no name of their own shares with nobody.
+ */
+function ask(shared: Shared, state: ViewerState, viewer: string, view: string, at: number, ahead = false): Asked {
+  const there = viewer === "" ? undefined : shared.asked;
+  if (there && at - there.at < (there.settled ? AHEAD_MS : JOIN_MS)) {
+    /* Taken by the drawing it was asked for: the next one asks for itself. */
+    if (!ahead) there.taken = true;
+    if (there.taken && there.settled) shared.asked = undefined;
+    return there;
+  }
+  const one: Asked = {
+    turn: (shared.reads = (shared.reads ?? 0) + 1),
+    at,
+    answer: new Promise<Readonly<Record<string, string>>>((resolve) => resolve(state.read(view))).then((values) => new Map(Object.entries(values).filter(([, value]) => typeof value === "string"))),
+    landed: new Map(),
+    settled: false,
+    taken: !ahead,
+  };
+  const done = (keep: boolean) => {
+    one.settled = true;
+    if (shared.asked === one && (!keep || one.taken)) shared.asked = undefined;
+  };
+  one.answer.then(() => done(true), () => done(false));
+  if (viewer !== "") shared.asked = one;
+  return one;
+}
+
+/** Ask the host for what a view keeps for this viewer, ahead of the page that draws it. Never rejects, and says nothing: the drawing that takes it does. */
+export function readAhead(state: ViewerState, principal: Principal, view: string, now: () => number = Date.now): void {
+  const viewer = viewerOf(principal);
+  if (viewer !== "") ask(sharedOf(state, viewer, view), state, viewer, view, now(), true);
+}
+
+/** Forget what was read of this state, for every viewer and view: the seat, the sign-in or the app changed under the page. What is being written goes on. */
+export function forgetRead(state: ViewerState): void {
+  for (const shared of sharedAt.get(state)?.values() ?? []) {
+    delete shared.last;
+    shared.asked = undefined;
+    /* An answer to what was asked before this is kept by nobody. */
+    shared.lastRead = shared.reads ?? 0;
+  }
 }
 const sharedAt = new WeakMap<ViewerState, Map<string, Shared>>();
 function sharedOf(state: ViewerState, viewer: string, view: string): Shared {
@@ -153,8 +222,9 @@ export function createMine({ view, viewer = "", state, onRefused, onLate, readMs
   let held = new Map<string, string>();
   let read = false;
   let waited = false;
-  /* What landed while this drawing was still reading: newer than what it will read. */
-  const landedWhileReading = new Map<string, string | null>();
+  /* What landed while this drawing was reading, for each read under way: newer than what it will read. */
+  const readings = new Set<Map<string, string | null>>();
+  let newest = 0;
   const hold = (key: string, value: string | null) => {
     if (value === null) held.delete(key);
     else held.set(key, value);
@@ -164,7 +234,7 @@ export function createMine({ view, viewer = "", state, onRefused, onLate, readMs
   const drawing: Drawing = {
     landed(key, value) {
       if (read || started) hold(key, value);
-      if (!read) landedWhileReading.set(key, value);
+      for (const landed of readings) landed.set(key, value);
     },
     onRefused,
     onLate,
@@ -180,29 +250,38 @@ export function createMine({ view, viewer = "", state, onRefused, onLate, readMs
    */
   if (shared.last) held = new Map(shared.last);
   const started = shared.last !== undefined;
-  const turn = (shared.reads = (shared.reads ?? 0) + 1);
   const refused = (sentence: string): ViewerStateAnswer => {
     onRefused?.(sentence);
     return { ok: false, sentence };
   };
-  const reading = (async () => {
+  const reading = load(false);
+  async function load(again: boolean): Promise<void> {
+    const asked = ask(shared, state, viewer, view, now());
+    const landed = new Map<string, string | null>();
+    readings.add(landed);
     try {
-      const answered = new Map(Object.entries(await state.read(view)).filter(([, value]) => typeof value === "string"));
+      const answered = await asked.answer;
+      /* A newer ask has answered already. */
+      if (asked.turn < newest) return;
+      newest = asked.turn;
       const was = held;
-      held = answered;
-      for (const [key, value] of landedWhileReading) hold(key, value);
-      const moved = started && (was.size !== held.size || [...held].some(([key, value]) => was.get(key) !== value));
+      held = new Map(answered);
+      for (const written of [asked.landed, landed]) for (const [key, value] of written) hold(key, value);
+      const late = waited || (again && !read);
+      const moved = (started || again) && (was.size !== held.size || [...held].some(([key, value]) => was.get(key) !== value));
       read = true;
       /* A read begun before another's, or by a drawing that no longer hears what is written, never stands over a newer one. */
-      if (viewer !== "" && drawings.has(drawing) && turn > (shared.lastRead ?? 0)) {
+      if (viewer !== "" && drawings.has(drawing) && asked.turn > (shared.lastRead ?? 0)) {
         shared.last = new Map(held);
-        shared.lastRead = turn;
+        shared.lastRead = asked.turn;
       }
-      if ((waited || moved) && drawings.has(drawing)) onLate?.();
+      if ((late || moved) && drawings.has(drawing)) onLate?.();
     } catch {
-      onRefused?.(UNREAD);
+      if (!again) onRefused?.(UNREAD);
+    } finally {
+      readings.delete(landed);
     }
-  })();
+  }
   const settled = new Promise<void>((resolve) => {
     const timer = setTimeout(() => {
       waited = true;
@@ -260,6 +339,7 @@ export function createMine({ view, viewer = "", state, onRefused, onLate, readMs
           }),
       );
     },
+    reread: () => void (drawings.has(drawing) && load(true)),
     dispose() {
       drawings.delete(drawing);
     },
@@ -293,6 +373,7 @@ function send(state: ViewerState, view: string, shared: Shared, key: string, lin
       if (kept) {
         /* Every drawing holds it, and is pushed it, but one told just now that it was kept. */
         const answered = new Set(past ? [] : told.map((waiting) => waiting.drawing));
+        shared.asked?.landed.set(key, value);
         if (value === null) shared.last?.delete(key);
         else shared.last?.set(key, value);
         for (const drawing of shared.drawings) {

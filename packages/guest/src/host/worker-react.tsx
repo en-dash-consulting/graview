@@ -1,6 +1,6 @@
 import type { ViewProblemSaid } from "./problems.js";
 import type { AnySchema, KindOfSchema, PagesArrangement, Principal, SignIn, Store } from "@graview/core";
-import { DefaultDrawnElsewhere, HomeFallsBack, isDefaultView, markBleeds, markPreviews, markReplacesPage, PageOfItsOwn, useGoTo, useGraviewIfAny, useKeptDrawings, useHostAssets, useHostFiles, useHostReel, useHostViewerState, usePlayback, ViewContentHeight, type GoTo, type KeptDrawing, type ReactViewRegistry, type ViewComponent, type ViewProps } from "@graview/react/provider";
+import { DefaultDrawnElsewhere, HomeFallsBack, isDefaultView, markAhead, markBleeds, markPreviews, markReplacesPage, PageOfItsOwn, useGoTo, useGraviewIfAny, useKeptDrawings, useHostAssets, useHostFiles, useHostReel, useHostViewerState, usePlayback, ViewContentHeight, type GoTo, type KeptDrawing, type ReactViewRegistry, type ViewComponent, type ViewProps } from "@graview/react/provider";
 import { setViewPlace } from "@graview/react/drawing";
 import { useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type ComponentType, type ContextType, type ReactNode } from "react";
 import type { EmbedHost } from "./embeds.js";
@@ -304,6 +304,9 @@ function WorkerViewMount({ definition: given, store, principal, input, goTo, pla
       });
     const stop = untilItArrives(workerChunk, (module) => {
       const view = module.mountWorkerView(element, optionsFor(definition.worker));
+      /* What was read for this seat is forgotten with its drawings. */
+      const state = latest.current.viewerState;
+      if (state) keeping?.onClear(state, () => module.forgetRead(state));
       mounted.current = view;
       stood.current = true;
       /* What the view's place lends its revision (Roadmap f-make-this-section-better), made with the worker's host. */
@@ -446,6 +449,16 @@ export function workerView(definition: WorkerViewDefinition, options: { readonly
     );
   }
   WorkerViewOfKind.displayName = `WorkerView(${definition.manifest.name})`;
+  /* Fetched ahead of its page by a face that knows a person is on their way; a draft is drawn where it is proposed. */
+  if (!definition.draft && !definition.keepsNothing) markAhead(WorkerViewOfKind, (asked) =>
+    void workerChunk().then(
+      (module) => {
+        const state = asked.viewerState as ReturnType<typeof useHostViewerState>;
+        if (asked.intent && state) asked.kept?.onClear(state, () => module.forgetRead(state));
+        module.viewAhead(definition, asked as never);
+      },
+      () => undefined,
+    ));
   return WorkerViewOfKind;
 }
 

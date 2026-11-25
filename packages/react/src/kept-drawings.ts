@@ -36,12 +36,15 @@ export interface KeptDrawings {
   take<D extends KeptDrawing>(name: string, of: readonly unknown[]): D | undefined;
   /** Let this one go. */
   forget(drawing: KeptDrawing): void;
-  /** Let every one go. */
+  /** Let every one go, and run what is to be run then. */
   clear(): void;
+  /** Run this each time every one is let go: one thing to run for each `key`. */
+  onClear(key: object, run: () => void): void;
 }
 
 export function createKeptDrawings(): KeptDrawings {
   const kept = new Map<string, { readonly drawing: KeptDrawing; readonly timer: ReturnType<typeof setTimeout> }>();
+  const clearing = new Map<object, () => void>();
   const out = (name: string): KeptDrawing | undefined => {
     const one = kept.get(name);
     if (!one) return undefined;
@@ -66,8 +69,12 @@ export function createKeptDrawings(): KeptDrawings {
       for (const [name, one] of kept) if (one.drawing === drawing) out(name);
       drawing.dispose();
     },
+    onClear(key, run) {
+      clearing.set(key, run);
+    },
     clear() {
       for (const name of [...kept.keys()]) out(name)?.dispose();
+      for (const run of clearing.values()) run();
     },
   };
 }

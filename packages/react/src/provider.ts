@@ -46,6 +46,7 @@ export type { ReaderMemory } from "./settings.js";
 export { createViews, layerViews } from "./view-registry.js";
 // The host's views as the place menu tidies them (Roadmap f-place-menu-views).
 export { KeptViewsProvider, useTidiedViews } from "./tidied-views.js";
+export { aheadOf, markAhead, type ViewAhead } from "./view-marks.js";
 export { BLEEDS, bleeds, bleedsFull, DEFAULT_VIEW, isDefaultView, markBleeds, markDefaultView, markPreviews, markReplacesPage, PREVIEWS, previewOf, REPLACES_PAGE, replacesPage, type ScenePreviewing } from "./view-marks.js";
 // Which view a kind's list page draws (FR-238).
 export { listPageViewOf } from "./list-page-view.js";

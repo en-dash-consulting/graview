@@ -1,5 +1,5 @@
 {
-  "at": "2026-11-25T21:49:10.670Z",
+  "at": "2026-11-25T23:23:35.105Z",
   "engines": [
     "chromium",
     "webkit",
@@ -9,9 +9,9 @@
   "returnMs": 120,
   "slow": 1,
   "movesFrames": {
-    "chromium": false,
-    "webkit": false,
-    "firefox": false
+    "chromium": "loads frames again",
+    "webkit": "loads frames again",
+    "firefox": "loads frames again"
   },
   "moves": [
     {
@@ -19,7 +19,7 @@
       "face": "pages",
       "move": "first",
       "place": "alpha",
-      "drawnAt": 192,
+      "drawnAt": 175,
       "frames": [
         {
           "what": "other",
@@ -28,12 +28,12 @@
         },
         {
           "what": "blank",
-          "from": 26,
-          "frames": 10
+          "from": 30,
+          "frames": 9
         },
         {
           "what": "drawn",
-          "from": 192,
+          "from": 175,
           "frames": 16
         }
       ]
@@ -47,7 +47,7 @@
       "frames": [
         {
           "what": "blank",
-          "from": 14,
+          "from": 15,
           "frames": 8
         },
         {
@@ -62,12 +62,12 @@
       "face": "pages",
       "move": "return",
       "place": "alpha",
-      "drawnAt": 14,
+      "drawnAt": 15,
       "frames": [
         {
           "what": "drawn",
-          "from": 14,
-          "frames": 16
+          "from": 15,
+          "frames": 17
         }
       ]
     },
@@ -76,11 +76,11 @@
       "face": "pages",
       "move": "return",
       "place": "beta",
-      "drawnAt": 15,
+      "drawnAt": 13,
       "frames": [
         {
           "what": "drawn",
-          "from": 15,
+          "from": 13,
           "frames": 17
         }
       ]
@@ -100,7 +100,7 @@
         {
           "what": "drawn",
           "from": 165,
-          "frames": 17
+          "frames": 16
         }
       ]
     },
@@ -128,20 +128,6 @@
       "face": "pages",
       "move": "return",
       "place": "record",
-      "drawnAt": 15,
-      "frames": [
-        {
-          "what": "drawn",
-          "from": 15,
-          "frames": 17
-        }
-      ]
-    },
-    {
-      "engine": "chromium",
-      "face": "pages",
-      "move": "return",
-      "place": "home",
       "drawnAt": 16,
       "frames": [
         {
@@ -154,18 +140,32 @@
     {
       "engine": "chromium",
       "face": "pages",
+      "move": "return",
+      "place": "home",
+      "drawnAt": 15,
+      "frames": [
+        {
+          "what": "drawn",
+          "from": 15,
+          "frames": 17
+        }
+      ]
+    },
+    {
+      "engine": "chromium",
+      "face": "pages",
       "move": "first",
       "place": "frame",
-      "drawnAt": 149,
+      "drawnAt": 199,
       "frames": [
         {
           "what": "blank",
           "from": 15,
-          "frames": 8
+          "frames": 11
         },
         {
           "what": "drawn",
-          "from": 149,
+          "from": 199,
           "frames": 17
         }
       ],
@@ -207,72 +207,126 @@
     },
     {
       "engine": "chromium",
-      "face": "one",
-      "move": "first",
+      "face": "pages",
+      "move": "first, cold",
       "place": "alpha",
-      "drawnAt": 186,
+      "drawnAt": 190,
+      "blank": 10,
       "frames": [
         {
           "what": "other",
-          "from": 8,
+          "from": 13,
           "frames": 1
         },
         {
           "what": "blank",
-          "from": 23,
+          "from": 26,
           "frames": 10
         },
         {
           "what": "drawn",
-          "from": 186,
-          "frames": 17
+          "from": 190,
+          "frames": 13
         }
       ]
     },
     {
       "engine": "chromium",
-      "face": "one",
-      "move": "first",
-      "place": "beta",
-      "drawnAt": 148,
+      "face": "pages",
+      "move": "first, idle",
+      "place": "alpha",
+      "drawnAt": 177,
+      "blank": 9,
       "frames": [
         {
+          "what": "other",
+          "from": 1,
+          "frames": 2
+        },
+        {
           "what": "blank",
-          "from": 15,
-          "frames": 8
+          "from": 29,
+          "frames": 9
         },
         {
           "what": "drawn",
-          "from": 148,
-          "frames": 16
+          "from": 177,
+          "frames": 13
         }
       ]
     },
     {
       "engine": "chromium",
-      "face": "one",
-      "move": "return",
+      "face": "pages",
+      "move": "first, pointer",
       "place": "alpha",
-      "drawnAt": 16,
+      "drawnAt": 59,
+      "blank": 2,
       "frames": [
         {
+          "what": "other",
+          "from": 12,
+          "frames": 1
+        },
+        {
+          "what": "blank",
+          "from": 28,
+          "frames": 2
+        },
+        {
           "what": "drawn",
-          "from": 16,
-          "frames": 17
+          "from": 59,
+          "frames": 13
         }
       ]
     },
     {
       "engine": "chromium",
-      "face": "one",
-      "move": "return",
-      "place": "beta",
-      "drawnAt": 15,
+      "face": "pages",
+      "move": "first, press",
+      "place": "alpha",
+      "drawnAt": 79,
+      "blank": 3,
       "frames": [
         {
+          "what": "other",
+          "from": 1,
+          "frames": 2
+        },
+        {
+          "what": "blank",
+          "from": 29,
+          "frames": 3
+        },
+        {
           "what": "drawn",
-          "from": 15,
-          "frames": 17
+          "from": 79,
+          "frames": 14
+        }
+      ]
+    },
+    {
+      "engine": "chromium",
+      "face": "pages",
+      "move": "first, keyboard",
+      "place": "alpha",
+      "drawnAt": 51,
+      "blank": 2,
+      "frames": [
+        {
+          "what": "other",
+          "from": 1,
+          "frames": 2
+        },
+        {
+          "what": "blank",
+          "from": 25,
+          "frames": 2
+        },
+        {
+          "what": "drawn",
+          "from": 51,
+          "frames": 14
         }
       ]
     },
@@ -280,12 +334,12 @@
       "engine": "chromium",
       "face": "one",
       "move": "first",
-      "place": "record",
+      "place": "alpha",
       "drawnAt": 165,
       "frames": [
         {
           "what": "blank",
-          "from": 27,
+          "from": 26,
           "frames": 9
         },
         {
@@ -299,7 +353,7 @@
       "engine": "chromium",
       "face": "one",
       "move": "first",
-      "place": "home",
+      "place": "beta",
       "drawnAt": 148,
       "frames": [
         {
@@ -318,7 +372,21 @@
       "engine": "chromium",
       "face": "one",
       "move": "return",
-      "place": "record",
+      "place": "alpha",
+      "drawnAt": 18,
+      "frames": [
+        {
+          "what": "drawn",
+          "from": 18,
+          "frames": 17
+        }
+      ]
+    },
+    {
+      "engine": "chromium",
+      "face": "one",
+      "move": "return",
+      "place": "beta",
       "drawnAt": 16,
       "frames": [
         {
@@ -331,13 +399,65 @@
     {
       "engine": "chromium",
       "face": "one",
-      "move": "return",
+      "move": "first",
+      "place": "record",
+      "drawnAt": 163,
+      "frames": [
+        {
+          "what": "blank",
+          "from": 26,
+          "frames": 9
+        },
+        {
+          "what": "drawn",
+          "from": 163,
+          "frames": 17
+        }
+      ]
+    },
+    {
+      "engine": "chromium",
+      "face": "one",
+      "move": "first",
       "place": "home",
-      "drawnAt": 15,
+      "drawnAt": 149,
+      "frames": [
+        {
+          "what": "blank",
+          "from": 16,
+          "frames": 8
+        },
+        {
+          "what": "drawn",
+          "from": 149,
+          "frames": 16
+        }
+      ]
+    },
+    {
+      "engine": "chromium",
+      "face": "one",
+      "move": "return",
+      "place": "record",
+      "drawnAt": 17,
       "frames": [
         {
           "what": "drawn",
-          "from": 15,
+          "from": 17,
+          "frames": 17
+        }
+      ]
+    },
+    {
+      "engine": "chromium",
+      "face": "one",
+      "move": "return",
+      "place": "home",
+      "drawnAt": 16,
+      "frames": [
+        {
+          "what": "drawn",
+          "from": 16,
           "frames": 17
         }
       ]
@@ -347,7 +467,7 @@
       "face": "one",
       "move": "first",
       "place": "frame",
-      "drawnAt": 148,
+      "drawnAt": 149,
       "frames": [
         {
           "what": "blank",
@@ -356,7 +476,7 @@
         },
         {
           "what": "drawn",
-          "from": 148,
+          "from": 149,
           "frames": 17
         }
       ],
@@ -367,11 +487,11 @@
       "face": "one",
       "move": "via",
       "place": "alpha",
-      "drawnAt": 15,
+      "drawnAt": 16,
       "frames": [
         {
           "what": "drawn",
-          "from": 15,
+          "from": 16,
           "frames": 17
         }
       ]
@@ -397,44 +517,159 @@
       "loads": 1
     },
     {
-      "engine": "webkit",
-      "face": "pages",
-      "move": "first",
+      "engine": "chromium",
+      "face": "one",
+      "move": "first, cold",
       "place": "alpha",
-      "drawnAt": 435,
+      "drawnAt": 193,
+      "blank": 11,
       "frames": [
         {
-          "what": "other",
-          "from": 171,
-          "frames": 2
-        },
-        {
           "what": "blank",
-          "from": 205,
-          "frames": 14
+          "from": 24,
+          "frames": 11
         },
         {
           "what": "drawn",
-          "from": 435,
-          "frames": 18
+          "from": 193,
+          "frames": 14
         }
       ]
     },
     {
-      "engine": "webkit",
-      "face": "pages",
-      "move": "first",
-      "place": "beta",
-      "drawnAt": 159,
+      "engine": "chromium",
+      "face": "one",
+      "move": "first, idle",
+      "place": "alpha",
+      "drawnAt": 173,
+      "blank": 9,
       "frames": [
         {
+          "what": "other",
+          "from": 9,
+          "frames": 1
+        },
+        {
           "what": "blank",
-          "from": 15,
+          "from": 26,
           "frames": 9
         },
         {
           "what": "drawn",
-          "from": 159,
+          "from": 173,
+          "frames": 13
+        }
+      ]
+    },
+    {
+      "engine": "chromium",
+      "face": "one",
+      "move": "first, pointer",
+      "place": "alpha",
+      "drawnAt": 61,
+      "blank": 3,
+      "frames": [
+        {
+          "what": "blank",
+          "from": 26,
+          "frames": 3
+        },
+        {
+          "what": "drawn",
+          "from": 61,
+          "frames": 13
+        }
+      ]
+    },
+    {
+      "engine": "chromium",
+      "face": "one",
+      "move": "first, press",
+      "place": "alpha",
+      "drawnAt": 72,
+      "blank": 3,
+      "frames": [
+        {
+          "what": "other",
+          "from": 9,
+          "frames": 1
+        },
+        {
+          "what": "blank",
+          "from": 25,
+          "frames": 3
+        },
+        {
+          "what": "drawn",
+          "from": 72,
+          "frames": 13
+        }
+      ]
+    },
+    {
+      "engine": "chromium",
+      "face": "one",
+      "move": "first, keyboard",
+      "place": "alpha",
+      "drawnAt": 55,
+      "blank": 2,
+      "frames": [
+        {
+          "what": "other",
+          "from": 8,
+          "frames": 1
+        },
+        {
+          "what": "blank",
+          "from": 27,
+          "frames": 2
+        },
+        {
+          "what": "drawn",
+          "from": 55,
+          "frames": 14
+        }
+      ]
+    },
+    {
+      "engine": "webkit",
+      "face": "pages",
+      "move": "first",
+      "place": "alpha",
+      "drawnAt": 374,
+      "frames": [
+        {
+          "what": "other",
+          "from": 118,
+          "frames": 2
+        },
+        {
+          "what": "blank",
+          "from": 164,
+          "frames": 12
+        },
+        {
+          "what": "drawn",
+          "from": 374,
+          "frames": 17
+        }
+      ]
+    },
+    {
+      "engine": "webkit",
+      "face": "pages",
+      "move": "first",
+      "place": "beta",
+      "drawnAt": 166,
+      "frames": [
+        {
+          "what": "blank",
+          "from": 16,
+          "frames": 10
+        },
+        {
+          "what": "drawn",
+          "from": 166,
           "frames": 17
         }
       ]
@@ -444,11 +679,11 @@
       "face": "pages",
       "move": "return",
       "place": "alpha",
-      "drawnAt": 18,
+      "drawnAt": 22,
       "frames": [
         {
           "what": "drawn",
-          "from": 18,
+          "from": 22,
           "frames": 17
         }
       ]
@@ -458,11 +693,11 @@
       "face": "pages",
       "move": "return",
       "place": "beta",
-      "drawnAt": 19,
+      "drawnAt": 21,
       "frames": [
         {
           "what": "drawn",
-          "from": 19,
+          "from": 21,
           "frames": 17
         }
       ]
@@ -472,21 +707,21 @@
       "face": "pages",
       "move": "first",
       "place": "record",
-      "drawnAt": 223,
+      "drawnAt": 224,
       "frames": [
         {
           "what": "other",
-          "from": 51,
+          "from": 42,
           "frames": 1
         },
         {
           "what": "blank",
-          "from": 65,
-          "frames": 10
+          "from": 58,
+          "frames": 11
         },
         {
           "what": "drawn",
-          "from": 223,
+          "from": 224,
           "frames": 17
         }
       ]
@@ -496,16 +731,16 @@
       "face": "pages",
       "move": "first",
       "place": "home",
-      "drawnAt": 159,
+      "drawnAt": 160,
       "frames": [
         {
           "what": "blank",
-          "from": 14,
+          "from": 15,
           "frames": 9
         },
         {
           "what": "drawn",
-          "from": 159,
+          "from": 160,
           "frames": 17
         }
       ]
@@ -529,11 +764,11 @@
       "face": "pages",
       "move": "return",
       "place": "home",
-      "drawnAt": 14,
+      "drawnAt": 15,
       "frames": [
         {
           "what": "drawn",
-          "from": 14,
+          "from": 15,
           "frames": 17
         }
       ]
@@ -543,7 +778,7 @@
       "face": "pages",
       "move": "first",
       "place": "frame",
-      "drawnAt": 164,
+      "drawnAt": 163,
       "frames": [
         {
           "what": "blank",
@@ -552,7 +787,7 @@
         },
         {
           "what": "drawn",
-          "from": 164,
+          "from": 163,
           "frames": 17
         }
       ],
@@ -563,11 +798,11 @@
       "face": "pages",
       "move": "via",
       "place": "alpha",
-      "drawnAt": 17,
+      "drawnAt": 20,
       "frames": [
         {
           "what": "drawn",
-          "from": 17,
+          "from": 20,
           "frames": 17
         }
       ]
@@ -581,7 +816,7 @@
       "frames": [
         {
           "what": "blank",
-          "from": 12,
+          "from": 13,
           "frames": 10
         },
         {
@@ -594,24 +829,168 @@
     },
     {
       "engine": "webkit",
-      "face": "one",
-      "move": "first",
+      "face": "pages",
+      "move": "first, cold",
       "place": "alpha",
-      "drawnAt": 222,
+      "drawnAt": 218,
+      "blank": 11,
       "frames": [
         {
           "what": "other",
-          "from": 1,
+          "from": 19,
           "frames": 1
         },
         {
           "what": "blank",
-          "from": 43,
+          "from": 32,
           "frames": 11
         },
         {
           "what": "drawn",
-          "from": 222,
+          "from": 218,
+          "frames": 14
+        }
+      ]
+    },
+    {
+      "engine": "webkit",
+      "face": "pages",
+      "move": "first, idle",
+      "place": "alpha",
+      "drawnAt": 208,
+      "blank": 11,
+      "frames": [
+        {
+          "what": "other",
+          "from": 18,
+          "frames": 1
+        },
+        {
+          "what": "blank",
+          "from": 36,
+          "frames": 11
+        },
+        {
+          "what": "drawn",
+          "from": 208,
+          "frames": 15
+        }
+      ]
+    },
+    {
+      "engine": "webkit",
+      "face": "pages",
+      "move": "first, pointer",
+      "place": "alpha",
+      "drawnAt": 85,
+      "blank": 3,
+      "frames": [
+        {
+          "what": "other",
+          "from": 18,
+          "frames": 1
+        },
+        {
+          "what": "blank",
+          "from": 33,
+          "frames": 3
+        },
+        {
+          "what": "drawn",
+          "from": 85,
+          "frames": 14
+        }
+      ]
+    },
+    {
+      "engine": "webkit",
+      "face": "pages",
+      "move": "first, press",
+      "place": "alpha",
+      "drawnAt": 113,
+      "blank": 5,
+      "frames": [
+        {
+          "what": "other",
+          "from": 19,
+          "frames": 1
+        },
+        {
+          "what": "blank",
+          "from": 33,
+          "frames": 5
+        },
+        {
+          "what": "drawn",
+          "from": 113,
+          "frames": 14
+        }
+      ]
+    },
+    {
+      "engine": "webkit",
+      "face": "pages",
+      "move": "first, keyboard",
+      "place": "alpha",
+      "drawnAt": 90,
+      "blank": 3,
+      "frames": [
+        {
+          "what": "other",
+          "from": 18,
+          "frames": 1
+        },
+        {
+          "what": "blank",
+          "from": 33,
+          "frames": 3
+        },
+        {
+          "what": "drawn",
+          "from": 90,
+          "frames": 14
+        }
+      ]
+    },
+    {
+      "engine": "webkit",
+      "face": "one",
+      "move": "first",
+      "place": "alpha",
+      "drawnAt": 204,
+      "frames": [
+        {
+          "what": "other",
+          "from": 10,
+          "frames": 1
+        },
+        {
+          "what": "blank",
+          "from": 49,
+          "frames": 10
+        },
+        {
+          "what": "drawn",
+          "from": 204,
+          "frames": 17
+        }
+      ]
+    },
+    {
+      "engine": "webkit",
+      "face": "one",
+      "move": "first",
+      "place": "beta",
+      "drawnAt": 169,
+      "frames": [
+        {
+          "what": "blank",
+          "from": 28,
+          "frames": 10
+        },
+        {
+          "what": "drawn",
+          "from": 169,
           "frames": 18
         }
       ]
@@ -619,32 +998,13 @@
     {
       "engine": "webkit",
       "face": "one",
-      "move": "first",
-      "place": "beta",
-      "drawnAt": 166,
-      "frames": [
-        {
-          "what": "blank",
-          "from": 26,
-          "frames": 10
-        },
-        {
-          "what": "drawn",
-          "from": 166,
-          "frames": 17
-        }
-      ]
-    },
-    {
-      "engine": "webkit",
-      "face": "one",
       "move": "return",
       "place": "alpha",
-      "drawnAt": 34,
+      "drawnAt": 31,
       "frames": [
         {
           "what": "drawn",
-          "from": 34,
+          "from": 31,
           "frames": 17
         }
       ]
@@ -654,11 +1014,11 @@
       "face": "one",
       "move": "return",
       "place": "beta",
-      "drawnAt": 27,
+      "drawnAt": 28,
       "frames": [
         {
           "what": "drawn",
-          "from": 27,
+          "from": 28,
           "frames": 18
         }
       ]
@@ -672,7 +1032,7 @@
       "frames": [
         {
           "what": "other",
-          "from": 15,
+          "from": 14,
           "frames": 1
         },
         {
@@ -692,16 +1052,16 @@
       "face": "one",
       "move": "first",
       "place": "home",
-      "drawnAt": 159,
+      "drawnAt": 160,
       "frames": [
         {
           "what": "blank",
-          "from": 19,
+          "from": 18,
           "frames": 9
         },
         {
           "what": "drawn",
-          "from": 159,
+          "from": 160,
           "frames": 17
         }
       ]
@@ -739,16 +1099,16 @@
       "face": "one",
       "move": "first",
       "place": "frame",
-      "drawnAt": 162,
+      "drawnAt": 179,
       "frames": [
         {
           "what": "blank",
-          "from": 17,
-          "frames": 9
+          "from": 18,
+          "frames": 10
         },
         {
           "what": "drawn",
-          "from": 162,
+          "from": 179,
           "frames": 17
         }
       ],
@@ -759,13 +1119,276 @@
       "face": "one",
       "move": "via",
       "place": "alpha",
-      "drawnAt": 24,
+      "drawnAt": 27,
+      "frames": [
+        {
+          "what": "drawn",
+          "from": 27,
+          "frames": 18
+        }
+      ]
+    },
+    {
+      "engine": "webkit",
+      "face": "one",
+      "move": "return",
+      "place": "frame",
+      "drawnAt": 175,
+      "frames": [
+        {
+          "what": "blank",
+          "from": 22,
+          "frames": 10
+        },
+        {
+          "what": "drawn",
+          "from": 175,
+          "frames": 17
+        }
+      ],
+      "loads": 1
+    },
+    {
+      "engine": "webkit",
+      "face": "one",
+      "move": "first, cold",
+      "place": "alpha",
+      "drawnAt": 246,
+      "blank": 11,
       "frames": [
         {
           "what": "other",
-          "from": 5,
+          "from": 16,
+          "frames": 2
+        },
+        {
+          "what": "blank",
+          "from": 61,
+          "frames": 11
+        },
+        {
+          "what": "drawn",
+          "from": 246,
+          "frames": 14
+        }
+      ]
+    },
+    {
+      "engine": "webkit",
+      "face": "one",
+      "move": "first, idle",
+      "place": "alpha",
+      "drawnAt": 203,
+      "blank": 10,
+      "frames": [
+        {
+          "what": "other",
+          "from": 10,
           "frames": 1
         },
+        {
+          "what": "blank",
+          "from": 49,
+          "frames": 10
+        },
+        {
+          "what": "drawn",
+          "from": 203,
+          "frames": 14
+        }
+      ]
+    },
+    {
+      "engine": "webkit",
+      "face": "one",
+      "move": "first, pointer",
+      "place": "alpha",
+      "drawnAt": 106,
+      "blank": 3,
+      "frames": [
+        {
+          "what": "other",
+          "from": 13,
+          "frames": 2
+        },
+        {
+          "what": "blank",
+          "from": 65,
+          "frames": 3
+        },
+        {
+          "what": "drawn",
+          "from": 106,
+          "frames": 14
+        }
+      ]
+    },
+    {
+      "engine": "webkit",
+      "face": "one",
+      "move": "first, press",
+      "place": "alpha",
+      "drawnAt": 96,
+      "blank": 3,
+      "frames": [
+        {
+          "what": "other",
+          "from": 11,
+          "frames": 1
+        },
+        {
+          "what": "blank",
+          "from": 46,
+          "frames": 3
+        },
+        {
+          "what": "drawn",
+          "from": 96,
+          "frames": 14
+        }
+      ]
+    },
+    {
+      "engine": "webkit",
+      "face": "one",
+      "move": "first, keyboard",
+      "place": "alpha",
+      "drawnAt": 118,
+      "blank": 3,
+      "frames": [
+        {
+          "what": "other",
+          "from": 14,
+          "frames": 2
+        },
+        {
+          "what": "blank",
+          "from": 74,
+          "frames": 3
+        },
+        {
+          "what": "drawn",
+          "from": 118,
+          "frames": 15
+        }
+      ]
+    },
+    {
+      "engine": "firefox",
+      "face": "pages",
+      "move": "first",
+      "place": "alpha",
+      "drawnAt": 184,
+      "frames": [
+        {
+          "what": "other",
+          "from": 0,
+          "frames": 2
+        },
+        {
+          "what": "blank",
+          "from": 24,
+          "frames": 10
+        },
+        {
+          "what": "drawn",
+          "from": 184,
+          "frames": 16
+        }
+      ]
+    },
+    {
+      "engine": "firefox",
+      "face": "pages",
+      "move": "first",
+      "place": "beta",
+      "drawnAt": 163,
+      "frames": [
+        {
+          "what": "blank",
+          "from": 15,
+          "frames": 9
+        },
+        {
+          "what": "drawn",
+          "from": 163,
+          "frames": 16
+        }
+      ]
+    },
+    {
+      "engine": "firefox",
+      "face": "pages",
+      "move": "return",
+      "place": "alpha",
+      "drawnAt": 14,
+      "frames": [
+        {
+          "what": "drawn",
+          "from": 14,
+          "frames": 16
+        }
+      ]
+    },
+    {
+      "engine": "firefox",
+      "face": "pages",
+      "move": "return",
+      "place": "beta",
+      "drawnAt": 14,
+      "frames": [
+        {
+          "what": "drawn",
+          "from": 14,
+          "frames": 16
+        }
+      ]
+    },
+    {
+      "engine": "firefox",
+      "face": "pages",
+      "move": "first",
+      "place": "record",
+      "drawnAt": 181,
+      "frames": [
+        {
+          "what": "blank",
+          "from": 19,
+          "frames": 10
+        },
+        {
+          "what": "drawn",
+          "from": 181,
+          "frames": 16
+        }
+      ]
+    },
+    {
+      "engine": "firefox",
+      "face": "pages",
+      "move": "first",
+      "place": "home",
+      "drawnAt": 164,
+      "frames": [
+        {
+          "what": "blank",
+          "from": 14,
+          "frames": 9
+        },
+        {
+          "what": "drawn",
+          "from": 164,
+          "frames": 16
+        }
+      ]
+    },
+    {
+      "engine": "firefox",
+      "face": "pages",
+      "move": "return",
+      "place": "record",
+      "drawnAt": 24,
+      "frames": [
         {
           "what": "drawn",
           "from": 24,
@@ -774,158 +1397,15 @@
       ]
     },
     {
-      "engine": "webkit",
-      "face": "one",
-      "move": "return",
-      "place": "frame",
-      "drawnAt": 160,
-      "frames": [
-        {
-          "what": "blank",
-          "from": 19,
-          "frames": 9
-        },
-        {
-          "what": "drawn",
-          "from": 160,
-          "frames": 17
-        }
-      ],
-      "loads": 1
-    },
-    {
-      "engine": "firefox",
-      "face": "pages",
-      "move": "first",
-      "place": "alpha",
-      "drawnAt": 212,
-      "frames": [
-        {
-          "what": "other",
-          "from": 1,
-          "frames": 2
-        },
-        {
-          "what": "blank",
-          "from": 37,
-          "frames": 11
-        },
-        {
-          "what": "drawn",
-          "from": 212,
-          "frames": 16
-        }
-      ]
-    },
-    {
-      "engine": "firefox",
-      "face": "pages",
-      "move": "first",
-      "place": "beta",
-      "drawnAt": 164,
-      "frames": [
-        {
-          "what": "blank",
-          "from": 16,
-          "frames": 9
-        },
-        {
-          "what": "drawn",
-          "from": 164,
-          "frames": 16
-        }
-      ]
-    },
-    {
-      "engine": "firefox",
-      "face": "pages",
-      "move": "return",
-      "place": "alpha",
-      "drawnAt": 16,
-      "frames": [
-        {
-          "what": "drawn",
-          "from": 16,
-          "frames": 17
-        }
-      ]
-    },
-    {
-      "engine": "firefox",
-      "face": "pages",
-      "move": "return",
-      "place": "beta",
-      "drawnAt": 15,
-      "frames": [
-        {
-          "what": "drawn",
-          "from": 15,
-          "frames": 17
-        }
-      ]
-    },
-    {
-      "engine": "firefox",
-      "face": "pages",
-      "move": "first",
-      "place": "record",
-      "drawnAt": 164,
-      "frames": [
-        {
-          "what": "blank",
-          "from": 15,
-          "frames": 9
-        },
-        {
-          "what": "drawn",
-          "from": 164,
-          "frames": 16
-        }
-      ]
-    },
-    {
-      "engine": "firefox",
-      "face": "pages",
-      "move": "first",
-      "place": "home",
-      "drawnAt": 163,
-      "frames": [
-        {
-          "what": "blank",
-          "from": 12,
-          "frames": 9
-        },
-        {
-          "what": "drawn",
-          "from": 163,
-          "frames": 17
-        }
-      ]
-    },
-    {
-      "engine": "firefox",
-      "face": "pages",
-      "move": "return",
-      "place": "record",
-      "drawnAt": 23,
-      "frames": [
-        {
-          "what": "drawn",
-          "from": 23,
-          "frames": 17
-        }
-      ]
-    },
-    {
       "engine": "firefox",
       "face": "pages",
       "move": "return",
       "place": "home",
-      "drawnAt": 15,
+      "drawnAt": 14,
       "frames": [
         {
           "what": "drawn",
-          "from": 15,
+          "from": 14,
           "frames": 16
         }
       ]
@@ -935,7 +1415,7 @@
       "face": "pages",
       "move": "first",
       "place": "frame",
-      "drawnAt": 164,
+      "drawnAt": 165,
       "frames": [
         {
           "what": "blank",
@@ -944,8 +1424,8 @@
         },
         {
           "what": "drawn",
-          "from": 164,
-          "frames": 16
+          "from": 165,
+          "frames": 17
         }
       ],
       "loads": 1
@@ -960,7 +1440,7 @@
         {
           "what": "drawn",
           "from": 15,
-          "frames": 17
+          "frames": 16
         }
       ]
     },
@@ -969,16 +1449,16 @@
       "face": "pages",
       "move": "return",
       "place": "frame",
-      "drawnAt": 149,
+      "drawnAt": 164,
       "frames": [
         {
           "what": "blank",
-          "from": 16,
-          "frames": 8
+          "from": 14,
+          "frames": 9
         },
         {
           "what": "drawn",
-          "from": 149,
+          "from": 164,
           "frames": 16
         }
       ],
@@ -986,20 +1466,145 @@
     },
     {
       "engine": "firefox",
-      "face": "one",
-      "move": "first",
+      "face": "pages",
+      "move": "first, cold",
       "place": "alpha",
-      "drawnAt": 216,
+      "drawnAt": 214,
+      "blank": 12,
       "frames": [
         {
+          "what": "other",
+          "from": 1,
+          "frames": 1
+        },
+        {
           "what": "blank",
-          "from": 25,
+          "from": 26,
           "frames": 12
         },
         {
           "what": "drawn",
-          "from": 216,
-          "frames": 17
+          "from": 214,
+          "frames": 14
+        }
+      ]
+    },
+    {
+      "engine": "firefox",
+      "face": "pages",
+      "move": "first, idle",
+      "place": "alpha",
+      "drawnAt": 173,
+      "blank": 9,
+      "frames": [
+        {
+          "what": "other",
+          "from": 1,
+          "frames": 2
+        },
+        {
+          "what": "blank",
+          "from": 23,
+          "frames": 9
+        },
+        {
+          "what": "drawn",
+          "from": 173,
+          "frames": 14
+        }
+      ]
+    },
+    {
+      "engine": "firefox",
+      "face": "pages",
+      "move": "first, pointer",
+      "place": "alpha",
+      "drawnAt": 82,
+      "blank": 4,
+      "frames": [
+        {
+          "what": "other",
+          "from": 2,
+          "frames": 1
+        },
+        {
+          "what": "blank",
+          "from": 28,
+          "frames": 4
+        },
+        {
+          "what": "drawn",
+          "from": 82,
+          "frames": 14
+        }
+      ]
+    },
+    {
+      "engine": "firefox",
+      "face": "pages",
+      "move": "first, press",
+      "place": "alpha",
+      "drawnAt": 125,
+      "blank": 6,
+      "frames": [
+        {
+          "what": "other",
+          "from": 2,
+          "frames": 2
+        },
+        {
+          "what": "blank",
+          "from": 26,
+          "frames": 6
+        },
+        {
+          "what": "drawn",
+          "from": 125,
+          "frames": 13
+        }
+      ]
+    },
+    {
+      "engine": "firefox",
+      "face": "pages",
+      "move": "first, keyboard",
+      "place": "alpha",
+      "drawnAt": 80,
+      "blank": 3,
+      "frames": [
+        {
+          "what": "other",
+          "from": 2,
+          "frames": 2
+        },
+        {
+          "what": "blank",
+          "from": 40,
+          "frames": 3
+        },
+        {
+          "what": "drawn",
+          "from": 80,
+          "frames": 14
+        }
+      ]
+    },
+    {
+      "engine": "firefox",
+      "face": "one",
+      "move": "first",
+      "place": "alpha",
+      "drawnAt": 177,
+      "frames": [
+        {
+          "what": "blank",
+          "from": 25,
+          "frames": 9
+        },
+        {
+          "what": "drawn",
+          "from": 177,
+          "frames": 16
         }
       ]
     },
@@ -1012,7 +1617,7 @@
       "frames": [
         {
           "what": "blank",
-          "from": 25,
+          "from": 30,
           "frames": 10
         },
         {
@@ -1027,11 +1632,11 @@
       "face": "one",
       "move": "return",
       "place": "alpha",
-      "drawnAt": 24,
+      "drawnAt": 28,
       "frames": [
         {
           "what": "drawn",
-          "from": 24,
+          "from": 28,
           "frames": 17
         }
       ]
@@ -1041,11 +1646,11 @@
       "face": "one",
       "move": "return",
       "place": "beta",
-      "drawnAt": 24,
+      "drawnAt": 30,
       "frames": [
         {
           "what": "drawn",
-          "from": 24,
+          "from": 30,
           "frames": 17
         }
       ]
@@ -1059,13 +1664,13 @@
       "frames": [
         {
           "what": "blank",
-          "from": 30,
+          "from": 29,
           "frames": 10
         },
         {
           "what": "drawn",
           "from": 181,
-          "frames": 17
+          "frames": 16
         }
       ]
     },
@@ -1074,16 +1679,16 @@
       "face": "one",
       "move": "first",
       "place": "home",
-      "drawnAt": 162,
+      "drawnAt": 164,
       "frames": [
         {
           "what": "blank",
-          "from": 14,
+          "from": 16,
           "frames": 9
         },
         {
           "what": "drawn",
-          "from": 162,
+          "from": 164,
           "frames": 16
         }
       ]
@@ -1093,12 +1698,12 @@
       "face": "one",
       "move": "return",
       "place": "record",
-      "drawnAt": 26,
+      "drawnAt": 33,
       "frames": [
         {
           "what": "drawn",
-          "from": 26,
-          "frames": 17
+          "from": 33,
+          "frames": 18
         }
       ]
     },
@@ -1107,11 +1712,11 @@
       "face": "one",
       "move": "return",
       "place": "home",
-      "drawnAt": 20,
+      "drawnAt": 17,
       "frames": [
         {
           "what": "drawn",
-          "from": 20,
+          "from": 17,
           "frames": 17
         }
       ]
@@ -1121,17 +1726,17 @@
       "face": "one",
       "move": "first",
       "place": "frame",
-      "drawnAt": 165,
+      "drawnAt": 164,
       "frames": [
         {
           "what": "blank",
-          "from": 14,
+          "from": 19,
           "frames": 9
         },
         {
           "what": "drawn",
-          "from": 165,
-          "frames": 17
+          "from": 164,
+          "frames": 16
         }
       ],
       "loads": 1
@@ -1141,11 +1746,11 @@
       "face": "one",
       "move": "via",
       "place": "alpha",
-      "drawnAt": 22,
+      "drawnAt": 25,
       "frames": [
         {
           "what": "drawn",
-          "from": 22,
+          "from": 25,
           "frames": 17
         }
       ]
@@ -1155,20 +1760,140 @@
       "face": "one",
       "move": "return",
       "place": "frame",
-      "drawnAt": 166,
+      "drawnAt": 165,
       "frames": [
         {
           "what": "blank",
-          "from": 22,
+          "from": 20,
           "frames": 9
         },
         {
           "what": "drawn",
-          "from": 166,
-          "frames": 17
+          "from": 165,
+          "frames": 16
         }
       ],
       "loads": 1
+    },
+    {
+      "engine": "firefox",
+      "face": "one",
+      "move": "first, cold",
+      "place": "alpha",
+      "drawnAt": 240,
+      "blank": 12,
+      "frames": [
+        {
+          "what": "other",
+          "from": 7,
+          "frames": 1
+        },
+        {
+          "what": "blank",
+          "from": 35,
+          "frames": 12
+        },
+        {
+          "what": "drawn",
+          "from": 240,
+          "frames": 13
+        }
+      ]
+    },
+    {
+      "engine": "firefox",
+      "face": "one",
+      "move": "first, idle",
+      "place": "alpha",
+      "drawnAt": 182,
+      "blank": 10,
+      "frames": [
+        {
+          "what": "blank",
+          "from": 26,
+          "frames": 10
+        },
+        {
+          "what": "drawn",
+          "from": 182,
+          "frames": 13
+        }
+      ]
+    },
+    {
+      "engine": "firefox",
+      "face": "one",
+      "move": "first, pointer",
+      "place": "alpha",
+      "drawnAt": 91,
+      "blank": 3,
+      "frames": [
+        {
+          "what": "other",
+          "from": 8,
+          "frames": 1
+        },
+        {
+          "what": "blank",
+          "from": 37,
+          "frames": 3
+        },
+        {
+          "what": "drawn",
+          "from": 91,
+          "frames": 13
+        }
+      ]
+    },
+    {
+      "engine": "firefox",
+      "face": "one",
+      "move": "first, press",
+      "place": "alpha",
+      "drawnAt": 118,
+      "blank": 6,
+      "frames": [
+        {
+          "what": "other",
+          "from": 2,
+          "frames": 1
+        },
+        {
+          "what": "blank",
+          "from": 28,
+          "frames": 6
+        },
+        {
+          "what": "drawn",
+          "from": 118,
+          "frames": 13
+        }
+      ]
+    },
+    {
+      "engine": "firefox",
+      "face": "one",
+      "move": "first, keyboard",
+      "place": "alpha",
+      "drawnAt": 99,
+      "blank": 4,
+      "frames": [
+        {
+          "what": "other",
+          "from": 2,
+          "frames": 2
+        },
+        {
+          "what": "blank",
+          "from": 39,
+          "frames": 4
+        },
+        {
+          "what": "drawn",
+          "from": 99,
+          "frames": 14
+        }
+      ]
     }
   ],
   "checks": {
@@ -1179,12 +1904,12 @@
           "face": "pages",
           "move": "return",
           "place": "alpha",
-          "drawnAt": 14,
+          "drawnAt": 15,
           "frames": [
             {
               "what": "drawn",
-              "from": 14,
-              "frames": 16
+              "from": 15,
+              "frames": 17
             }
           ],
           "ok": true
@@ -1194,11 +1919,11 @@
           "face": "pages",
           "move": "return",
           "place": "beta",
-          "drawnAt": 15,
+          "drawnAt": 13,
           "frames": [
             {
               "what": "drawn",
-              "from": 15,
+              "from": 13,
               "frames": 17
             }
           ],
@@ -1207,66 +1932,6 @@
         {
           "engine": "chromium",
           "face": "pages",
-          "move": "return",
-          "place": "record",
-          "drawnAt": 15,
-          "frames": [
-            {
-              "what": "drawn",
-              "from": 15,
-              "frames": 17
-            }
-          ],
-          "ok": true
-        },
-        {
-          "engine": "chromium",
-          "face": "pages",
-          "move": "return",
-          "place": "home",
-          "drawnAt": 16,
-          "frames": [
-            {
-              "what": "drawn",
-              "from": 16,
-              "frames": 17
-            }
-          ],
-          "ok": true
-        },
-        {
-          "engine": "chromium",
-          "face": "one",
-          "move": "return",
-          "place": "alpha",
-          "drawnAt": 16,
-          "frames": [
-            {
-              "what": "drawn",
-              "from": 16,
-              "frames": 17
-            }
-          ],
-          "ok": true
-        },
-        {
-          "engine": "chromium",
-          "face": "one",
-          "move": "return",
-          "place": "beta",
-          "drawnAt": 15,
-          "frames": [
-            {
-              "what": "drawn",
-              "from": 15,
-              "frames": 17
-            }
-          ],
-          "ok": true
-        },
-        {
-          "engine": "chromium",
-          "face": "one",
           "move": "return",
           "place": "record",
           "drawnAt": 16,
@@ -1281,7 +1946,7 @@
         },
         {
           "engine": "chromium",
-          "face": "one",
+          "face": "pages",
           "move": "return",
           "place": "home",
           "drawnAt": 15,
@@ -1295,8 +1960,8 @@
           "ok": true
         },
         {
-          "engine": "webkit",
-          "face": "pages",
+          "engine": "chromium",
+          "face": "one",
           "move": "return",
           "place": "alpha",
           "drawnAt": 18,
@@ -1310,15 +1975,75 @@
           "ok": true
         },
         {
+          "engine": "chromium",
+          "face": "one",
+          "move": "return",
+          "place": "beta",
+          "drawnAt": 16,
+          "frames": [
+            {
+              "what": "drawn",
+              "from": 16,
+              "frames": 17
+            }
+          ],
+          "ok": true
+        },
+        {
+          "engine": "chromium",
+          "face": "one",
+          "move": "return",
+          "place": "record",
+          "drawnAt": 17,
+          "frames": [
+            {
+              "what": "drawn",
+              "from": 17,
+              "frames": 17
+            }
+          ],
+          "ok": true
+        },
+        {
+          "engine": "chromium",
+          "face": "one",
+          "move": "return",
+          "place": "home",
+          "drawnAt": 16,
+          "frames": [
+            {
+              "what": "drawn",
+              "from": 16,
+              "frames": 17
+            }
+          ],
+          "ok": true
+        },
+        {
+          "engine": "webkit",
+          "face": "pages",
+          "move": "return",
+          "place": "alpha",
+          "drawnAt": 22,
+          "frames": [
+            {
+              "what": "drawn",
+              "from": 22,
+              "frames": 17
+            }
+          ],
+          "ok": true
+        },
+        {
           "engine": "webkit",
           "face": "pages",
           "move": "return",
           "place": "beta",
-          "drawnAt": 19,
+          "drawnAt": 21,
           "frames": [
             {
               "what": "drawn",
-              "from": 19,
+              "from": 21,
               "frames": 17
             }
           ],
@@ -1344,11 +2069,11 @@
           "face": "pages",
           "move": "return",
           "place": "home",
-          "drawnAt": 14,
+          "drawnAt": 15,
           "frames": [
             {
               "what": "drawn",
-              "from": 14,
+              "from": 15,
               "frames": 17
             }
           ],
@@ -1359,11 +2084,11 @@
           "face": "one",
           "move": "return",
           "place": "alpha",
-          "drawnAt": 34,
+          "drawnAt": 31,
           "frames": [
             {
               "what": "drawn",
-              "from": 34,
+              "from": 31,
               "frames": 17
             }
           ],
@@ -1374,11 +2099,11 @@
           "face": "one",
           "move": "return",
           "place": "beta",
-          "drawnAt": 27,
+          "drawnAt": 28,
           "frames": [
             {
               "what": "drawn",
-              "from": 27,
+              "from": 28,
               "frames": 18
             }
           ],
@@ -1419,12 +2144,12 @@
           "face": "pages",
           "move": "return",
           "place": "alpha",
-          "drawnAt": 16,
+          "drawnAt": 14,
           "frames": [
             {
               "what": "drawn",
-              "from": 16,
-              "frames": 17
+              "from": 14,
+              "frames": 16
             }
           ],
           "ok": true
@@ -1434,12 +2159,12 @@
           "face": "pages",
           "move": "return",
           "place": "beta",
-          "drawnAt": 15,
+          "drawnAt": 14,
           "frames": [
             {
               "what": "drawn",
-              "from": 15,
-              "frames": 17
+              "from": 14,
+              "frames": 16
             }
           ],
           "ok": true
@@ -1449,11 +2174,11 @@
           "face": "pages",
           "move": "return",
           "place": "record",
-          "drawnAt": 23,
+          "drawnAt": 24,
           "frames": [
             {
               "what": "drawn",
-              "from": 23,
+              "from": 24,
               "frames": 17
             }
           ],
@@ -1464,11 +2189,11 @@
           "face": "pages",
           "move": "return",
           "place": "home",
-          "drawnAt": 15,
+          "drawnAt": 14,
           "frames": [
             {
               "what": "drawn",
-              "from": 15,
+              "from": 14,
               "frames": 16
             }
           ],
@@ -1479,11 +2204,11 @@
           "face": "one",
           "move": "return",
           "place": "alpha",
-          "drawnAt": 24,
+          "drawnAt": 28,
           "frames": [
             {
               "what": "drawn",
-              "from": 24,
+              "from": 28,
               "frames": 17
             }
           ],
@@ -1494,11 +2219,11 @@
           "face": "one",
           "move": "return",
           "place": "beta",
-          "drawnAt": 24,
+          "drawnAt": 30,
           "frames": [
             {
               "what": "drawn",
-              "from": 24,
+              "from": 30,
               "frames": 17
             }
           ],
@@ -1509,12 +2234,12 @@
           "face": "one",
           "move": "return",
           "place": "record",
-          "drawnAt": 26,
+          "drawnAt": 33,
           "frames": [
             {
               "what": "drawn",
-              "from": 26,
-              "frames": 17
+              "from": 33,
+              "frames": 18
             }
           ],
           "ok": true
@@ -1524,11 +2249,11 @@
           "face": "one",
           "move": "return",
           "place": "home",
-          "drawnAt": 20,
+          "drawnAt": 17,
           "frames": [
             {
               "what": "drawn",
-              "from": 20,
+              "from": 17,
               "frames": 17
             }
           ],
@@ -1590,7 +2315,7 @@
           "frames": [
             {
               "what": "blank",
-              "from": 12,
+              "from": 13,
               "frames": 10
             },
             {
@@ -1607,16 +2332,16 @@
           "face": "one",
           "move": "return",
           "place": "frame",
-          "drawnAt": 160,
+          "drawnAt": 175,
           "frames": [
             {
               "what": "blank",
-              "from": 19,
-              "frames": 9
+              "from": 22,
+              "frames": 10
             },
             {
               "what": "drawn",
-              "from": 160,
+              "from": 175,
               "frames": 17
             }
           ],
@@ -1628,16 +2353,16 @@
           "face": "pages",
           "move": "return",
           "place": "frame",
-          "drawnAt": 149,
+          "drawnAt": 164,
           "frames": [
             {
               "what": "blank",
-              "from": 16,
-              "frames": 8
+              "from": 14,
+              "frames": 9
             },
             {
               "what": "drawn",
-              "from": 149,
+              "from": 164,
               "frames": 16
             }
           ],
@@ -1649,17 +2374,17 @@
           "face": "one",
           "move": "return",
           "place": "frame",
-          "drawnAt": 166,
+          "drawnAt": 165,
           "frames": [
             {
               "what": "blank",
-              "from": 22,
+              "from": 20,
               "frames": 9
             },
             {
               "what": "drawn",
-              "from": 166,
-              "frames": 17
+              "from": 165,
+              "frames": 16
             }
           ],
           "loads": 1,
@@ -1675,70 +2400,70 @@
           "engine": "chromium",
           "face": "pages",
           "place": "alpha",
-          "drawnAt": 14,
+          "drawnAt": 15,
           "ok": true
         },
         {
           "engine": "chromium",
           "face": "pages",
           "place": "beta",
-          "drawnAt": 15,
+          "drawnAt": 13,
           "ok": true
         },
         {
           "engine": "chromium",
           "face": "pages",
           "place": "record",
-          "drawnAt": 15,
+          "drawnAt": 16,
           "ok": true
         },
         {
           "engine": "chromium",
           "face": "pages",
           "place": "home",
-          "drawnAt": 16,
-          "ok": true
-        },
-        {
-          "engine": "chromium",
-          "face": "one",
-          "place": "alpha",
-          "drawnAt": 16,
-          "ok": true
-        },
-        {
-          "engine": "chromium",
-          "face": "one",
-          "place": "beta",
           "drawnAt": 15,
           "ok": true
         },
         {
           "engine": "chromium",
           "face": "one",
-          "place": "record",
-          "drawnAt": 16,
-          "ok": true
-        },
-        {
-          "engine": "chromium",
-          "face": "one",
-          "place": "home",
-          "drawnAt": 15,
-          "ok": true
-        },
-        {
-          "engine": "webkit",
-          "face": "pages",
           "place": "alpha",
           "drawnAt": 18,
           "ok": true
         },
         {
+          "engine": "chromium",
+          "face": "one",
+          "place": "beta",
+          "drawnAt": 16,
+          "ok": true
+        },
+        {
+          "engine": "chromium",
+          "face": "one",
+          "place": "record",
+          "drawnAt": 17,
+          "ok": true
+        },
+        {
+          "engine": "chromium",
+          "face": "one",
+          "place": "home",
+          "drawnAt": 16,
+          "ok": true
+        },
+        {
+          "engine": "webkit",
+          "face": "pages",
+          "place": "alpha",
+          "drawnAt": 22,
+          "ok": true
+        },
+        {
           "engine": "webkit",
           "face": "pages",
           "place": "beta",
-          "drawnAt": 19,
+          "drawnAt": 21,
           "ok": true
         },
         {
@@ -1752,21 +2477,21 @@
           "engine": "webkit",
           "face": "pages",
           "place": "home",
-          "drawnAt": 14,
+          "drawnAt": 15,
           "ok": true
         },
         {
           "engine": "webkit",
           "face": "one",
           "place": "alpha",
-          "drawnAt": 34,
+          "drawnAt": 31,
           "ok": true
         },
         {
           "engine": "webkit",
           "face": "one",
           "place": "beta",
-          "drawnAt": 27,
+          "drawnAt": 28,
           "ok": true
         },
         {
@@ -1787,56 +2512,56 @@
           "engine": "firefox",
           "face": "pages",
           "place": "alpha",
-          "drawnAt": 16,
+          "drawnAt": 14,
           "ok": true
         },
         {
           "engine": "firefox",
           "face": "pages",
           "place": "beta",
-          "drawnAt": 15,
+          "drawnAt": 14,
           "ok": true
         },
         {
           "engine": "firefox",
           "face": "pages",
           "place": "record",
-          "drawnAt": 23,
+          "drawnAt": 24,
           "ok": true
         },
         {
           "engine": "firefox",
           "face": "pages",
           "place": "home",
-          "drawnAt": 15,
+          "drawnAt": 14,
           "ok": true
         },
         {
           "engine": "firefox",
           "face": "one",
           "place": "alpha",
-          "drawnAt": 24,
+          "drawnAt": 28,
           "ok": true
         },
         {
           "engine": "firefox",
           "face": "one",
           "place": "beta",
-          "drawnAt": 24,
+          "drawnAt": 30,
           "ok": true
         },
         {
           "engine": "firefox",
           "face": "one",
           "place": "record",
-          "drawnAt": 26,
+          "drawnAt": 33,
           "ok": true
         },
         {
           "engine": "firefox",
           "face": "one",
           "place": "home",
-          "drawnAt": 20,
+          "drawnAt": 17,
           "ok": true
         }
       ],
@@ -1921,7 +2646,7 @@
           "frames": [
             {
               "what": "drawn",
-              "from": 7,
+              "from": 8,
               "frames": 17
             }
           ],
@@ -1933,7 +2658,7 @@
           "frames": [
             {
               "what": "drawn",
-              "from": 14,
+              "from": 15,
               "frames": 17
             }
           ],
@@ -1942,52 +2667,6 @@
         {
           "engine": "webkit",
           "face": "pages",
-          "frames": [
-            {
-              "what": "other",
-              "from": 1,
-              "frames": 2
-            },
-            {
-              "what": "drawn",
-              "from": 32,
-              "frames": 15
-            }
-          ],
-          "ok": true
-        },
-        {
-          "engine": "webkit",
-          "face": "one",
-          "frames": [
-            {
-              "what": "other",
-              "from": 1,
-              "frames": 2
-            },
-            {
-              "what": "drawn",
-              "from": 40,
-              "frames": 18
-            }
-          ],
-          "ok": true
-        },
-        {
-          "engine": "firefox",
-          "face": "pages",
-          "frames": [
-            {
-              "what": "drawn",
-              "from": 11,
-              "frames": 17
-            }
-          ],
-          "ok": true
-        },
-        {
-          "engine": "firefox",
-          "face": "one",
           "frames": [
             {
               "what": "other",
@@ -1996,7 +2675,58 @@
             },
             {
               "what": "drawn",
-              "from": 27,
+              "from": 39,
+              "frames": 7
+            }
+          ],
+          "ok": true
+        },
+        {
+          "engine": "webkit",
+          "face": "one",
+          "frames": [
+            {
+              "what": "other",
+              "from": 1,
+              "frames": 2
+            },
+            {
+              "what": "drawn",
+              "from": 46,
+              "frames": 17
+            }
+          ],
+          "ok": true
+        },
+        {
+          "engine": "firefox",
+          "face": "pages",
+          "frames": [
+            {
+              "what": "other",
+              "from": 1,
+              "frames": 1
+            },
+            {
+              "what": "drawn",
+              "from": 20,
+              "frames": 17
+            }
+          ],
+          "ok": true
+        },
+        {
+          "engine": "firefox",
+          "face": "one",
+          "frames": [
+            {
+              "what": "other",
+              "from": 0,
+              "frames": 1
+            },
+            {
+              "what": "drawn",
+              "from": 31,
               "frames": 17
             }
           ],
@@ -2215,12 +2945,12 @@
           "frames": [
             {
               "what": "blank",
-              "from": 8,
-              "frames": 1
+              "from": 9,
+              "frames": 2
             },
             {
               "what": "drawn",
-              "from": 24,
+              "from": 41,
               "frames": 17
             }
           ],
@@ -2233,12 +2963,12 @@
           "frames": [
             {
               "what": "blank",
-              "from": 10,
+              "from": 12,
               "frames": 2
             },
             {
               "what": "drawn",
-              "from": 37,
+              "from": 39,
               "frames": 17
             }
           ],
@@ -2251,18 +2981,18 @@
           "frames": [
             {
               "what": "other",
-              "from": 6,
+              "from": 4,
               "frames": 1
             },
             {
               "what": "blank",
-              "from": 20,
-              "frames": 3
+              "from": 23,
+              "frames": 2
             },
             {
               "what": "drawn",
-              "from": 49,
-              "frames": 18
+              "from": 55,
+              "frames": 17
             }
           ],
           "left": false,
@@ -2279,12 +3009,12 @@
             },
             {
               "what": "blank",
-              "from": 30,
+              "from": 39,
               "frames": 3
             },
             {
               "what": "drawn",
-              "from": 55,
+              "from": 69,
               "frames": 17
             }
           ],
@@ -2297,18 +3027,18 @@
           "frames": [
             {
               "what": "other",
-              "from": 6,
+              "from": 5,
               "frames": 1
             },
             {
               "what": "blank",
-              "from": 18,
+              "from": 20,
               "frames": 2
             },
             {
               "what": "drawn",
-              "from": 49,
-              "frames": 16
+              "from": 53,
+              "frames": 17
             }
           ],
           "left": false,
@@ -2319,14 +3049,19 @@
           "face": "one",
           "frames": [
             {
+              "what": "other",
+              "from": 5,
+              "frames": 1
+            },
+            {
               "what": "blank",
-              "from": 20,
-              "frames": 2
+              "from": 29,
+              "frames": 3
             },
             {
               "what": "drawn",
-              "from": 47,
-              "frames": 17
+              "from": 67,
+              "frames": 16
             }
           ],
           "left": false,
@@ -2388,7 +3123,7 @@
           "engine": "chromium",
           "face": "pages",
           "visit": "first",
-          "ms": 648,
+          "ms": 649,
           "ok": true
         },
         {
@@ -2402,7 +3137,7 @@
           "engine": "chromium",
           "face": "one",
           "visit": "first",
-          "ms": 648,
+          "ms": 650,
           "ok": true
         },
         {
@@ -2416,21 +3151,21 @@
           "engine": "webkit",
           "face": "pages",
           "visit": "first",
-          "ms": 561,
+          "ms": 562,
           "ok": true
         },
         {
           "engine": "webkit",
           "face": "pages",
           "visit": "again",
-          "ms": 450,
+          "ms": 458,
           "ok": true
         },
         {
           "engine": "webkit",
           "face": "one",
           "visit": "first",
-          "ms": 563,
+          "ms": 568,
           "ok": true
         },
         {
@@ -2444,7 +3179,7 @@
           "engine": "firefox",
           "face": "pages",
           "visit": "first",
-          "ms": 664,
+          "ms": 665,
           "ok": true
         },
         {
@@ -2458,14 +3193,575 @@
           "engine": "firefox",
           "face": "one",
           "visit": "first",
-          "ms": 664,
+          "ms": 565,
           "ok": true
         },
         {
           "engine": "firefox",
           "face": "one",
           "visit": "again",
-          "ms": 447,
+          "ms": 548,
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "aFirstVisitComeToByAPointerOrTheKeyboardWaitsForNothingFetched": {
+      "held": [
+        {
+          "engine": "chromium",
+          "face": "pages",
+          "how": "pointer",
+          "drawnAt": 59,
+          "cold": 190,
+          "blank": 2,
+          "ok": true
+        },
+        {
+          "engine": "chromium",
+          "face": "pages",
+          "how": "keyboard",
+          "drawnAt": 51,
+          "cold": 190,
+          "blank": 2,
+          "ok": true
+        },
+        {
+          "engine": "chromium",
+          "face": "one",
+          "how": "pointer",
+          "drawnAt": 61,
+          "cold": 193,
+          "blank": 3,
+          "ok": true
+        },
+        {
+          "engine": "chromium",
+          "face": "one",
+          "how": "keyboard",
+          "drawnAt": 55,
+          "cold": 193,
+          "blank": 2,
+          "ok": true
+        },
+        {
+          "engine": "webkit",
+          "face": "pages",
+          "how": "pointer",
+          "drawnAt": 85,
+          "cold": 218,
+          "blank": 3,
+          "ok": true
+        },
+        {
+          "engine": "webkit",
+          "face": "pages",
+          "how": "keyboard",
+          "drawnAt": 90,
+          "cold": 218,
+          "blank": 3,
+          "ok": true
+        },
+        {
+          "engine": "webkit",
+          "face": "one",
+          "how": "pointer",
+          "drawnAt": 106,
+          "cold": 246,
+          "blank": 3,
+          "ok": true
+        },
+        {
+          "engine": "webkit",
+          "face": "one",
+          "how": "keyboard",
+          "drawnAt": 118,
+          "cold": 246,
+          "blank": 3,
+          "ok": true
+        },
+        {
+          "engine": "firefox",
+          "face": "pages",
+          "how": "pointer",
+          "drawnAt": 82,
+          "cold": 214,
+          "blank": 4,
+          "ok": true
+        },
+        {
+          "engine": "firefox",
+          "face": "pages",
+          "how": "keyboard",
+          "drawnAt": 80,
+          "cold": 214,
+          "blank": 3,
+          "ok": true
+        },
+        {
+          "engine": "firefox",
+          "face": "one",
+          "how": "pointer",
+          "drawnAt": 91,
+          "cold": 240,
+          "blank": 3,
+          "ok": true
+        },
+        {
+          "engine": "firefox",
+          "face": "one",
+          "how": "keyboard",
+          "drawnAt": 99,
+          "cold": 240,
+          "blank": 4,
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "aPressHasTheHeadStartOfItsPointerGoingDown": {
+      "held": [
+        {
+          "engine": "chromium",
+          "face": "pages",
+          "drawnAt": 79,
+          "cold": 190,
+          "blank": 3,
+          "ok": true
+        },
+        {
+          "engine": "chromium",
+          "face": "one",
+          "drawnAt": 72,
+          "cold": 193,
+          "blank": 3,
+          "ok": true
+        },
+        {
+          "engine": "webkit",
+          "face": "pages",
+          "drawnAt": 113,
+          "cold": 218,
+          "blank": 5,
+          "ok": true
+        },
+        {
+          "engine": "webkit",
+          "face": "one",
+          "drawnAt": 96,
+          "cold": 246,
+          "blank": 3,
+          "ok": true
+        },
+        {
+          "engine": "firefox",
+          "face": "pages",
+          "drawnAt": 125,
+          "cold": 214,
+          "blank": 6,
+          "ok": true
+        },
+        {
+          "engine": "firefox",
+          "face": "one",
+          "drawnAt": 118,
+          "cold": 240,
+          "blank": 6,
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "aPageAskedToSaveDataFetchesNothingAhead": {
+      "held": [
+        {
+          "engine": "chromium",
+          "face": "pages",
+          "fetched": [],
+          "reads": [],
+          "ok": true
+        },
+        {
+          "engine": "chromium",
+          "face": "one",
+          "fetched": [],
+          "reads": [],
+          "ok": true
+        },
+        {
+          "engine": "webkit",
+          "face": "pages",
+          "fetched": [],
+          "reads": [],
+          "ok": true
+        },
+        {
+          "engine": "webkit",
+          "face": "one",
+          "fetched": [],
+          "reads": [],
+          "ok": true
+        },
+        {
+          "engine": "firefox",
+          "face": "pages",
+          "fetched": [],
+          "reads": [],
+          "ok": true
+        },
+        {
+          "engine": "firefox",
+          "face": "one",
+          "fetched": [],
+          "reads": [],
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "idlenessFetchesTheCodeOfAFewPlacesAndNobodysValues": {
+      "held": [
+        {
+          "engine": "chromium",
+          "face": "pages",
+          "values": [],
+          "codes": [
+            "alpha",
+            "beta",
+            "slow",
+            "spins"
+          ],
+          "ok": true
+        },
+        {
+          "engine": "chromium",
+          "face": "one",
+          "values": [],
+          "codes": [
+            "alpha",
+            "beta",
+            "slow",
+            "spins"
+          ],
+          "ok": true
+        },
+        {
+          "engine": "webkit",
+          "face": "pages",
+          "values": [],
+          "codes": [
+            "alpha",
+            "beta"
+          ],
+          "ok": true
+        },
+        {
+          "engine": "webkit",
+          "face": "one",
+          "values": [],
+          "codes": [
+            "alpha",
+            "beta"
+          ],
+          "ok": true
+        },
+        {
+          "engine": "firefox",
+          "face": "pages",
+          "values": [],
+          "codes": [
+            "alpha",
+            "beta",
+            "slow",
+            "spins"
+          ],
+          "ok": true
+        },
+        {
+          "engine": "firefox",
+          "face": "one",
+          "values": [],
+          "codes": [
+            "alpha",
+            "beta",
+            "slow",
+            "spins"
+          ],
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "aViewsCodeAndWhatItKeepsAreAskedOnceForAVisit": {
+      "held": [
+        {
+          "engine": "chromium",
+          "face": "pages",
+          "how": "pointer",
+          "code": [
+            [
+              "alpha",
+              1
+            ]
+          ],
+          "reads": [
+            "alpha"
+          ],
+          "ok": true
+        },
+        {
+          "engine": "chromium",
+          "face": "pages",
+          "how": "press",
+          "code": [
+            [
+              "alpha",
+              1
+            ]
+          ],
+          "reads": [
+            "alpha"
+          ],
+          "ok": true
+        },
+        {
+          "engine": "chromium",
+          "face": "pages",
+          "how": "keyboard",
+          "code": [
+            [
+              "alpha",
+              1
+            ]
+          ],
+          "reads": [
+            "alpha"
+          ],
+          "ok": true
+        },
+        {
+          "engine": "chromium",
+          "face": "one",
+          "how": "pointer",
+          "code": [
+            [
+              "alpha",
+              1
+            ]
+          ],
+          "reads": [
+            "alpha"
+          ],
+          "ok": true
+        },
+        {
+          "engine": "chromium",
+          "face": "one",
+          "how": "press",
+          "code": [
+            [
+              "alpha",
+              1
+            ]
+          ],
+          "reads": [
+            "alpha"
+          ],
+          "ok": true
+        },
+        {
+          "engine": "chromium",
+          "face": "one",
+          "how": "keyboard",
+          "code": [
+            [
+              "alpha",
+              1
+            ]
+          ],
+          "reads": [
+            "alpha"
+          ],
+          "ok": true
+        },
+        {
+          "engine": "webkit",
+          "face": "pages",
+          "how": "pointer",
+          "code": [
+            [
+              "alpha",
+              1
+            ]
+          ],
+          "reads": [
+            "alpha"
+          ],
+          "ok": true
+        },
+        {
+          "engine": "webkit",
+          "face": "pages",
+          "how": "press",
+          "code": [
+            [
+              "alpha",
+              1
+            ]
+          ],
+          "reads": [
+            "alpha"
+          ],
+          "ok": true
+        },
+        {
+          "engine": "webkit",
+          "face": "pages",
+          "how": "keyboard",
+          "code": [
+            [
+              "alpha",
+              1
+            ]
+          ],
+          "reads": [
+            "alpha"
+          ],
+          "ok": true
+        },
+        {
+          "engine": "webkit",
+          "face": "one",
+          "how": "pointer",
+          "code": [
+            [
+              "alpha",
+              1
+            ]
+          ],
+          "reads": [
+            "alpha"
+          ],
+          "ok": true
+        },
+        {
+          "engine": "webkit",
+          "face": "one",
+          "how": "press",
+          "code": [
+            [
+              "alpha",
+              1
+            ]
+          ],
+          "reads": [
+            "alpha"
+          ],
+          "ok": true
+        },
+        {
+          "engine": "webkit",
+          "face": "one",
+          "how": "keyboard",
+          "code": [
+            [
+              "alpha",
+              1
+            ]
+          ],
+          "reads": [
+            "alpha"
+          ],
+          "ok": true
+        },
+        {
+          "engine": "firefox",
+          "face": "pages",
+          "how": "pointer",
+          "code": [
+            [
+              "alpha",
+              1
+            ]
+          ],
+          "reads": [
+            "alpha"
+          ],
+          "ok": true
+        },
+        {
+          "engine": "firefox",
+          "face": "pages",
+          "how": "press",
+          "code": [
+            [
+              "alpha",
+              1
+            ]
+          ],
+          "reads": [
+            "alpha"
+          ],
+          "ok": true
+        },
+        {
+          "engine": "firefox",
+          "face": "pages",
+          "how": "keyboard",
+          "code": [
+            [
+              "alpha",
+              1
+            ]
+          ],
+          "reads": [
+            "alpha"
+          ],
+          "ok": true
+        },
+        {
+          "engine": "firefox",
+          "face": "one",
+          "how": "pointer",
+          "code": [
+            [
+              "alpha",
+              1
+            ]
+          ],
+          "reads": [
+            "alpha"
+          ],
+          "ok": true
+        },
+        {
+          "engine": "firefox",
+          "face": "one",
+          "how": "press",
+          "code": [
+            [
+              "alpha",
+              1
+            ]
+          ],
+          "reads": [
+            "alpha"
+          ],
+          "ok": true
+        },
+        {
+          "engine": "firefox",
+          "face": "one",
+          "how": "keyboard",
+          "code": [
+            [
+              "alpha",
+              1
+            ]
+          ],
+          "reads": [
+            "alpha"
+          ],
           "ok": true
         }
       ],
@@ -2478,59 +3774,74 @@
   },
   "passed": true,
   "timing": {
-    "wall": 130,
-    "cpu": 31.9,
+    "wall": 257,
+    "cpu": 77.7,
     "serverStartup": 0,
     "servers": [],
-    "beforeFirstBrowser": 612,
+    "beforeFirstBrowser": 758,
     "browsers": 3,
-    "browserLaunch": 798,
-    "fixedWaits": 57600,
-    "fixedWaitCount": 66,
+    "browserLaunch": 830,
+    "fixedWaits": 163440,
+    "fixedWaitCount": 180,
     "fixedWaitSites": [
       {
-        "at": "verify-view-return.mjs:309",
+        "at": "verify-view-return.mjs:407",
+        "ms": 57000,
+        "count": 30
+      },
+      {
+        "at": "verify-view-return.mjs:402",
+        "ms": 36000,
+        "count": 30
+      },
+      {
+        "at": "verify-view-return.mjs:341",
         "ms": 21600,
         "count": 12
       },
       {
-        "at": "verify-view-return.mjs:254",
+        "at": "verify-view-return.mjs:286",
         "ms": 15000,
         "count": 6
       },
       {
-        "at": "verify-view-return.mjs:299",
+        "at": "verify-view-return.mjs:331",
         "ms": 8400,
         "count": 12
       },
       {
-        "at": "verify-view-return.mjs:276",
+        "at": "verify-view-return.mjs:439",
+        "ms": 6000,
+        "count": 30
+      },
+      {
+        "at": "verify-view-return.mjs:422",
+        "ms": 4200,
+        "count": 12
+      },
+      {
+        "at": "verify-view-return.mjs:308",
         "ms": 3600,
         "count": 6
       },
       {
-        "at": "verify-view-return.mjs:283",
+        "at": "verify-view-return.mjs:315",
         "ms": 3600,
         "count": 6
       },
       {
-        "at": "verify-view-return.mjs:281",
+        "at": "verify-view-return.mjs:313",
         "ms": 2400,
         "count": 6
       },
       {
-        "at": "verify-view-return.mjs:292",
+        "at": "verify-view-return.mjs:433",
+        "ms": 2100,
+        "count": 6
+      },
+      {
+        "at": "verify-view-return.mjs:324",
         "ms": 1800,
-        "count": 6
-      },
-      {
-        "at": "verify-view-return.mjs:331",
-        "ms": 600,
-        "count": 6
-      },
-      {
-        "at": "verify-view-return.mjs:337",
-        "ms": 600,
         "count": 6
       }
     ],
