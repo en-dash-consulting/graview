@@ -76,22 +76,32 @@ const failing = new Set<() => void>();
  * (a prefetch, the other face fetched while idle).
  */
 let onTheirWay = 0;
+/*
+ * And how many of them the page is whole without: what stands under it (the
+ * one face, its city), drawn where the reader does not yet look. A place has
+ * not drawn until they have (`data-graview-drawn`, which a picture of it
+ * waits for); a person may be shown the page before
+ * (`data-graview-painted`, which its opening screen lifts on).
+ */
+let underOnTheirWay = 0;
 
-/** The loader of something drawn as it is first needed, counted while it is on its way (`partsArriving`). */
-export function partArriving<T>(load: () => Promise<T>): () => Promise<T> {
+/** The loader of something drawn as it is first needed, counted while it is on its way (`partsArriving`); `under`, one the page is whole without. */
+export function partArriving<T>(load: () => Promise<T>, under = false): () => Promise<T> {
   return () => {
-    onTheirWay += 1;
+    const count = (by: number) => {
+      onTheirWay += by;
+      if (under) underOnTheirWay += by;
+    };
+    count(1);
     const going = load();
-    going.then(
-      () => void (onTheirWay -= 1),
-      () => void (onTheirWay -= 1),
-    );
+    const settled = () => count(-1);
+    going.then(settled, settled);
     return going;
   };
 }
 
-/** How many parts are drawn and still on their way: none once every drawn part has arrived, or said it did not. */
-export const partsArriving = (): number => onTheirWay;
+/** How many parts are drawn and still on their way: none once every drawn part has arrived, or said it did not. `over`, only those the page is not whole without. */
+export const partsArriving = (over = false): number => onTheirWay - (over ? underOnTheirWay : 0);
 
 /*
  * A PART IS ON ITS WAY UNTIL IT HAS DRAWN, NOT UNTIL ITS MODULE ARRIVED.
@@ -132,8 +142,13 @@ export function partsWatchMoved(watch: PartsWatch): void {
   watch.at += 1;
 }
 
-/** How many parts drawn under `watch` suspended and have not drawn since. */
-export const partsWaiting = (watch: PartsWatch | null | undefined): number => watch?.waiting.size ?? 0;
+/** A part, as a watch waits for it; `under`, one the page is whole without. */
+interface Part {
+  readonly under?: boolean;
+}
+
+/** How many parts drawn under `watch` suspended and have not drawn since. `over`, only those the page is not whole without. */
+export const partsWaiting = (watch: PartsWatch | null | undefined, over = false): number => (over ? [...(watch?.waiting.keys() ?? [])].filter((part: Part) => !part.under).length : (watch?.waiting.size ?? 0));
 
 /** Said as a part suspends under a watch. */
 function waitingFor(watch: PartsWatch | null, part: object): void {
@@ -152,11 +167,12 @@ function useDrawnPart(part: object): void {
  * `React.lazy` over a component's module, waited for by the watch it is
  * drawn under until it has drawn (`PartsWatch`), as a lazy module's part
  * is. Its failure is React.lazy's — thrown to the nearest error boundary —
- * and is then waited for no longer.
+ * and is then waited for no longer. `under` says the page is whole without
+ * it: the opening screen lifts before it has come.
  */
-export function lazyPart<C extends (props: never) => ReactNode>(load: () => Promise<{ readonly default: C }>): C {
+export function lazyPart<C extends (props: never) => ReactNode>(load: () => Promise<{ readonly default: C }>, { under = false }: { readonly under?: boolean } = {}): C {
   type P = object;
-  const part = {};
+  const part: Part = { under };
   let here = false;
   const watches = new Set<PartsWatch>();
   const Lazy = lazy(
@@ -176,6 +192,7 @@ export function lazyPart<C extends (props: never) => ReactNode>(load: () => Prom
           throw error;
         },
       ),
+      under,
     ),
   ) as unknown as ComponentType<P>;
   function Part(props: P) {

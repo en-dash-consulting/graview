@@ -289,7 +289,7 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: PagesE
 }
 
 export { hostScheme } from "./frame.js";
-export { DRAWN_ATTRIBUTE } from "./drawn.js";
+export { DRAWN_ATTRIBUTE, PAINTED_ATTRIBUTE } from "./drawn.js";
 export type { EmbedDraftView, ForkedViewDefaults } from "./draft.js";
 export type { EmbedWhere } from "./where.js";
 export type { EmbedBar, EmbedError, EmbedErrorWhere, EmbedHostContext, EmbedReady, EmbedRemote } from "./frame.js";

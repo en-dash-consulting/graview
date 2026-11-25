@@ -1,3 +1,4 @@
+import { OVERVIEW_PATH } from "@graview/core";
 import { partsArriving, partsWaiting, partsWatchMoved, placeDrawn, placeWatched, type PartsWatch } from "@graview/react/provider";
 import { useLayoutEffect, useRef } from "react";
 import type { EmbedWhere } from "./where.js";
@@ -16,10 +17,24 @@ import type { EmbedWhere } from "./where.js";
  * `data-graview-drawn`, its value the place's path, and the host is told
  * `onDrawn(place)`. A move to another place takes it off in the same
  * commit, and the new place says it again once it settles.
+ *
+ * A PERSON MAY BE SHOWN THE PAGE BEFORE THAT. On the one face the page is
+ * read before the face under it has come (`lazyPart`'s `under`), so the
+ * root says `data-graview-painted` the same way and as soon, but without
+ * waiting for what stands under the page: what an app's opening screen
+ * lifts on. It waits for everything else a place waits for, and is never
+ * said for time alone, so a page said drawn by the ten seconds is never
+ * said painted (wait for either); at the city (the overview, the page out of the
+ * window) it waits for the face and its city too, which are what is read.
+ * An attribute written again as it was is no change to it: the city's frame
+ * loop writes its own every frame, and a place over it is said drawn only
+ * after ten seconds.
  */
 
 /** The attribute the embed's root wears while the place it is on has drawn and settled. */
 export const DRAWN_ATTRIBUTE = "data-graview-drawn";
+/** The attribute it wears while the page has been drawn and painted, what stands under it perhaps still to come. */
+export const PAINTED_ATTRIBUTE = "data-graview-painted";
 
 /** How long nothing may move before a place is said to have settled. */
 const QUIET_MS = 200;
@@ -37,13 +52,13 @@ function images(root: HTMLElement): HTMLImageElement[] {
   return all;
 }
 
-/** Whether what the place draws is all here: the face, its parts, its fonts, its images and its views. */
-function here(root: HTMLElement, parts?: PartsWatch): boolean {
+/** Whether what the place draws is all here: the face, its parts, its fonts, its images and its views. `over`, what stands under the page left out. */
+function here(root: HTMLElement, parts?: PartsWatch, over = false): boolean {
   const fonts = (root.ownerDocument as Document & { fonts?: { status?: string } }).fonts;
   if (fonts?.status === "loading") return false;
-  if (partsArriving() > 0) return false;
+  if (partsArriving(over) > 0) return false;
   // A part here whose module arrived, still to be drawn in the commit React holds back a moment after the place first drew.
-  if (partsWaiting(parts) > 0) return false;
+  if (partsWaiting(parts, over) > 0) return false;
   // The face on its way, or a part of it saying it is busy: a frame guest among them, until it has drawn or its time is up.
   if (root.querySelector('[aria-busy="true"]')) return false;
   // An image off screen and lazy is not waited for: it never loads until it is scrolled to.
@@ -70,17 +85,23 @@ function measure(root: HTMLElement): string {
  */
 export function watchDrawn(root: HTMLElement, path: string, settled: () => void, parts?: PartsWatch): () => void {
   root.removeAttribute(DRAWN_ATTRIBUTE);
+  root.removeAttribute(PAINTED_ATTRIBUTE);
   const window = root.ownerDocument.defaultView;
   if (!window) return () => undefined;
   const started = now();
   let moved = started;
+  // When anything last changed, an attribute written again as it was aside.
+  let changed = started;
   let last = measure(root);
   let stopped = false;
   let timer: ReturnType<typeof setTimeout> | undefined;
   const observer = typeof MutationObserver === "undefined" ? undefined : new MutationObserver((records) => {
-    if (records.some((record) => !(record.target === root && record.attributeName === DRAWN_ATTRIBUTE))) moved = now();
+    const seen = records.filter((record) => !(record.target === root && (record.attributeName === DRAWN_ATTRIBUTE || record.attributeName === PAINTED_ATTRIBUTE)));
+    if (seen.length === 0) return;
+    moved = now();
+    if (seen.some((record) => record.attributeName === null || (record.target as Element).getAttribute(record.attributeName) !== record.oldValue)) changed = moved;
   });
-  observer?.observe(root, { childList: true, subtree: true, characterData: true, attributes: true });
+  observer?.observe(root, { childList: true, subtree: true, characterData: true, attributes: true, attributeOldValue: true });
   const stop = () => {
     stopped = true;
     observer?.disconnect();
@@ -98,14 +119,32 @@ export function watchDrawn(root: HTMLElement, path: string, settled: () => void,
     if (typeof window.requestAnimationFrame === "function") window.requestAnimationFrame(() => setTimeout(go, 0));
     setTimeout(go, 100);
   };
+  const overview = path.split(/[?#]/)[0] === OVERVIEW_PATH;
+  /*
+   * The page is whole, what stands under it aside; at the city, where that
+   * is what is read, all of it. All of it too over a frame, which the face
+   * would load again from nothing as it takes the page in, where the
+   * browser cannot move an element as it is (`held-element.tsx`).
+   */
+  const movesWhole = "moveBefore" in root;
+  const whole = () => here(root, parts, !overview && !root.querySelector("[data-graview-away]") && (movesWhole || !root.querySelector("iframe")));
+  let painting = false;
   const look = () => {
     if (stopped) return;
     const size = measure(root);
     if (size !== last) {
       last = size;
-      moved = now();
+      moved = changed = now();
     }
     const at = now();
+    if (!painting && at - changed >= QUIET_MS && whole()) {
+      painting = true;
+      afterPaint(() => {
+        // Asked again once painted: a part may have suspended in that frame.
+        painting = !stopped && whole();
+        if (painting) root.setAttribute(PAINTED_ATTRIBUTE, path);
+      });
+    }
     if ((here(root, parts) && at - moved >= QUIET_MS) || at - started >= MOST_MS) {
       afterPaint(() => {
         if (stopped) return;

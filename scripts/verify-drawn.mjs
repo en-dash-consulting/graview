@@ -64,6 +64,15 @@
  * a desk; the drop-down's Hidden lists them, and Show puts them back
  * (Roadmap f-hidden-view-leaves-the-bar).
  *
+ * And the opening screen (`@graview/pages/splash`), inlined as a host
+ * inlines it (`?splash=1`) over the one face (`?one=1`), each part of it
+ * held back in turn as a slow network holds it: the screen lifts once the
+ * page and its view have drawn, the late font and image with them, while
+ * `data-graview-drawn` still waits for the part; nothing on the page moves
+ * as the part then comes; a frame guest, which the face would load again
+ * as it takes the page in, and an address that opens over the city rather
+ * than on the page, hold the screen up until the part has come.
+ *
  *   node scripts/verify-drawn.mjs [--engine=chromium|webkit|firefox] [--quick] [--shots=<dir>] [--probe]
  */
 import { createServer } from "node:http";
@@ -77,6 +86,7 @@ import { ENGINES, launchEngine } from "./lib/engine.mjs";
 import { graviewSources } from "./lib/graview-sources.mjs";
 import { at, portFor } from "./lib/ports.mjs";
 import { vacant } from "./lib/serve.mjs";
+import { splashHtml } from "../packages/pages/dist/splash.js";
 import { unfold } from "./lib/menu-more.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -175,6 +185,18 @@ body{margin:0;background:#f6f6f2;color:#222}
 </style></head>
 <body><div id="app"></div><script type="module" src="/entry.js"></script></body></html>`;
 
+/* The same page opening through the app's own screen, as a host inlines it before the app's root. */
+const SPLASH = splashHtml({ name: "The roadmap", splash: { style: "plain" } }, { fade: false });
+const SPLASH_PAGE = HOST_PAGE.replace("</style>", `${SPLASH.css}</style>`).replace("<body>", `<body>${SPLASH.html}<script>${SPLASH.script}</script>`);
+/* The one face's two parts, each by words only its own module has; and how long one is held back. */
+const PARTS = [
+  { part: "face", words: '"one-place-bar"' },
+  { part: "city", words: "function OnePlaceCity(" },
+];
+const HELD_MS = 5_000;
+/* How long a slow runner may take to draw the page meanwhile: under the ten seconds after which a place is said drawn whatever has come. */
+const LIFT_MS = 8_000;
+
 /** A PNG of one color, as small as a PNG of that size can be. */
 function png(width, height) {
   const crcTable = Array.from({ length: 256 }, (_, n) => {
@@ -225,6 +247,8 @@ async function buildHost() {
         const drafts = ${JSON.stringify(DRAFTS)};
         const params = new URLSearchParams(location.search);
         const asked = drafts[params.get("draft") ?? ""];
+        // Pages and the Scene as one face (?one=1).
+        const one = params.has("one") ? { sceneUnderPages: true } : {};
         // The pages alone (?alone=1), under Cloud's base (?base=1), with a frame guest on a feature's page (?guest=late|silent).
         const alone = params.has("alone");
         const based = params.has("base") ? { basePath: ${JSON.stringify(BASE)} } : {};
@@ -267,6 +291,7 @@ async function buildHost() {
             ...(alone ? {} : { face: "pages", studio: false }),
             routing: "address",
             ...based,
+            ...one,
             principal: { kind: "human", id: "u:owner", roles: ["owner"] },
             label: compiled.app.name,
             heading: 1,
@@ -292,7 +317,6 @@ async function buildHost() {
     plugins: [graviewSources(repoRoot)],
     logLevel: "silent",
   });
-  writeFileSync(join(out, "index.html"), HOST_PAGE);
   const image = png(360, 240);
   const font = readFileSync(FONT);
   const later = (ms, then) => setTimeout(then, ms);
@@ -310,7 +334,7 @@ async function buildHost() {
       return;
     }
     response.writeHead(200, { "content-type": script ? "text/javascript" : "text/html" });
-    response.end(readFileSync(script ? file : join(out, "index.html")));
+    response.end(script ? readFileSync(file) : (request.url ?? "").includes("splash=1") ? SPLASH_PAGE : HOST_PAGE);
   });
   await vacant(portFor("drawn-host"));
   await new Promise((ready) => host.listen(portFor("drawn-host"), ready));
@@ -365,17 +389,43 @@ function instrument() {
       text: words(root?.querySelector("[data-embed-content]")),
     };
   };
+  // Where the words a person reads stand: the page's headings, links and the bar's, and the view's.
+  const textsNow = () => {
+    const root = document.querySelector("[data-graview-embed]");
+    if (!root) return [];
+    const all = [...root.querySelectorAll("main h1, main h2, main a, [data-graview-app-bar] a, [data-graview-app-bar] h1, [data-worker-view-place]")];
+    for (const view of root.querySelectorAll("[data-worker-view]")) if (view.shadowRoot) all.push(...view.shadowRoot.querySelectorAll(".lead, li, a, img"));
+    return all.map((element) => {
+      const box = element.getBoundingClientRect();
+      return { words: (element.textContent ?? "").trim().slice(0, 40) || element.localName, box: [Math.round(box.left), Math.round(box.top), Math.round(box.width), Math.round(box.height)] };
+    });
+  };
+  window.__textsNow = textsNow;
   window.__rects = rects;
   window.__seenNow = seenNow;
   window.__marks = [];
+  // The opening screen, as it is taken away: when, with what was on the page then, and whether the place had been said drawn.
+  window.__lifted = null;
   const watch = () =>
     new MutationObserver((records) => {
+      if (!window.__lifted && records.some((record) => [...record.removedNodes].some((node) => node.id === "graview-splash"))) {
+        const bar = document.querySelector("[data-graview-app-bar]")?.getBoundingClientRect();
+        window.__lifted = {
+          at: Math.round(performance.now()),
+          drawn: document.querySelector("[data-graview-drawn]") !== null,
+          level: document.querySelector("[data-graview-one-place]")?.getAttribute("data-graview-one-place") ?? null,
+          camera: document.querySelector('[data-testid="one-place-city"]')?.hasAttribute("data-graview-camera-zoom") ?? false,
+          bar: Boolean(bar && bar.width > 0 && bar.height > 0),
+          seen: seenNow(),
+          texts: textsNow(),
+        };
+      }
       for (const record of records) {
         if (record.attributeName !== "data-graview-drawn") continue;
         const value = record.target.getAttribute("data-graview-drawn");
         window.__marks.push({ value, at: performance.now(), seen: seenNow(), rects: value === null ? null : rects() });
       }
-    }).observe(document, { subtree: true, attributes: true, attributeFilter: ["data-graview-drawn"] });
+    }).observe(document, { subtree: true, attributes: true, attributeFilter: ["data-graview-drawn"], childList: true });
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", watch);
   else watch();
 }
@@ -394,7 +444,7 @@ const movedBetween = (before, after) => {
 const report = { at: new Date().toISOString(), engines, screens: SCREENS, late: { fontMs: FONT_LATE_MS, imageMs: IMAGE_LATE_MS }, checks: {} };
 const host = await buildHost();
 const errors = [];
-const seen = { home: [], still: [], move: [], failed: [], told: [], scene: [], drafts: [], gone: [], frames: [], silent: [], alone: [], aloneDraft: [], swaps: [], based: [], tidied: [] };
+const seen = { home: [], still: [], move: [], failed: [], told: [], scene: [], drafts: [], gone: [], frames: [], silent: [], alone: [], aloneDraft: [], swaps: [], based: [], tidied: [], lifts: [], waits: [] };
 /* What the place menu hides while it is the place open: a kind's list, a declared lens, a view the host keeps. */
 const TIDIED = [
   { name: "list", path: "/features", label: "Features", item: "hide-list" },
@@ -469,6 +519,71 @@ try {
         seen.failed.push({ engine, screen: screen.name, drawn, seen: mark?.seen ?? null });
         await shot(page, "failed");
         await close();
+      }
+      {
+        // The opening screen over the one face, a part of it held back: lifted when the page has drawn, the place said drawn only once the part has come.
+        const opened = async (path, words) => {
+          const context = await browser.newContext({ viewport: { width: screen.width, height: screen.height }, colorScheme: screen.scheme, reducedMotion: "reduce" });
+          const page = await context.newPage();
+          page.on("pageerror", (error) => errors.push(`${label} ${path}: ${error.message}`));
+          await page.addInitScript(instrument);
+          let letGo;
+          const until = new Promise((done) => (letGo = done));
+          let held = 0;
+          await page.route("**/*.js", async (route) => {
+            const response = await route.fetch();
+            const body = await response.text();
+            if (body.includes(words)) {
+              held++;
+              await until;
+            }
+            await route.fulfill({ response, body });
+          });
+          // Firefox holds the page's `load` event for a script still on its way.
+          await page.goto(`${at("drawn-host")}${path}`, { waitUntil: "commit" });
+          const lifted = (timeout) => page.waitForFunction(() => window.__lifted, null, { timeout }).then((found) => found.jsonValue(), () => null);
+          const saidDrawn = () => page.waitForFunction(() => window.__marks.find((mark) => mark.value !== null), null, { timeout: 20_000 }).then((found) => found.jsonValue(), () => null);
+          const wasSaid = () => page.evaluate(() => window.__marks.some((mark) => mark.value !== null));
+          return { page, letGo, lifted, saidDrawn, wasSaid, held: () => held, close: async () => (await page.unrouteAll({ behavior: "ignoreErrors" }), context.close()) };
+        };
+        for (const { part, words } of PARTS) {
+          const run = await opened("/?one=1&splash=1", words);
+          const begun = Date.now();
+          let lift = await run.lifted(LIFT_MS);
+          const before = lift !== null;
+          await shot(run.page, `lifted-${part}`);
+          // Held the whole time, however soon the screen lifted: the place is not said drawn meanwhile.
+          await run.page.waitForTimeout(Math.max(0, HELD_MS - (Date.now() - begun)));
+          const heldBack = run.held() > 0;
+          const drawnWhileHeld = await run.wasSaid();
+          run.letGo();
+          const mark = await run.saidDrawn();
+          lift ??= await run.lifted(20_000);
+          // Whole by now: the part come, and what a person was reading where it was as the screen lifted.
+          const after = await run.page.evaluate(() => window.__textsNow());
+          const shifted = (lift?.texts ?? []).filter((was, n) => after[n]?.words !== was.words || was.box.some((value, side) => Math.abs(value - after[n].box[side]) > 1)).map((was) => was.words);
+          seen.lifts.push({ engine, screen: screen.name, part, before, heldBack, drawnWhileHeld, drawnAt: mark ? Math.round(mark.at) : null, shifted, compared: lift?.texts.length ?? 0, ...(lift ? { liftedAt: lift.at, drawnAtLift: lift.drawn, bar: lift.bar, fonts: lift.seen.fonts, lateFace: lift.seen.lateFace, viewWords: lift.seen.viewWords, picture: lift.seen.picture, busy: lift.seen.busy } : {}) });
+          await shot(run.page, `whole-${part}`);
+          await run.close();
+        }
+        for (const [name, path, words] of [
+          // A frame guest, which the face loads again as it takes the page in, where the browser cannot move an element as it is.
+          ["guest", "/features/f1?guest=late&one=1&splash=1", PARTS[0].words],
+          // Opened over the city, the page under it is not what was asked for.
+          ["city", "/places/overview?one=1&splash=1", PARTS[0].words],
+          ["city-part", "/places/overview?one=1&splash=1", PARTS[1].words],
+        ]) {
+          const run = await opened(path, words);
+          let lift = await run.lifted(3_500);
+          const early = lift !== null;
+          const movesWhole = await run.page.evaluate(() => "moveBefore" in document.body);
+          const drawnWhileHeld = await run.wasSaid();
+          const heldBack = run.held() > 0;
+          run.letGo();
+          lift ??= await run.lifted(20_000);
+          seen.waits.push({ engine, screen: screen.name, name, movesWhole, early, heldBack, drawnWhileHeld, lifted: lift ? { at: lift.at, drawn: lift.drawn, level: lift.level, camera: lift.camera, frame: lift.seen.frame, busy: lift.seen.busy } : null });
+          await run.close();
+        }
       }
       for (const [name, draft] of Object.entries(DRAFTS)) {
         // A view proposed and not kept, pictured where it attaches once the page says it has drawn (FR-187).
@@ -711,6 +826,28 @@ report.checks.aDraftUnderABasePathIsDrawnAtItsPlace = {
 report.checks.aViewHiddenFromThePlaceMenuLeavesTheBarAndComesBackOnShow = {
   seen: seen.tidied,
   ok: TIDIED.every((tidied) => every(seen.tidied.filter((one) => one.name === tidied.name), (one) => one.drawn && one.before && one.offered && one.left && one.still === tidied.path && one.named === tidied.label && one.inFoot && one.back)),
+};
+/* Each part of the one face, held back well past the second and a half the late font and image take. */
+report.checks.theOpeningScreenLiftsOnceThePageAndItsViewHaveDrawnWhileAPartOfTheOneFaceIsHeldBack = {
+  seen: seen.lifts,
+  ok: PARTS.every(({ part }) => every(seen.lifts.filter((one) => one.part === part), (one) => one.heldBack && one.before && one.drawnAtLift === false && one.bar && one.lateFace === true && one.fonts === "loaded" && !one.busy && /Printable boards/.test(one.viewWords ?? "") && one.picture?.complete === true && one.picture.width === 360)),
+};
+report.checks.thePlaceIsNotSaidDrawnUntilTheHeldPartHasCome = {
+  seen: seen.lifts.map(({ engine, screen, part, drawnWhileHeld, liftedAt, drawnAt }) => ({ engine, screen, part, drawnWhileHeld, liftedAt, drawnAt })),
+  ok: seen.lifts.length === runs * PARTS.length && seen.lifts.every((one) => one.drawnWhileHeld === false && one.drawnAt !== null && one.drawnAt >= HELD_MS),
+};
+report.checks.nothingAPersonReadsMovesAsTheHeldPartComesAfterTheScreenHasLifted = {
+  seen: seen.lifts.map(({ engine, screen, part, compared, shifted }) => ({ engine, screen, part, compared, shifted })),
+  ok: seen.lifts.length === runs * PARTS.length && seen.lifts.every((one) => one.compared > 5 && one.shifted.length === 0),
+};
+const waited = (name) => seen.waits.filter((one) => one.name === name);
+report.checks.theOpeningScreenStaysUpOverAFrameGuestUntilTheFaceThatTakesItInHasCome = {
+  seen: waited("guest"),
+  ok: every(waited("guest"), (one) => one.heldBack && one.early === one.movesWhole && one.drawnWhileHeld === false && one.lifted?.frame?.drawn === true && !one.lifted.busy),
+};
+report.checks.theOpeningScreenStaysUpOverTheCityUntilTheCityHasComeAndLiftsBeforeThePlaceIsSaidDrawn = {
+  seen: [...waited("city"), ...waited("city-part")],
+  ok: ["city", "city-part"].every((name) => every(waited(name), (one) => one.heldBack && !one.early && !one.drawnWhileHeld && one.lifted?.level === "2" && one.lifted.camera && !one.lifted.busy && one.lifted.drawn === false)),
 };
 report.checks.noPageErrors = { errors, ok: errors.length === 0 };
 

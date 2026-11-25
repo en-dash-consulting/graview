@@ -45,7 +45,7 @@ import { BOARD_ASPECT, boardFaceWidth, boardsInTheirPlaces, sameFit, titleThatFi
  * The city's part (`one-place-city.tsx`) — the Scene, the camera, the
  * lines, the boards' places — is fetched as the page first draws.
  */
-const OnePlaceCity = lazyPart(retryingImport(() => import("./one-place-city.js").then((module) => ({ default: module.OnePlaceCity }))));
+const OnePlaceCity = lazyPart(retryingImport(() => import("./one-place-city.js").then((module) => ({ default: module.OnePlaceCity }))), { under: true });
 
 const lessMotion = (): boolean => typeof window !== "undefined" && typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 const windowSize = () => ({ width: document.documentElement.clientWidth || window.innerWidth, height: window.innerHeight });
@@ -869,7 +869,7 @@ export function OnePlace<S extends AnySchema>({
       <Suspense fallback={null}>
         <OnePlaceCity where={where} out={now.away} sheet={sheet} connected={connected} boards={standing} current={current} boardEls={boardEls} boardLayer={boardLayer} fab={fab} view={view} lessMotion={lessMotion()} resolve={resolve} openRecord={openRecord} openKind={openKind} onGround={onGround} motion={motion} onAltitude={onAltitude} {...(context.sceneRules ? { sceneRules: context.sceneRules } : {})} />
       </Suspense>
-      <div ref={sheet} data-graview-one-place={now.level} {...(inPanel ? { "data-graview-in-panel": "" } : {})} data-graview-standing-on={where.type === "record" ? where.id : where.type === "list" ? `kind:${where.kind}` : where.type} style={sheetStyle}>
+      <div ref={sheet} data-graview-one-place={now.level} {...(away ? { "data-graview-away": "" } : {})} {...(inPanel ? { "data-graview-in-panel": "" } : {})} data-graview-standing-on={where.type === "record" ? where.id : where.type === "list" ? `kind:${where.kind}` : where.type} style={sheetStyle}>
         <div {...(now.level >= CITY ? { inert: true } : {})} style={away ? { minHeight: "100%", display: "flex", flexDirection: "column" } : { display: "contents" }}>
           {/* Under a host's bar (an embed's, in the slot) the shell keeps no room for it: the page keeps it here. */}
           {context.embedded ? <div aria-hidden="true" data-graview-bar-room="" style={{ height: "var(--graview-one-face-bar, 0px)", flex: "0 0 auto" }} /> : null}
