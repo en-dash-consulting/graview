@@ -41,6 +41,8 @@ describe("the codes a view's problems are said with", () => {
       "jump-goes-nowhere",
       "file-link-goes-nowhere",
       "media-not-drawn",
+      "embed-refused",
+      "embed-not-allowed",
       "drop-not-offered",
       "gestures-not-declared",
       "press-refused",

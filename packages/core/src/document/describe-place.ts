@@ -490,6 +490,7 @@ export function placeText(description: Omit<PlaceDescription, "text">): string {
 
 /** A placed video in one line: what it shows, where it is, what the browser is handed, how it plays, and whether it will. */
 export function videoLine(video: DescribedVideo): string {
+  if (video.provider) return `${video.text} (${video.source}, ${video.link}): ${video.poster ? "with a poster" : "no poster"}; ${video.playable ? "plays in place once a person presses it, with its link beside it; playable" : `not playable: ${video.why ?? "its link is drawn alone"}`}.`;
   const how = video.autoplay ? "plays as a background, muted and looping, with no controls" : "plays with the browser's controls";
   return `${video.text} (${video.app ? `the app's ${video.app}` : `${video.field} of ${video.record}`}): ${video.source}${video.duration !== undefined ? `, ${Math.round(video.duration)} s` : ""}, ${video.poster ? "with a poster" : "no poster"}; ${how}${video.cover ? ", filling its box" : ""}; ${video.playable ? "playable" : `not playable: ${video.why ?? "it is not a video a browser plays"}`}.`;
 }

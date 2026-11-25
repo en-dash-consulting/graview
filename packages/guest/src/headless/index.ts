@@ -33,6 +33,7 @@ import { checkManifest, checkProposedManifest, edgesReadWithoutTheirKindsProblem
 import { PICTURE_STAND_IN, standInPictures } from "../host/pictures.js";
 import { judgeDestination, listsOf, placeVocabulary } from "../host/links.js";
 import { guestPlacesOf, placeNamed } from "../host/links-words.js";
+import type { EmbedHost } from "../host/embeds.js";
 import type { GuestViewInput } from "../host/session.js";
 import type { ViewAudit } from "../audit/rules.js";
 import type { TreeElement } from "./tree.js";
@@ -175,6 +176,8 @@ export interface RunWorkerViewHeadlessOptions<S extends AnySchema> {
    * the relation and the kind to add to `reads.kinds`.
    */
   readonly standing?: boolean;
+  /** The providers a view may play a video from, as the live host says it (WorkerViewOptions.embeds): both unsaid. */
+  readonly embeds?: EmbedHost;
   /** The `https:` origins a view's images may come from by address, as the live host lists them (WorkerViewOptions.images). */
   readonly images?: { readonly origins: readonly string[] };
   /** The `https:` origins a view's links may go to beyond what it was handed, as the live host lists them (WorkerViewOptions.links). */
@@ -437,6 +440,7 @@ export async function runWorkerViewHeadless<S extends AnySchema>(options: RunWor
     places: places.map((place) => ({ as: place.as, title: place.title })),
     ...(placesUnsure ? { placesUnsure: true } : {}),
     ...(options.images ? { imageOrigins: [...options.images.origins] } : {}),
+    ...(options.embeds ? { embeds: [...options.embeds.providers] } : {}),
     ...(options.links ? { linkOrigins: [...options.links.origins] } : {}),
     ...(options.asset ? { assets: true } : {}),
     ...(options.origin ? { origin: options.origin } : {}),

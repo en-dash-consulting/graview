@@ -223,6 +223,8 @@ export type { GuestKitElement, Kit, KitComponent, KitEvent, KitProperty, KitProp
  * time a view draws.
  */
 export { mountWorkerView } from "./view.js";
+export { EMBED_ORIGINS, EMBED_PROVIDERS } from "./embeds.js";
+export type { EmbedHost, EmbedProvider } from "./embeds.js";
 // What a view's place lends its revision (Roadmap f-make-this-section-better), made when a view is first drawn.
 export { viewPlaceHandle } from "./place-handle.js";
 export type { ViewPlaceHandleOptions } from "./place-handle.js";

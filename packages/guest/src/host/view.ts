@@ -24,6 +24,7 @@ import { createLinks, listsOf, placeVocabulary, type Arrival, type Destination }
 import { addressAt, arriveAt } from "./arrive-at.js";
 import type { GoTo } from "@graview/react/provider";
 import type { GuestPictureHand } from "./pictures.js";
+import type { EmbedHost } from "./embeds.js";
 import type { GuestMedia } from "./media.js";
 import type { GuestDrops } from "./drop.js";
 import type { GuestGestures } from "./gestures.js";
@@ -288,6 +289,17 @@ export interface MountWorkerViewOptions<S extends AnySchema> {
    * carry what it reads out of the app in a link a person presses.
    */
   readonly links?: { readonly origins: readonly string[] };
+  /**
+   * WHICH PROVIDERS A VIEW MAY PLAY A VIDEO FROM (HQ f-view-video-embeds),
+   * of the closed list `EMBED_PROVIDERS` ("youtube", "vimeo"): both unsaid,
+   * so a host whose page plays from one says it alone, and `{ providers: [] }`
+   * turns every one off. One turned off is drawn as its link out, alone.
+   * Nothing is asked of a provider before a person presses play; the page's
+   * own policy must allow its frame (`frame-src` https://www.youtube-nocookie.com
+   * https://player.vimeo.com), and where it does not the video says so and
+   * keeps its link.
+   */
+  readonly embeds?: EmbedHost;
   /** Who made it, said under the region (ADR 0007: "Made by Claude for Nick"). Nothing by default. */
   readonly author?: string;
   /**
@@ -757,7 +769,9 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
    * `data-worker-view-failed` instead, its plain face drawn.
    */
   let answered = false;
-  const mark = () => region.toggleAttribute("data-worker-view-drawn", !failed && answered && drawing !== undefined && waiting.length === 0 && pending.size === 0 && !pictures?.waiting() && !(drops?.waiting ?? 0));
+  /* Its videos' player is on its way: what it stands in is not drawn yet. */
+  let mediaWaits = false;
+  const mark = () => region.toggleAttribute("data-worker-view-drawn", !failed && answered && drawing !== undefined && waiting.length === 0 && pending.size === 0 && !mediaWaits && !pictures?.waiting() && !(drops?.waiting ?? 0));
 
   /*
    * TIME PER PUSH (FR-94). Each push of what the view is shown is timed
@@ -862,7 +876,9 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
    */
   let media: GuestMedia | undefined;
   let mediaAsked = false;
-  const wantMedia = () => {
+  let mediaMissed = false;
+  const wantMedia = (waits: boolean) => {
+    if (waits && !media && !mediaMissed) mediaWaits = true;
     if (mediaAsked) return;
     mediaAsked = true;
     void mediaChunk().then(
@@ -873,6 +889,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
           pictures: manifest.pictures !== undefined,
           shown: () => lastProps,
           ...(options.reel ? { reel: options.reel } : {}),
+          ...(options.embeds ? { embeds: options.embeds } : {}),
           ...(options.file ? { file: options.file } : {}),
           onProblem: (said, problem) => {
             port?.postMessage({ type: "notice", text: said });
@@ -880,8 +897,17 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
           },
         });
         media.refresh(shadow);
+        mediaWaits = false;
+        mark();
       },
-      () => options.onProblem?.(`The view "${manifest.title ?? manifest.name}" places a video or a full-screen viewer, and the host's player could not be loaded.`, { code: "host-part-not-loaded" }),
+      () => {
+        /* Asked for again as the view next draws. */
+        mediaWaits = mediaAsked = false;
+        const said = mediaMissed;
+        mediaMissed = true;
+        mark();
+        if (!said) options.onProblem?.(`The view "${manifest.title ?? manifest.name}" places a video or a full-screen viewer, and the host's player could not be loaded.`, { code: "host-part-not-loaded" });
+      },
     );
   };
   /*
@@ -991,11 +1017,11 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
       },
     ));
   const marksMedia = (element: Element) => {
-    if (element.localName === "graview-video") return wantMedia();
+    if (element.localName === "graview-video") return wantMedia(element.hasAttribute("data-provider") || element.hasAttribute("data-watch"));
     if (!element.hasAttribute("data-lightbox")) return;
     /* It opens the host's viewer: said so to assistive technology. */
     element.setAttribute("aria-haspopup", "dialog");
-    wantMedia();
+    wantMedia(false);
   };
   void Promise.all([openDrawChunk(), pressChunk()]).then(([{ createOpenDrawing, createPartFallbacks, handedLinks, judgeLink, linkRefusedWords }, { createPressReader, createSaver, fillPrefills, judgePress, markPresses, prefillOf, quietPictures }]) => {
     if (failed) return;
@@ -1055,7 +1081,8 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
       markPresses(shadow);
       quietPictures(shadow);
       fillPrefills(shadow, reader, prefilled, (asked) => prefillOf(options.store, options.principal, manifest, shown, asked));
-      media?.refresh(shadow);
+      if (media) media.refresh(shadow);
+      else if (mediaMissed) wantMedia(false);
       drops?.refresh();
       notes?.refresh();
       if (sections) sections.refresh();
@@ -1087,7 +1114,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
           port?.postMessage({ type: "notice", text: said });
           return options.onProblem?.(said, { code: "link-refused" });
         }
-        if (refusal.reason !== "url" || refusal.element !== "img" || refusal.address === undefined || toldImages.has(refusal.address)) return;
+        if (refusal.reason !== "url" || (refusal.element !== "img" && refusal.element !== "graview-video") || refusal.address === undefined || toldImages.has(refusal.address)) return;
         toldImages.add(refusal.address);
         const said = imageRefusedWords(refusal.address, { ...(options.images ? { origins: options.images.origins } : {}), assets: options.asset !== undefined }, refusal.length);
         port?.postMessage({ type: "notice", text: said });

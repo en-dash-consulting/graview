@@ -3,6 +3,7 @@ import type { AnySchema, KindOfSchema, PagesArrangement, Principal, Store } from
 import { DefaultDrawnElsewhere, HomeFallsBack, isDefaultView, markBleeds, markPreviews, markReplacesPage, useGoTo, useGraviewIfAny, useHostAssets, useHostFiles, useHostReel, useHostViewerState, usePlayback, ViewContentHeight, type GoTo, type ReactViewRegistry, type ViewComponent, type ViewProps } from "@graview/react/provider";
 import { setViewPlace } from "@graview/react/drawing";
 import { useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ComponentType, type ReactNode } from "react";
+import type { EmbedHost } from "./embeds.js";
 import type { GuestPlace } from "../protocol.js";
 import type { WorkerViewManifest } from "./manifest.js";
 import type { GuestViewInput } from "./session.js";
@@ -50,6 +51,8 @@ export interface WorkerViewDefinition {
   readonly fonts?: { readonly origins: readonly string[] };
   /** `false`: none of the view's own faces is drawn, each said as refused, while the faces the app lends still draw (WorkerViewOptions.ownFaces). `true` by default. */
   readonly ownFaces?: boolean;
+  /** The providers it may play a video from (WorkerViewOptions.embeds): YouTube and Vimeo unsaid, none for `{ providers: [] }`. */
+  readonly embeds?: EmbedHost;
   /** The `https:` origins its links may go to beyond what it was handed (WorkerViewOptions.links): none by default. */
   readonly links?: { readonly origins: readonly string[] };
   /**
@@ -199,6 +202,7 @@ function WorkerViewMount({ definition: given, store, principal, input, goTo, pla
         ...(definition.fonts ? { fonts: definition.fonts } : {}),
         ...(definition.ownFaces === false ? { ownFaces: false } : {}),
         ...(definition.links ? { links: definition.links } : {}),
+        ...(definition.embeds ? { embeds: definition.embeds } : {}),
         /* What a file dropped on what the view drew is stored through (FR-193): the page's host's files, as they are now. */
         files: () => latest.current.hostFiles,
         /* What it keeps for its viewer (`graview.mine`). A draft, proposed and not kept, keeps nothing of anybody's. */

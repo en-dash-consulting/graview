@@ -1,6 +1,6 @@
 # graview-view-drawing
 
-`graview-view-drawing` is one of Graview's 31 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Draw in a Graview worker view — the HTML, SVG and CSS the host keeps of it, the app's tokens and brand, the images a view may show (the app's logo, the app's own images, the pictures on records), a record's video or the app's reel the host plays and its full-screen viewer, files a person drops on it — and find out what the host refused rather than assuming it drew.
+`graview-view-drawing` is one of Graview's 31 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Draw in a Graview worker view — the HTML, SVG and CSS the host keeps of it, the app's tokens and brand, the images a view may show (the app's logo, the app's own images, the pictures on records), a record's video, the app's reel or a YouTube or Vimeo video the host plays and its full-screen viewer, files a person drops on it — and find out what the host refused rather than assuming it drew.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -38,7 +38,7 @@ An `img`'s `src` is drawn only when it is one of these; any other address is ref
 
 - **A `data:` image** the view holds: PNG, GIF, JPEG, WebP, AVIF, BMP or SVG, at most 512,000 characters as its URL.
 - **The app's logo**: `<img src="${props.theme.logo}">`, which the host made from the brand's mark; absent when it has none.
-- **An image the app holds**, by the content address it was stored at: `/graview/assets/<sha256>.<ext>` (what Graview Cloud's `add_image` answers) — or that path under the app's base, or by the page's own address for it, each the same image. It is drawn only where the host says where those live (`asset` on the view's definition, and on a headless run), and refused elsewhere.
+- **An image the app holds**, by the content address it was stored at: `/graview/assets/<sha256>.<ext>` (what Graview Cloud's `add_image` answers), alone or under the app's base or the page's own address. It is drawn only where the host says where those live (`asset` on the view's definition, and on a headless run), and refused elsewhere.
 - **An `https:` image on an origin the host lists** — `images: { origins: ["https://upload.wikimedia.org"] }` on the view's definition (and on a headless run), asked for with no referrer. Unlisted, a URL on a record is refused.
 - **A picture on a record.** Say `pictures: true` in the manifest, or `{ width: 400 }`, the widest it draws one. Each picture is then `{ name, type, bytes, width, height, aspect, cutout, focus, caption, src, thumb, left }`, never the host's path. Size a tile by `aspect`; draw a `cutout` (transparent, or on a plain ground) whole (`object-fit: contain`) and crop the rest (`cover`) at `object-position: ${x*100}% ${y*100}%` of `focus`. `src` is fetched as the reader, made smaller to `width`; absent until later. `left` says why one never will. An SVG has no `src`; a document keeps its `href`, plus `src` where its host made a `preview`. They share 12 MB: choose kinds, `records: { subject: true }` or `{ ids }`, and `most: 12`. `thumb: 240` (< `width`) adds a smaller `thumb`: draw `thumb || src`; `{ width: 240, aspect: 1 }` crops it around `focus`.
 
@@ -48,18 +48,19 @@ const photos = (job.photos || []).map((photo) => photo.src
   : graview.html`<p data-key="${photo.name}">${photo.left || photo.name}</p>`);
 ```
 
-Without `pictures`, a record's file comes as the record keeps it: its `href` draws only where it is the app's own image (`/graview/assets/…`).
+Without `pictures`, a file's `href` draws only as the app's own image.
 
 ### A video, and the full-screen viewer
 
 A view names it and **the host draws it**:
 
-- **`<graview-video data-record="${node.id}" data-field="clip">`** (and `data-index` in a list), for a manifest that says `pictures`: the record's video — poster first, the browser's controls, captions. Size the box in your stylesheet (`graview-video { width: 100% }`); nothing inside is yours. It comes as facts (`name, type, width, height, caption, duration, poster`), never a `src`.
+- **`<graview-video data-record="${node.id}" data-field="clip">`** (and `data-index` in a list), for a manifest that says `pictures`: the record's video — poster first, the browser's controls, captions. Size the box in your stylesheet; nothing inside is yours. It comes as facts (`name, type, width, height, caption, duration, poster`), never a `src`.
 - **`<graview-video data-app="reel">`**: the app's own reel, no `pictures` needed. Its facts are in `props.theme.reel` (`name, caption, duration, poster, playable`); absent, the host handed none.
-- **`autoplay cover`** on either: a hero background — muted, looping, no controls, filling the box; still at its poster under reduced motion. A headless run lists each video and whether it plays: confirm it there.
+- **`autoplay cover`** on either: a hero background — muted, looping, no controls, filling the box; still at its poster under reduced motion. A headless run says whether each plays.
+- **`<graview-video data-provider="youtube" data-video="dQw4w9WgXcQ" title="The keynote">`** (or `vimeo`, or `data-watch="${node.link}"`): poster and play button, its player once pressed, always a link out. `poster`: a picture you may show; `data-start="1m30s"`; `data-shape` 16:9, 4:3, 1:1, 9:16. Any other is refused (`embed-refused`).
 - **`<button data-lightbox data-record="${node.id}" data-field="photos" data-index="0">`**: the viewer's press opens the host's full-screen viewer for that picture or video; Escape closes it. Your code cannot.
 
-A record not shown, a field with no video, a view without `pictures`, or a reel not handed draws nothing, and says why.
+What is not shown, held or handed draws nothing, and says why.
 
 ### Files a person drops on it
 
@@ -87,10 +88,10 @@ graview.on("drop", "[data-drop]", (event) => {
 
 ### What the check cannot see
 
-`graview check` and `refused` never see whether it reads (an image with no `alt`, a token used for a meaning it does not carry, colors that fail in dark): look on both faces, at 390 and on a desk, in both schemes.
+Whether it reads (an image with no `alt`, colors that fail in dark): look on both faces, at 390 and on a desk, in both schemes.
 
 ---
 
-Draw in a Graview worker view — the HTML, SVG and CSS the host keeps of it, the app's tokens and brand, the images a view may show (the app's logo, the app's own images, the pictures on records), a record's video or the app's reel the host plays and its full-screen viewer, files a person drops on it — and find out what the host refused rather than assuming it drew.
+Draw in a Graview worker view — the HTML, SVG and CSS the host keeps of it, the app's tokens and brand, the images a view may show (the app's logo, the app's own images, the pictures on records), a record's video, the app's reel or a YouTube or Vimeo video the host plays and its full-screen viewer, files a person drops on it — and find out what the host refused rather than assuming it drew.
 
 The page: https://graview.dev/docs/skills/graview-view-drawing.html · Every Graview docs page, for a model: https://graview.dev/llms.txt

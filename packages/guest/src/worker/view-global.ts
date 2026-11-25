@@ -344,34 +344,69 @@ export function createViewRuntime(io: ViewIo): ViewRuntime {
     call: () => undefined,
   } as never);
 
-  const keyOf = (node: Node) => (node.nodeType === 1 ? ((node as Element).getAttribute("data-key") ?? (node as Element).getAttribute("id")) : null);
+  /*
+   * A VIDEO IS KEPT BY THE ONE IT NAMES (HQ f-view-video-embeds): a frame
+   * taken out of a page and put back starts over, so a video on a provider is
+   * its own key — what came or went around it does not make it another — and
+   * it is what moves past it that is moved.
+   */
+  const isEmbed = (element: Element) => element.localName === "graview-video" && (element.hasAttribute("data-video") || element.hasAttribute("data-watch"));
+  const keyOf = (node: Node) => {
+    if (node.nodeType !== 1) return null;
+    const element = node as Element;
+    const own = element.getAttribute("data-key") ?? element.getAttribute("id");
+    return own ?? (isEmbed(element) ? `${element.getAttribute("data-provider")} ${element.getAttribute("data-video")} ${(element.getAttribute("data-watch") ?? "").split(/[?&#]/).filter((one) => !/^(t|start)=/.test(one)).join("&")}` : null);
+  };
+  /* The videos under each node that holds any, read once as a drawing begins; empty where none is drawn, which costs a drawing nothing. */
+  const videosUnder = new Map<Node, readonly string[]>();
+  function readVideos(node: Node): readonly string[] {
+    if (node.nodeType !== 1) return [];
+    const held = isEmbed(node as Element) ? [keyOf(node) ?? ""] : Array.from(node.childNodes).flatMap(readVideos);
+    if (held.length > 0) videosUnder.set(node, held);
+    return held;
+  }
+  const sharesVideo = (a: Node, b: Node) => {
+    const held = videosUnder.get(a);
+    return held !== undefined && (videosUnder.get(b)?.some((one) => held.includes(one)) ?? false);
+  };
   const same = (a: Node, b: Node) =>
     a.nodeType === b.nodeType && (a.nodeType !== 1 || ((a as Element).localName === (b as Element).localName && (a as Element).namespaceURI === (b as Element).namespaceURI && keyOf(a) === keyOf(b)));
+
+  /** What `live` holds that stays as `want`, from `index` on, or undefined where `want` is new. `later`: what is drawn after it that holds a video. */
+  function staying(live: Node, index: number, want: Node, later: readonly Node[]): Node | undefined {
+    const have = live.childNodes[index];
+    const rest = () => Array.from(live.childNodes).slice(index);
+    /* The one holding the video it holds, whatever stands where it stood. */
+    const holder = videosUnder.has(want) ? rest().find((one) => same(one, want) && sharesVideo(one, want)) : undefined;
+    if (holder) return holder;
+    /* What holds a video a later part draws is that part's. */
+    const taken = (one: Node) => videosUnder.has(one) && later.some((other) => same(one, other) && sharesVideo(one, other));
+    if (have && same(have, want) && !taken(have)) return have;
+    return keyOf(want) === null ? undefined : rest().slice(1).find((one) => same(one, want) && !taken(one));
+  }
 
   /** Make `live` hold what `next` holds, keeping every node that can stay. */
   function morph(live: Node, next: Node): void {
     const wanted = Array.from(next.childNodes);
+    const later = wanted.filter((want) => videosUnder.has(want));
     let index = 0;
     for (const want of wanted) {
+      if (later[0] === want) later.shift();
       const have = live.childNodes[index] ?? null;
-      if (have && same(have, want)) {
-        update(have, want);
-        index += 1;
-        continue;
-      }
-      const key = keyOf(want);
-      if (key !== null) {
-        const later = Array.from(live.childNodes)
-          .slice(index + 1)
-          .find((candidate) => same(candidate, want));
-        if (later) {
-          live.insertBefore(later, have);
-          update(later, want);
-          index += 1;
-          continue;
+      const stays = staying(live, index, want, later);
+      if (!stays) live.insertBefore(want, have);
+      else {
+        if (stays !== have) {
+          const between = Array.from(live.childNodes).slice(index);
+          between.length = between.indexOf(stays as ChildNode);
+          /* A frame moved starts over: what stands before it makes way instead, unless it holds a video that stays too. */
+          if (videosUnder.has(stays) && !between.some((one) => later.some((other) => same(one, other) && sharesVideo(one, other)))) {
+            const after = stays.nextSibling;
+            for (const one of between) live.insertBefore(one, after);
+          } else live.insertBefore(stays, have);
         }
+        update(stays, want);
       }
-      live.insertBefore(want, have);
       index += 1;
     }
     while (live.childNodes.length > index) live.removeChild(live.lastChild!);
@@ -449,6 +484,8 @@ export function createViewRuntime(io: ViewIo): ViewRuntime {
     refusedLast = [...said];
     if (refusedLast.length > 0) io.warn(`The host will not draw: ${refusedLast.join(", ")}`);
     tellCustom(next);
+    videosUnder.clear();
+    if (readVideos(next).length > 0) readVideos(root as unknown as Node);
     morph(root as unknown as Node, next);
     /* The parts of the next render are counted afresh: a name's turn is its place in one render. */
     turns.clear();

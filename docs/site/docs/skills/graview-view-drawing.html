@@ -17,13 +17,13 @@ if (location.hostname === "graview.dev" || location.hostname === "www.graview.de
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>graview-view-drawing — Graview docs</title>
-<meta name="description" content="Draw in a Graview worker view — the HTML, SVG and CSS the host keeps of it, the app's tokens and brand, the images a view may show (the app's logo, the app's own images, the pictures on records), a record's video or the app's reel the host plays and its full-screen viewer, files a person drops on it — and find out what the host refused rather than assuming it drew.">
+<meta name="description" content="Draw in a Graview worker view — the HTML, SVG and CSS the host keeps of it, the app's tokens and brand, the images a view may show (the app's logo, the app's own images, the pictures on records), a record's video, the app's reel or a YouTube or Vimeo video the host plays and its full-screen viewer, files a person drops on it — and find out what the host refused rather than assuming it drew.">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#F7F7F2" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0A0F1F" media="(prefers-color-scheme: dark)">
 <meta property="og:site_name" content="Graview">
 <meta property="og:title" content="graview-view-drawing — Graview docs">
-<meta property="og:description" content="Draw in a Graview worker view — the HTML, SVG and CSS the host keeps of it, the app's tokens and brand, the images a view may show (the app's logo, the app's own images, the pictures on records), a record's video or the app's reel the host plays and its full-screen viewer, files a person drops on it — and find out what the host refused rather than assuming it drew.">
+<meta property="og:description" content="Draw in a Graview worker view — the HTML, SVG and CSS the host keeps of it, the app's tokens and brand, the images a view may show (the app's logo, the app's own images, the pictures on records), a record's video, the app's reel or a YouTube or Vimeo video the host plays and its full-screen viewer, files a person drops on it — and find out what the host refused rather than assuming it drew.">
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://graview.dev/docs/skills/graview-view-drawing.html">
 <meta property="og:image" content="https://graview.dev/og.png">
@@ -62,7 +62,7 @@ img { max-width: 100%; }
    "@type": "TechArticle",
    "@id": "https://graview.dev/docs/skills/graview-view-drawing.html#article",
    "headline": "graview-view-drawing — Graview docs",
-   "description": "Draw in a Graview worker view — the HTML, SVG and CSS the host keeps of it, the app's tokens and brand, the images a view may show (the app's logo, the app's own images, the pictures on records), a record's video or the app's reel the host plays and its full-screen viewer, files a person drops on it — and find out what the host refused rather than assuming it drew.",
+   "description": "Draw in a Graview worker view — the HTML, SVG and CSS the host keeps of it, the app's tokens and brand, the images a view may show (the app's logo, the app's own images, the pictures on records), a record's video, the app's reel or a YouTube or Vimeo video the host plays and its full-screen viewer, files a person drops on it — and find out what the host refused rather than assuming it drew.",
    "url": "https://graview.dev/docs/skills/graview-view-drawing.html",
    "inLanguage": "en",
    "image": "https://graview.dev/og.png",
@@ -1798,7 +1798,7 @@ main.landing > section.agent-hero { padding-top: clamp(40px, 6vh, 72px); gap: va
   <main class="col" id="main" tabindex="-1">
     <section id="what" aria-labelledby="h-what" style="padding-top: 6px;">
       <h1 id="h-what">graview-view-drawing</h1>
-      <p class="lede" style="margin-top: 18px;"><code>graview-view-drawing</code> is one of Graview's 31 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Draw in a Graview worker view — the HTML, SVG and CSS the host keeps of it, the app's tokens and brand, the images a view may show (the app's logo, the app's own images, the pictures on records), a record's video or the app's reel the host plays and its full-screen viewer, files a person drops on it — and find out what the host refused rather than assuming it drew.</p>
+      <p class="lede" style="margin-top: 18px;"><code>graview-view-drawing</code> is one of Graview's 31 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Draw in a Graview worker view — the HTML, SVG and CSS the host keeps of it, the app's tokens and brand, the images a view may show (the app's logo, the app's own images, the pictures on records), a record's video, the app's reel or a YouTube or Vimeo video the host plays and its full-screen viewer, files a person drops on it — and find out what the host refused rather than assuming it drew.</p>
       <p class="sm dim">Installed into a project by <code>graview skills install .</code>, and read by whichever assistant is working beside you.</p>
     </section>
     <section id="skill" aria-labelledby="h-skill">
@@ -1821,23 +1821,24 @@ main.landing > section.agent-hero { padding-top: clamp(40px, 6vh, 72px); gap: va
 <ul>
 <li><strong>A <code>data:</code> image</strong> the view holds: PNG, GIF, JPEG, WebP, AVIF, BMP or SVG, at most 512,000 characters as its URL.</li>
 <li><strong>The app's logo</strong>: <code>&lt;img src="${props.theme.logo}"&gt;</code>, which the host made from the brand's mark; absent when it has none.</li>
-<li><strong>An image the app holds</strong>, by the content address it was stored at: <code>/graview/assets/&lt;sha256&gt;.&lt;ext&gt;</code> (what Graview Cloud's <code>add_image</code> answers) — or that path under the app's base, or by the page's own address for it, each the same image. It is drawn only where the host says where those live (<code>asset</code> on the view's definition, and on a headless run), and refused elsewhere.</li>
+<li><strong>An image the app holds</strong>, by the content address it was stored at: <code>/graview/assets/&lt;sha256&gt;.&lt;ext&gt;</code> (what Graview Cloud's <code>add_image</code> answers), alone or under the app's base or the page's own address. It is drawn only where the host says where those live (<code>asset</code> on the view's definition, and on a headless run), and refused elsewhere.</li>
 <li><strong>An <code>https:</code> image on an origin the host lists</strong> — `images: { origins: ["https://upload.wikimedia.org"] }` on the view's definition (and on a headless run), asked for with no referrer. Unlisted, a URL on a record is refused.</li>
 <li><strong>A picture on a record.</strong> Say <code>pictures: true</code> in the manifest, or <code>{ width: 400 }</code>, the widest it draws one. Each picture is then `{ name, type, bytes, width, height, aspect, cutout, focus, caption, src, thumb, left }<code>, never the host's path. Size a tile by </code>aspect`; draw a <code>cutout</code> (transparent, or on a plain ground) whole (`object-fit: contain<code>) and crop the rest (</code>cover<code>) at </code>object-position: ${x*100}% ${y*100}%<code> of </code>focus<code>. </code>src` is fetched as the reader, made smaller to <code>width</code>; absent until later. <code>left</code> says why one never will. An SVG has no <code>src</code>; a document keeps its <code>href</code>, plus <code>src</code> where its host made a <code>preview</code>. They share 12 MB: choose kinds, <code>records: { subject: true }</code> or <code>{ ids }</code>, and <code>most: 12</code>. <code>thumb: 240</code> (&lt; <code>width</code>) adds a smaller <code>thumb</code>: draw <code>thumb || src</code>; <code>{ width: 240, aspect: 1 }</code> crops it around <code>focus</code>.</li>
 </ul>
 <div class="code" data-scroller><pre><code class="language-js">const photos = (job.photos || []).map((photo) =&gt; photo.src
   ? graview.html`&lt;img data-key="${photo.name}" src="${photo.src}" alt="${photo.caption || photo.name}"&gt;`
   : graview.html`&lt;p data-key="${photo.name}"&gt;${photo.left || photo.name}&lt;/p&gt;`);</code></pre></div>
-<p>Without <code>pictures</code>, a record's file comes as the record keeps it: its <code>href</code> draws only where it is the app's own image (<code>/graview/assets/…</code>).</p>
+<p>Without <code>pictures</code>, a file's <code>href</code> draws only as the app's own image.</p>
 <h3>A video, and the full-screen viewer</h3>
 <p>A view names it and <strong>the host draws it</strong>:</p>
 <ul>
-<li><strong><code>&lt;graview-video data-record="${node.id}" data-field="clip"&gt;</code></strong> (and <code>data-index</code> in a list), for a manifest that says <code>pictures</code>: the record's video — poster first, the browser's controls, captions. Size the box in your stylesheet (<code>graview-video { width: 100% }</code>); nothing inside is yours. It comes as facts (`name, type, width, height, caption, duration, poster<code>), never a </code>src`.</li>
+<li><strong><code>&lt;graview-video data-record="${node.id}" data-field="clip"&gt;</code></strong> (and <code>data-index</code> in a list), for a manifest that says <code>pictures</code>: the record's video — poster first, the browser's controls, captions. Size the box in your stylesheet; nothing inside is yours. It comes as facts (`name, type, width, height, caption, duration, poster<code>), never a </code>src`.</li>
 <li><strong><code>&lt;graview-video data-app="reel"&gt;</code></strong>: the app's own reel, no <code>pictures</code> needed. Its facts are in <code>props.theme.reel</code> (`name, caption, duration, poster, playable`); absent, the host handed none.</li>
-<li><strong><code>autoplay cover</code></strong> on either: a hero background — muted, looping, no controls, filling the box; still at its poster under reduced motion. A headless run lists each video and whether it plays: confirm it there.</li>
+<li><strong><code>autoplay cover</code></strong> on either: a hero background — muted, looping, no controls, filling the box; still at its poster under reduced motion. A headless run says whether each plays.</li>
+<li>**`&lt;graview-video data-provider="youtube" data-video="dQw4w9WgXcQ" title="The keynote"&gt;<code>** (or </code>vimeo<code>, or </code>data-watch="${node.link}"`): poster and play button, its player once pressed, always a link out. <code>poster</code>: a picture you may show; <code>data-start="1m30s"</code>; <code>data-shape</code> 16:9, 4:3, 1:1, 9:16. Any other is refused (<code>embed-refused</code>).</li>
 <li>**`&lt;button data-lightbox data-record="${node.id}" data-field="photos" data-index="0"&gt;`**: the viewer's press opens the host's full-screen viewer for that picture or video; Escape closes it. Your code cannot.</li>
 </ul>
-<p>A record not shown, a field with no video, a view without <code>pictures</code>, or a reel not handed draws nothing, and says why.</p>
+<p>What is not shown, held or handed draws nothing, and says why.</p>
 <h3>Files a person drops on it</h3>
 <p>Say which fields files become — <code>accepts: [{ kind: "moment", field: "photo" }, { kind: "moment", field: "clip" }]</code> in the manifest — and mark the element: <code>&lt;section data-drop="moment" data-drop-connect="takenOn:${day.id}"&gt;</code>. <strong>The host owns the drop</strong>: it draws the target while files are dragged over it, says what dropping does, holds each file to the field its type fits and to the host's files, and stores it. On a phone the same element is a tap that opens the picker. It is a target only where this seat may make that kind and the host takes files. A view that does not hear <code>drop</code> gets a record of the kind per file, its file on its field, linked as <code>data-drop-connect</code> says, in one change one undo takes back. One that does is told once:</p>
 <div class="code" data-scroller><pre><code class="language-js">graview.on("drop", "[data-drop]", (event) =&gt; {
@@ -1856,7 +1857,7 @@ main.landing > section.agent-hero { padding-top: clamp(40px, 6vh, 72px); gap: va
 <li>As each seat (<code>--seats</code>): are the pictures it may not see absent? A kind in <code>props.unseen</code> gets a sentence, not a hole.</li>
 </ol>
 <h3>What the check cannot see</h3>
-<p><code>graview check</code> and <code>refused</code> never see whether it reads (an image with no <code>alt</code>, a token used for a meaning it does not carry, colors that fail in dark): look on both faces, at 390 and on a desk, in both schemes.</p>
+<p>Whether it reads (an image with no <code>alt</code>, colors that fail in dark): look on both faces, at 390 and on a desk, in both schemes.</p>
     </section>
 
   </main>
