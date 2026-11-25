@@ -1,0 +1,52 @@
+# The browsers a harness drives, and the system libraries they need, as
+# Nightly and verify.yml install them.
+#
+# Both are cached. The browsers by the lockfile's Playwright: a fresh download
+# of all three took 42 of a job's 45 minutes on 2026-10-22. And the libraries'
+# packages, which were downloaded from the mirror every time: on a slow day
+# that was 7 to 16 minutes of a shard that then ran for 5 (verify.yml, run
+# 45268697796). apt still asks the mirror which versions are current and
+# checks each package it was handed against them, so a package that moved on
+# is downloaded; the week in the key is when the kept ones are refreshed.
+name: The engines
+description: Playwright's chromium, webkit and firefox, with their system libraries, from the cache where it has them
+runs:
+  using: composite
+  steps:
+    - name: The engines, cached
+      id: engines-cache
+      uses: actions/cache/restore@v4
+      with:
+        path: ~/.cache/ms-playwright
+        key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+    - id: week
+      shell: bash
+      run: echo "week=$(date -u +%G-%V)" >> "$GITHUB_OUTPUT"
+    - name: Their libraries, cached
+      id: libraries-cache
+      uses: actions/cache/restore@v4
+      with:
+        path: ~/.cache/playwright-debs
+        key: playwright-debs-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-${{ steps.week.outputs.week }}
+        restore-keys: playwright-debs-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-
+    - name: The engines
+      shell: bash
+      run: |
+        mkdir -p ~/.cache/playwright-debs
+        find ~/.cache/playwright-debs -name '*.deb' -exec sudo cp -t /var/cache/apt/archives {} +
+        npx playwright install --with-deps chromium webkit firefox
+        find /var/cache/apt/archives -maxdepth 1 -name '*.deb' -exec cp -u -t ~/.cache/playwright-debs {} +
+    # Saved the moment they are installed: a cache saved after the job is
+    # never saved when the job runs out of time, which is when it matters.
+    - name: The engines, kept
+      if: steps.engines-cache.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v4
+      with:
+        path: ~/.cache/ms-playwright
+        key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+    - name: Their libraries, kept
+      if: steps.libraries-cache.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v4
+      with:
+        path: ~/.cache/playwright-debs
+        key: playwright-debs-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-${{ steps.week.outputs.week }}

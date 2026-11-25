@@ -42,9 +42,9 @@ on:
         options: [dom, gpu]
         default: dom
       shards:
-        description: "At most this many runners (up to 32): the whole chain wants about 24, a harness run in parts a runner or less per part"
+        description: "At most this many runners (up to 32): the whole chain wants about 28, a harness run in parts a runner or less per part"
         type: string
-        default: "24"
+        default: "28"
       request:
         description: "A token in the run's name, so whoever dispatched it can find it (verify-on-github.mjs sets it)"
         type: string
@@ -104,21 +104,8 @@ jobs:
       # typecheck does not, and those harnesses stopped before their first claim.
       - run: node scripts/build-preview-page.mjs
 
-      # Nightly's engines, cached by the same key, so either workflow fills it for the other.
-      - name: The engines, cached
-        id: engines-cache
-        uses: actions/cache/restore@v4
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
       - name: The engines
-        run: npx playwright install --with-deps chromium webkit firefox
-      - name: The engines, kept
-        if: steps.engines-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v4
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+        uses: ./.github/actions/engines
 
       # The GPU path's Chromium, pinned as Nightly pins it (its comment says
       # why, and when the pin moves: move both together).

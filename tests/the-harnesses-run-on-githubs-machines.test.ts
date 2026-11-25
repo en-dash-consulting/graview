@@ -173,7 +173,8 @@ describe("the workflow", () => {
 
   it("sets up as Nightly does: the engines Playwright pins, cached by Nightly's key, and Nightly's Chrome for the GPU path", () => {
     const nightly = readFileSync(resolve(repo, ".github/workflows/nightly.yml"), "utf8");
-    expect(workflow).toContain("key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}");
+    for (const one of [workflow, nightly]) expect(one).toContain("uses: ./.github/actions/engines");
+    expect(readFileSync(resolve(repo, ".github/actions/engines/action.yml"), "utf8")).toContain("key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}");
     const pin = /CHROME_PIN: "([\d.]+)"/;
     expect(workflow.match(pin)?.[1]).toBe(nightly.match(pin)?.[1]);
   });

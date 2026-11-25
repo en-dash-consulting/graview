@@ -14,7 +14,7 @@ import { claimBlocks, defaultJobs, lockBlock, longestFirst, nextFor, runPool } f
 // @ts-expect-error — as above.
 import { falseClaims } from "../scripts/lib/on-github.mjs";
 // @ts-expect-error — as above.
-import { mergeParts, partPath, splitUnit, unitsOf } from "../scripts/lib/parts.mjs";
+import { chooseSteps, mergeParts, partPath, PARTS, splitUnit, unitsOf } from "../scripts/lib/parts.mjs";
 // @ts-expect-error — as above.
 import { settled, until } from "../scripts/lib/settled.mjs";
 
@@ -341,6 +341,7 @@ describe("a harness run in parts", () => {
     expect(quiet).toContain("quiet.firefox-rest");
     expect(unitsOf(["address"])).toEqual(["address.chromium", "address.webkit", "address.firefox"]);
     expect(unitsOf(["quiet.webkit"])).toEqual(["quiet.webkit"]);
+    expect(unitsOf(["journeys"])).toEqual(["journeys.todo", "journeys.seedbed", "journeys.discography", "journeys.gauntlet-scene", "journeys.gauntlet-pages", "journeys.rest"]);
     expect(splitUnit("quiet.chromium-steady")).toEqual({ name: "quiet", part: "chromium-steady" });
     expect(partPath("/r/docs/address.json", "webkit")).toBe("/r/docs/address.part-webkit.json");
     expect(partPath("/r/docs/address.json", "")).toBe("/r/docs/address.json");
@@ -360,5 +361,47 @@ describe("a harness run in parts", () => {
     ]);
     expect(falseClaims(short)).toEqual(["everyPartWroteAVerdict"]);
     expect(short.checks.everyPartWroteAVerdict.missing).toEqual(["firefox"]);
+  });
+
+  it("takes every step of the whole between its parts, each once: what no part names, its rest takes", () => {
+    const listed = (file: string, args: string[]) =>
+      execFileSync(process.execPath, [resolve(repo, "scripts", file), "--list-steps", ...args], { encoding: "utf8", timeout: 30_000 }).trim().split("\n");
+    for (const [name, file] of [["journeys", "verify-journeys.mjs"], ["site", "verify-site.mjs"], ["one-face", "verify-one-face.mjs"]] as const) {
+      const whole = listed(file, []);
+      expect(whole.length).toBeGreaterThan(10);
+      const parts = PARTS[name].parts.map(({ args }: { args: string[] }) => listed(file, args));
+      for (const part of parts) expect(part.filter(Boolean).length).toBeGreaterThan(0);
+      expect(parts.flat().sort()).toEqual([...whole].sort());
+      expect(new Set(whole).size).toBe(whole.length);
+    }
+  }, 60_000);
+
+  it("compares a job's pointer with its keyboard in one part, so a part alone holds it to twice", () => {
+    const faces = PARTS.journeys.parts.flatMap(({ args }: { args: string[] }) => args);
+    expect(faces.some((arg: string) => /pointer|keyboard|1440|390/.test(arg))).toBe(false);
+  });
+
+  it("refuses a part that names a step the harness does not have, which nothing would run", () => {
+    const steps = [{ name: "desk/bar" }, { name: "phone/bar" }, { name: "phone-later/bar" }];
+    expect(chooseSteps(steps, ["--steps=phone"])).toEqual([{ name: "phone/bar" }]);
+    expect(chooseSteps(steps, ["--not=phone"])).toEqual([{ name: "desk/bar" }, { name: "phone-later/bar" }]);
+    expect(chooseSteps(steps, [])).toEqual(steps);
+    expect(() => chooseSteps(steps, ["--not=phones"])).toThrow(/No step called phones/);
+  });
+
+  it("makes every claim the whole made: one that no part had anything to judge is false, and one another part made is that part's", () => {
+    const merged = mergeParts([
+      { part: "desk", verdict: { passed: true, checks: { bar: { ok: true } }, unmade: ["pinch", "duplicate"] } },
+      { part: "phone", verdict: { passed: true, checks: { bar: { ok: true }, pinch: { ok: true } }, unmade: ["duplicate"] } },
+    ]);
+    expect(merged.checks.pinch.ok).toBe(true);
+    expect(falseClaims(merged)).toEqual(["duplicate"]);
+    expect(merged.passed).toBe(false);
+    const criteria = mergeParts([
+      { part: "page", verdict: { passed: true, criteria: { everyViewportIsClean: true } } },
+      { part: "rest", verdict: { passed: true, criteria: { forced: true }, unmade: ["everyViewportIsClean"] } },
+    ]);
+    expect(falseClaims(criteria)).toEqual([]);
+    expect(criteria.passed).toBe(true);
   });
 });

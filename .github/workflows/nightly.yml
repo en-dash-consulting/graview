@@ -108,25 +108,8 @@ jobs:
       - run: node scripts/build-preview-page.mjs
 
       # quick-ask and a few others walk all three engines, so every shard has them.
-      # The browsers are cached by the pinned Playwright version: a fresh
-      # download of all three took 42 of a job's 45 minutes on 2026-10-22.
-      # Their system libraries are installed every time (install-deps).
-      - name: The engines, cached
-        id: engines-cache
-        uses: actions/cache/restore@v4
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
       - name: The engines
-        run: npx playwright install --with-deps chromium webkit firefox
-      # Saved the moment they are installed: a cache saved after the job is
-      # never saved when the job runs out of time, which is when it matters.
-      - name: The engines, kept
-        if: steps.engines-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v4
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+        uses: ./.github/actions/engines
 
       # The GPU path's Chromium: Google Chrome, which has element capture
       # behind its flag; engine.mjs switches it on with SwiftShader.
@@ -188,22 +171,8 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck
-      # The browsers are cached by the pinned Playwright version: a fresh
-      # download of all three took 42 of a job's 45 minutes on 2026-10-22.
-      # Their system libraries are installed every time (install-deps).
-      - name: The engines, cached
-        id: engines-cache
-        uses: actions/cache/restore@v4
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
-      - run: npx playwright install --with-deps chromium webkit firefox
-      - name: The engines, kept
-        if: steps.engines-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v4
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+      - name: The engines
+        uses: ./.github/actions/engines
       # A cell that fails is looked at again alone; one that held the second
       # time is written to docs/flakes.json and raised as a warning.
       - run: pnpm engines

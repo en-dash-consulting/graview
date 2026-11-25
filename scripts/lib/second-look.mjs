@@ -14,6 +14,7 @@
 import { copyFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { ownedBy, writtenSince } from "./on-github.mjs";
+import { splitUnit } from "./parts.mjs";
 
 /** The claims a harness printed as false: `"name": false` lines, and `FAIL name` lines from a nested chain. */
 export const missedClaims = (output) => {
@@ -54,7 +55,9 @@ export const FIRST_LOOK = "docs/first-look";
 /** The first look's own files copied under docs/first-look/, by path; `first` is runOne's answer (`file`, `began`). */
 export const keepFirstLook = (repoRoot, first) => {
   const base = first.file.replace(/^verify-/, "").replace(/\.mjs$/, "");
-  const own = (path) => ownedBy(base, path);
+  // A part keeps and clears its own files alone (lib/parts.mjs): another part of the harness may have failed beside it.
+  const { part } = splitUnit(first.name ?? "");
+  const own = (path) => ownedBy(base, path) && (!part || !path.includes(".part-") || path.includes(`.part-${part}.`));
   const copyOf = (path) => resolve(repoRoot, FIRST_LOOK, path.slice("docs/".length));
   // An earlier run's first look of this harness is not this run's.
   const earlier = writtenSince(repoRoot, 0, FIRST_LOOK).map((file) => `docs/${file.path.slice(FIRST_LOOK.length + 1)}`);

@@ -277,7 +277,8 @@ const inChainOrder = (wanted) => {
 };
 const quickRun = argv.includes("--quick");
 const units = inChainOrder(
-  unitsOf(asked.length > 0 ? asked : lastFailed ? lastFailed.filter((unit) => KNOWN.includes(unit)) : selection ? selection.names : CHAIN.map(([name]) => name)),
+  // An app of one's own is one run of it: the parts are of the checkout's apps (lib/parts.mjs).
+  (asked.length > 0 ? asked : lastFailed ? lastFailed.filter((unit) => KNOWN.includes(unit)) : selection ? selection.names : CHAIN.map(([name]) => name)).flatMap((unit) => (appPaths.length > 0 && TAKES_AN_APP.has(unit) ? [unit] : unitsOf([unit]))),
 )
   .filter((unit) => !except.includes(unit) && !except.includes(splitUnit(unit).name))
   // --quick is Chromium alone where a harness sweeps engines: so are its parts, unless a part was named.
@@ -666,7 +667,7 @@ for (const unit of units) {
  * took only some parts leaves them for whoever runs the rest.
  */
 for (const name of Object.keys(PARTS)) {
-  const ran = results.filter((one) => one.harness === name);
+  const ran = results.filter((one) => one.harness === name && splitUnit(one.name).part);
   if (ran.length === 0) continue;
   const whole = PARTS[name].parts.every(({ part }) => units.includes(`${name}.${part}`));
   // --quick took one engine's parts on purpose: its verdict is made from those, so docs/<name>.json says what this run held.
@@ -709,7 +710,9 @@ if (broken.length > 0) {
  * says what is wrong — each problem once however many screens showed it,
  * and whether it is new, still there, or fixed since the last run.
  */
-const ledger = updateLedger(repoRoot, { since: started, ran: new Set(results.map((one) => scriptName(one.file))) });
+// A harness that ran only some of its parts looked at only some of its screens: a problem it did not see there is not one it fixed.
+const inFull = results.filter((one) => !PARTS[one.harness] || !splitUnit(one.name).part || PARTS[one.harness].parts.every(({ part }) => units.includes(`${one.harness}.${part}`)));
+const ledger = updateLedger(repoRoot, { since: started, ran: new Set(inFull.map((one) => scriptName(one.file))) });
 const line = (entry) => `  ${entry.rule.padEnd(22)} ${entry.detail.slice(0, 150)}  (${entry.harnesses.join(", ")})\n`;
 if (ledger.fresh.length + ledger.still.length + ledger.fixed.length + ledger.flapping.length > 0) {
   say(`\nproblems: ${ledger.fresh.length} new, ${ledger.still.length} still open, ${ledger.fixed.length} fixed, ${ledger.flapping.length} back after a fix\n`);

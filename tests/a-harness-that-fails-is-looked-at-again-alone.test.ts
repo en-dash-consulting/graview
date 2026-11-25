@@ -95,6 +95,20 @@ describe("a harness that fails is looked at again, alone", () => {
     expect(JSON.parse(readFileSync(join(root, "docs/one-face.json"), "utf8"))).toEqual({ ok: true });
   });
 
+  it("keeps a part's first look, its watch with it, and leaves the first look of a part that failed before it", () => {
+    const root = mkdtempSync(join(tmpdir(), "first-look-parts-"));
+    mkdirSync(join(root, "docs/watch"), { recursive: true });
+    const began = new Date(Date.now() - 1000).toISOString();
+    for (const part of ["desk", "phone"]) {
+      writeFileSync(join(root, `docs/one-face.part-${part}.json`), part);
+      writeFileSync(join(root, `docs/watch/verify-one-face.part-${part}.json`), part);
+    }
+    const kept = (part: string) => keepFirstLook(root, { name: `one-face.${part}`, file: "verify-one-face.mjs", began }).sort();
+    expect(kept("desk")).toEqual(["docs/first-look/one-face.part-desk.json", "docs/first-look/watch/verify-one-face.part-desk.json"]);
+    expect(kept("phone")).toEqual(["docs/first-look/one-face.part-phone.json", "docs/first-look/watch/verify-one-face.part-phone.json"]);
+    expect(readFileSync(join(root, "docs/first-look/one-face.part-desk.json"), "utf8")).toBe("desk");
+  });
+
   it("keeps the first look of a harness whose verdict is named otherwise than its script (pages writes pages-face)", () => {
     const root = mkdtempSync(join(tmpdir(), "first-look-pages-"));
     mkdirSync(join(root, "docs"), { recursive: true });

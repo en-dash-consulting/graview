@@ -443,7 +443,15 @@ export class Person {
     this.log = [];
   }
 
-  /** Until what the last press asked for has settled (settled.mjs), never longer than `ms`. */
+  /**
+   * Until what the last press asked for has settled (settled.mjs), never
+   * longer than `ms`. Nearly every short wait here takes its whole time,
+   * and not for the page: of todo's, measured 2026-11-25, nine in ten were
+   * still held by a look the watch takes 400 ms after a change, and so are
+   * `ready` and a job's end. Moving on sooner would leave a state before it
+   * was judged, so these stay, and what they cost is paid side by side
+   * (lib/parts.mjs).
+   */
   async settle(ms = 140) {
     await settled(this.page, { most: ms });
   }
@@ -2078,6 +2086,55 @@ export function keyboardChecks(report) {
       named: [...named].map(([why, runs]) => ({ why, runs })),
     },
     theKeyboardSkipsIntoALongList: { ok: skipped.length === lists.length, lists },
+  };
+}
+
+/** The report without the runs the harness could not drive, which are neither friction nor a regression. */
+export function drivenOnly(report) {
+  const counted = structuredClone(report);
+  for (const result of Object.values(counted.apps)) {
+    for (const job of Object.values(result.jobs ?? {})) {
+      for (const [key, run] of Object.entries(job.runs)) if (run.harness) delete job.runs[key];
+    }
+  }
+  return counted;
+}
+
+/**
+ * THE VERDICT OF THE PARTS (lib/parts.mjs): every app's jobs with every run
+ * a part made of them, and the friction and the keyboard's claims read from
+ * the whole, as one process would have read them — a job's cheapest way is
+ * looked for across the faces, which two parts walk. A regression is of one
+ * run, so the parts' own are the whole's. A part that wrote no verdict is a
+ * claim that fails.
+ *
+ * @param {{ part: string, verdict: object | null }[]} parts
+ */
+export function mergeJourneys(parts) {
+  const wrote = parts.filter((one) => one.verdict?.apps);
+  const apps = {};
+  for (const { verdict } of wrote) {
+    for (const [app, result] of Object.entries(verdict.apps)) {
+      const was = apps[app] ?? {};
+      const jobs = { ...was.jobs };
+      for (const [id, job] of Object.entries(result.jobs ?? {})) jobs[id] = { ...job, runs: { ...jobs[id]?.runs, ...job.runs } };
+      apps[app] = { ...was, ...result, ...(Object.keys(jobs).length > 0 ? { jobs } : {}) };
+    }
+  }
+  const counted = drivenOnly({ apps });
+  const missing = parts.filter((one) => !wrote.includes(one)).map((one) => one.part);
+  const checks = { ...keyboardChecks(counted), everyPartWroteAVerdict: { ok: missing.length === 0, ...(missing.length > 0 ? { missing } : {}) } };
+  const regressions = [...new Set(wrote.flatMap((one) => one.verdict.regressions ?? []))];
+  return {
+    at: wrote.map((one) => one.verdict.at).filter(Boolean).sort().at(-1) ?? new Date().toISOString(),
+    parts: parts.map((one) => one.part),
+    ...(wrote[0]?.verdict.engine ? { engine: wrote[0].verdict.engine } : {}),
+    apps,
+    friction: frictionOf(counted),
+    regressions,
+    checks,
+    passed: regressions.length === 0 && wrote.every((one) => one.verdict.passed !== false) && Object.values(checks).every((check) => check.ok),
+    took: wrote.reduce((sum, one) => sum + (one.verdict.took ?? 0), 0),
   };
 }
 
