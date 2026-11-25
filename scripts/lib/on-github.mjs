@@ -17,7 +17,7 @@
  */
 import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
-import { allUnits, PARTS, unitName, unitsOf } from "./parts.mjs";
+import { allUnits, PARTS, splitUnit, unitName, unitsOf } from "./parts.mjs";
 
 /** A harness name as `pnpm verify` takes one, or one part of one (`quiet.webkit`, lib/parts.mjs), and nothing a shell would read as more. */
 export const HARNESS_NAME = /^[a-z][a-z0-9-]*(\.[a-z][a-z0-9-]*)?$/;
@@ -227,7 +227,9 @@ export function summarizeShard({ root, since, asked, lastRun, written }) {
   // No moment the harnesses began (the shard stopped before them) is no harness run, whatever the checkout's last run says.
   const ran = since > 0 && lastRun && Date.parse(lastRun.at) >= since ? lastRun.results : [];
   const starts = ran.map((one) => (one.began ? Date.parse(one.began) : null)).filter((at) => at !== null);
-  const harnesses = asked.map((name) => {
+  // A harness made of its parts here that the whole failed (verify-all.mjs) is named by itself, not by a part.
+  const wholes = ran.filter((one) => !asked.includes(one.name) && asked.some((unit) => splitUnit(unit).name === one.name));
+  const harnesses = [...asked, ...wholes.map((one) => one.name)].map((name) => {
     const result = ran.find((one) => one.name === name);
     if (!result) return { name, verdict: "no verdict", took: null, claims: ["wrote no verdict: the shard stopped before it ran or finished"], files: [] };
     const began = result.began ? Date.parse(result.began) : null;

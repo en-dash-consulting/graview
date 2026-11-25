@@ -157,3 +157,21 @@ jobs:
           path: ${{ runner.temp }}/verdicts
           if-no-files-found: ignore
           retention-days: 14
+
+  # A harness in parts on several runners, judged whole: a claim no part made.
+  whole:
+    needs: harnesses
+    if: ${{ !cancelled() }}
+    name: The harnesses made of their parts
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: verdicts-*
+          path: verdicts
+      - run: node scripts/verify-whole.mjs verdicts

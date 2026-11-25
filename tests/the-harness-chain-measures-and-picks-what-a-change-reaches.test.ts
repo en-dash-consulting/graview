@@ -386,6 +386,14 @@ describe("a harness run in parts", () => {
     };
     expect(write(() => ["by-page", "everyViewportIsClean"])).toEqual(["everyViewportIsClean"]);
     expect(write((part) => (part === "page" ? [] : ["by-page"]))).toEqual([]);
+    // And across runners, where no shard holds every part (scripts/verify-whole.mjs).
+    PARTS.site.parts.forEach(({ part }: { part: string }, at: number) => {
+      const shard = join(root, `shards/verdicts-${at}/docs`);
+      mkdirSync(shard, { recursive: true });
+      writeFileSync(join(shard, `site-check.part-${part}.json`), JSON.stringify({ passed: true, criteria: { [`by-${part}`]: true }, unmade: ["everyViewportIsClean"] }));
+    });
+    expect(() => execFileSync(process.execPath, [resolve(repo, "scripts/verify-whole.mjs"), join(root, "shards")], { encoding: "utf8", stdio: "pipe" })).toThrow(/Command failed/);
+    expect(readFileSync(resolve(repo, ".github/workflows/verify.yml"), "utf8")).toContain("node scripts/verify-whole.mjs verdicts");
     const verifyAll = readFileSync(resolve(repo, "scripts/verify-all.mjs"), "utf8");
     expect(verifyAll).toMatch(/const broken = \[.*\.\.\.failedWhole\]/);
     expect(verifyAll).toMatch(/results: \[\.\.\.results, \.\.\.failedWhole\]/);
