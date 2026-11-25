@@ -1,7 +1,7 @@
 export { AUTO_SCENE_HEIGHT, Embed, faceOf, mount, mountWhenNear, preload } from "./embed.js";
 export type { EmbedDraftView, EmbedHandle, ForkedViewDefaults, EmbedOptions, EmbedProps, EmbedStudio } from "./embed.js";
 export { hostScheme } from "./frame.js";
-export { DRAWN_ATTRIBUTE } from "./drawn.js";
+export { DRAWN_ATTRIBUTE, PAINTED_ATTRIBUTE } from "./drawn.js";
 export { faceAtAddress } from "./address.js";
 export type { EmbedWhere } from "./where.js";
 export type { EmbedBar, EmbedError, EmbedErrorWhere, EmbedFace, EmbedHostContext, EmbedReady, EmbedRemote, FrameOptions } from "./frame.js";

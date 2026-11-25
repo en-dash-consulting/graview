@@ -114,6 +114,34 @@ describe("a part is waited for until it has drawn", () => {
     expect(partsWaiting(watch)).toBe(0);
   });
 
+  it("waits for a part under the page, unless only what the page is not whole without is asked after", async () => {
+    const watch = createPartsWatch();
+    const over = controlled<{ readonly default: () => ReactNode }>();
+    const under = controlled<{ readonly default: () => ReactNode }>();
+    const Over = lazyPart(over.load);
+    const Under = lazyPart(under.load, { under: true });
+    const before = { all: partsArriving(), over: partsArriving(true) };
+    const counts = () => [partsArriving() - before.all, partsArriving(true) - before.over, partsWaiting(watch), partsWaiting(watch, true)];
+    draw(watch, () => (
+      <>
+        <Suspense fallback={null}>
+          <Over />
+        </Suspense>
+        <Suspense fallback={null}>
+          <Under />
+        </Suspense>
+      </>
+    ));
+    expect(await until(() => partsWaiting(watch) === 2)).toBe(true);
+    expect(counts()).toEqual([2, 1, 2, 1]);
+    over.arrive({ default: () => <p data-testid="over" /> });
+    expect(await until(() => host!.querySelector('[data-testid="over"]') !== null)).toBe(true);
+    expect(counts()).toEqual([1, 0, 1, 0]);
+    under.arrive({ default: () => <p data-testid="under" /> });
+    expect(await until(() => host!.querySelector('[data-testid="under"]') !== null)).toBe(true);
+    expect(counts()).toEqual([0, 0, 0, 0]);
+  });
+
   it("is not waited for where nothing watches the place", async () => {
     const module = controlled<{ readonly rows: string }>();
     const Lens = lazyModule(module.load).part((m) => <p data-testid="rows">{m.rows}</p>);

@@ -21,7 +21,7 @@ import { useHref, useLocation, useNavigate, useNavigationType, useParams } from 
 import { OneFaceComing, OneFaceContext, useOneFace, useOneFaceComing, type OneFace } from "./one-place-control.js";
 import { createPortal } from "react-dom";
 import { heldHost, HeldHere } from "./held-element.js";
-const OnePlace = lazyPart(() => import("./one-place.js").then((module) => ({ default: module.OnePlace })));
+const OnePlace = lazyPart(() => import("./one-place.js").then((module) => ({ default: module.OnePlace })), { under: true });
 import { appKeyOf, BarFindContext, FirstLookDoor, HeadingsUnder, PastBar, registerReaderLenses, SpecLinks, type BarFind, type FirstLook } from "@graview/primitives/pages";
 
 /** Who reads the face when the host names nobody. */

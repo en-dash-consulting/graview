@@ -15,8 +15,11 @@
  * by the script the moment it is parsed): above every rung of the ladder
  * (`@graview/core`'s `LAYERS`) by the browser's say, with no `z-index` of
  * its own, and never shown at all where no script runs. The script watches
- * for `data-graview-drawn` (the embed says it once the place has drawn and
- * settled, FR-188) — or a page error said as an alert, or fifteen seconds
+ * for `data-graview-painted` (the embed says it once the page and its views
+ * are painted, the one face under them perhaps still to come) or
+ * `data-graview-drawn` (once all of the place has drawn and settled, FR-188)
+ * — or a page error said as an alert (one with words in it: the page's own
+ * live region stands empty from its first commit), or fifteen seconds
  * — then fades the screen out and removes it. Reduced motion takes it away
  * at once and draws nothing that moves; so does a browser driven by
  * automation (`navigator.webdriver`), or a host that says `fade: false`,
@@ -278,9 +281,10 @@ var stop=null,gone=false,t0=Date.now(),hold=s.hasAttribute("data-hold"),SET=2.4;
 function settle(){s.setAttribute("data-settled","")}
 function go(){if(gone)return;gone=true;ob.disconnect();clearTimeout(most);if(stop)stop();if(quick){if(s.parentNode)s.parentNode.removeChild(s);return}
 s.setAttribute("data-gone","");setTimeout(function(){if(s.parentNode)s.parentNode.removeChild(s)},320)}
-function drawn(){return !!document.querySelector("[data-graview-drawn],[role=alert]")}
+function drawn(){if(document.querySelector("[data-graview-painted],[data-graview-drawn]"))return true;
+for(var a=document.querySelectorAll("[role=alert]"),i=0;i<a.length;i++)if(/\S/.test(a[i].textContent))return true;return false}
 var ob=new MutationObserver(function(){if(drawn())go()}),most;
-if(!hold){ob.observe(document.documentElement,{attributes:true,childList:true,subtree:true,attributeFilter:["data-graview-drawn","role"]});
+if(!hold){ob.observe(document.documentElement,{attributes:true,childList:true,characterData:true,subtree:true,attributeFilter:["data-graview-painted","data-graview-drawn","role"]});
 most=setTimeout(go,15000);
 if(drawn()){go();return}}
 var style=s.getAttribute("data-style"),img=s.querySelector(".graview-splash-image");
