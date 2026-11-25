@@ -68,12 +68,10 @@ describe("a link a person comes to", () => {
     bar.dispatchEvent(new Event("touchstart", { bubbles: true }));
     two.dispatchEvent(new Event("pointerover", { bubbles: true }));
     document.body.dispatchEvent(new Event("pointerover", { bubbles: true }));
-    await settle();
+    await act(async () => vi.waitFor(() => expect(read.mock.calls).toEqual([["one"], ["three"]]), { timeout: 5_000 }));
     expect([code.one, code.two, code.three].map((asked) => asked!.mock.calls.length)).toEqual([1, 0, 1]);
-    expect(read.mock.calls).toEqual([["one"], ["three"]]);
     two.dispatchEvent(new Event("pointerover", { bubbles: true }));
-    await settle();
-    expect(code.two).toHaveBeenCalledTimes(1);
+    await act(async () => vi.waitFor(() => expect(code.two).toHaveBeenCalledTimes(1), { timeout: 5_000 }));
   });
 
   it("outside the app, or under another base, fetches nothing", async () => {
@@ -115,6 +113,7 @@ describe("an idle page", () => {
     Object.assign(window, { requestIdleCallback: (run: () => void) => setTimeout(run, 0) });
     const { code, read, listen } = page(bethan);
     listen();
+    await act(async () => vi.waitFor(() => expect(Object.values(code).filter((asked) => asked.mock.calls.length === 1)).toHaveLength(4), { timeout: 5_000 }));
     await settle(200);
     expect(Object.values(code).filter((asked) => asked.mock.calls.length === 1)).toHaveLength(4);
     expect(read).not.toHaveBeenCalled();

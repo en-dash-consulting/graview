@@ -7,7 +7,7 @@ import { pluralSlug } from "./registry.js";
 import { Suspense, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from "react";
 import { HrefOfContext } from "./href-of.js";
 import { aggregateId } from "@graview/layout/view";
-import { afterFirstDraw, GoToContext, GraviewProvider, lazyPart, hasLanded, HostAssetsContext, HostFilesContext, HostReelContext, HostViewerStateContext, markLanded, useHostViewerState, useKeptDrawings, useHostReel, PlaybackContext, useGraviewIfAny, useOwnPlayback, useTheKeyboardLandsSomewhere, useTheWatchKnowsWhatIsUnseen, type FieldTyping, type GoTo, type GoToAlso, type GoToTarget, type GraviewContextValue, type Playback } from "@graview/react/provider";
+import { aheadOf, afterFirstDraw, GoToContext, GraviewProvider, lazyPart, hasLanded, HostAssetsContext, HostFilesContext, HostReelContext, HostViewerStateContext, markLanded, useHostViewerState, useKeptDrawings, useHostReel, PlaybackContext, useGraviewIfAny, useOwnPlayback, useTheKeyboardLandsSomewhere, useTheWatchKnowsWhatIsUnseen, type FieldTyping, type GoTo, type GoToAlso, type GoToTarget, type GraviewContextValue, type Playback } from "@graview/react/provider";
 import { PageQuickAsk } from "./quick-ask.js";
 /* A view the seat drew, as a page: fetched when one is first shown here. */
 const DraftPage = lazyPart(() => import("./page-draft.js").then((module) => ({ default: module.DraftPage })));
@@ -341,15 +341,20 @@ function FaceRoot<S extends AnySchema>({
   const base = useHref("/").replace(/\/$/, "");
   useEffect(() => {
     const at = root.current;
-    if (!at || !context.views) return;
+    const views = context.views;
+    /* Only where the app has a view that waits for something: a page of the framework's own pages asks for nothing more. */
+    if (!at || !views || !(aheadOf(views.homeView?.()) || views.registrations().some((one) => aheadOf(one.view)))) return;
     let stop: (() => void) | undefined;
     let gone = false;
-    const wait = afterFirstDraw(() => void import("./view-ahead.js").then((module) => {
+    let idle: ReturnType<typeof setTimeout> | undefined;
+    /* Once the page has drawn, and after that, a moment of its own. */
+    const wait = afterFirstDraw(() => (idle = setTimeout(() => void import("./view-ahead.js").then((module) => {
       /* The bar is outside this element in an embed and on the one face: its places are heard where it is. */
       if (!gone) stop = module.fetchAhead(at.closest<HTMLElement>("[data-graview-embed]") ?? (context.embedded ? at : at.ownerDocument.body), base, () => asked.current as never);
-    }, () => undefined));
+    }, () => undefined), 300)));
     return () => {
       gone = true;
+      clearTimeout(idle);
       wait();
       stop?.();
     };
