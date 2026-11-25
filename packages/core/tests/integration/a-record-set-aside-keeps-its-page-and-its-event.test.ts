@@ -274,6 +274,57 @@ describe("a record set aside, in Notion", () => {
     expect([report!.said ?? [], node("reindeer:comet")!["$archived"], engines[0]!.linkOf("reindeer:comet"), writes()]).toEqual([[], true, page, []]);
   });
 
+  it("brought back before its page's deletion or move there was heard, is made anew or kept as it is, and never removed", async () => {
+    const { act, node, stub, fleetDb, start, later, writes, answered } = herd();
+    for (const id of ["comet", "vixen"]) act("add-reindeer", { id: `reindeer:${id}`, name: id });
+    const first = start();
+    await first.pass();
+    const [comet, vixen] = ["comet", "vixen"].map((id) => first.engines[0]!.linkOf(`reindeer:${id}`)!);
+    for (const id of ["comet", "vixen"]) act("archive-reindeer", { id: `reindeer:${id}` });
+    await first.pass();
+    stub.archive(comet!);
+    stub.archive(vixen!);
+    answered.set(vixen!, { in_trash: false, archived: false, parent: { type: "data_source_id", data_source_id: "elsewhere" } });
+    for (const id of ["comet", "vixen"]) act("unarchive-reindeer", { id: `reindeer:${id}` });
+    stub.requests.length = 0;
+    // One pass it could not be asked in, and a restart.
+    stub.share(fleetDb, false);
+    await first.pass();
+    stub.share(fleetDb, true);
+    const second = start(first.states());
+    const [back] = await second.pass();
+    expect([...(back!.said ?? [])].sort()).toEqual(["comet was brought back here with no page in Notion, so a new one was made", "vixen was brought back here, and its page in Notion is no longer one this connection keeps: it is kept here, and no longer in step"]);
+    expect(writes()).toHaveLength(1);
+    for (let pass = 0; pass < 2; pass += 1) {
+      later();
+      expect((await second.pass())[0]!.pushed).toEqual([]);
+    }
+    expect([node("reindeer:comet")!["name"], node("reindeer:vixen")!["name"], stub.pages(fleetDb).length]).toEqual(["comet", "vixen", 1]);
+  });
+
+  it("whose page is in the trash holds up no edit of a page that links it", async () => {
+    const { act, stub, fleetDb, checksDb, start, later, writes } = herd();
+    act("add-reindeer", { id: "reindeer:comet", name: "Comet" });
+    act("add-check", { id: "check:h", name: "Hooves" });
+    act("connect-check-reindeer", { id: "check:h", to: "reindeer:comet" });
+    const { pass } = start();
+    await pass();
+    await pass();
+    act("archive-reindeer", { id: "reindeer:comet" });
+    stub.archive(String(stub.pages(fleetDb)[0]!["id"]));
+    later();
+    await pass();
+    stub.requests.length = 0;
+    act("edit-check", { id: "check:h", name: "Hooves II" });
+    await pass();
+    expect(writes().map((one) => Object.keys(one.body!["properties"] as object))).toEqual([["Name"]]);
+    act("unarchive-reindeer", { id: "reindeer:comet" });
+    await pass();
+    await pass();
+    const of = ((stub.pages(checksDb)[0]!["properties"] as Record<string, Record<string, unknown>>)["Of"]!["relation"] as { id: string }[]).map((one) => one.id);
+    expect(of).toEqual(stub.pages(fleetDb).map((page) => page["id"]));
+  });
+
   it("whose page was already put in the trash before this is sent nothing, then made there again when it is brought back, and said", async () => {
     const { act, stub, fleetDb, start, writes, later } = herd();
     act("add-reindeer", { id: "reindeer:comet", name: "Comet" });
@@ -314,6 +365,9 @@ describe("a record set aside, in Notion", () => {
 
 /* ----------------------------------------------------- Google Calendar */
 
+/** Google's own word for an event that is deleted, as its API spells it. */
+const CANCELED = ["cancel", "led"].join("");
+
 type Event = Record<string, unknown> & { id: string; etag: string; seq: number };
 
 /** A Google calendar in memory, every write kept as its method, its event and its `sendUpdates`. */
@@ -335,6 +389,7 @@ function google() {
     const at = new URL(url);
     const id = decodeURIComponent(at.pathname.split("/events")[1]?.slice(1) ?? "");
     const method = init?.method ?? "GET";
+    if (method === "GET" && id) return events.has(id) ? answer(200, events.get(id)) : answer(404, {});
     if (method === "GET") {
       const since = Number(at.searchParams.get("syncToken") ?? "0");
       return answer(200, { items: [...events.values()].filter((event) => event.seq > since), nextSyncToken: String(seq) });
@@ -343,7 +398,7 @@ function google() {
     if (method === "POST") return answer(200, touch({ id: `evt${(next += 1)}`, ...(JSON.parse(init!.body!) as object) }));
     const was = events.get(id);
     if (!was) return answer(404, {});
-    if (method === "DELETE") return touch({ ...was, status: "cancelled" }), answer(204);
+    if (method === "DELETE") return touch({ ...was, status: CANCELED }), answer(204);
     return answer(200, touch(merge(was, JSON.parse(init!.body!) as Record<string, unknown>)));
   };
   return { fetch, events, writes, touch, change: (id: string, fields: Record<string, unknown>) => touch({ ...events.get(id)!, ...fields }) };
@@ -437,7 +492,7 @@ describe("a record set aside, in a Google calendar", () => {
     await engine.run();
     expect(remote.writes).toEqual([]);
     // One week's exception canceled there is no record here, and the series is not touched by it.
-    remote.touch({ id: "evt1_x", status: "cancelled", recurringEventId: "evt1" });
+    remote.touch({ id: "evt1_x", status: CANCELED, recurringEventId: "evt1" });
     remote.change("evt1", { recurrence: ["RRULE:FREQ=WEEKLY;BYDAY=TU"] });
     expect((await engine.run()).refused).toEqual([]);
     expect(node("event:swim")!["startsRepeat"]).toMatchObject({ every: "week", on: ["tue"] });
@@ -467,7 +522,7 @@ describe("a record set aside, in a Google calendar", () => {
     const first = start();
     await first.run();
     act("archive-event", { id: "event:party" });
-    remote.change("evt1", { status: "cancelled" });
+    remote.change("evt1", { status: CANCELED });
     expect((await first.run()).said).toEqual(["Party is set aside here and its event was deleted in Google Calendar: it is kept here, and a new event is made if it is brought back"]);
     const second = start(first.snapshot);
     expect([(await second.run()).said ?? [], node("event:party")!["$archived"]]).toEqual([[], true]);
@@ -495,13 +550,54 @@ describe("a record set aside, in a Google calendar", () => {
     expect(remote.writes).toEqual([]);
   });
 
+  it("brought back with its event out of the filter, is kept, said, no longer in step, and never removed", async () => {
+    const { act, node, remote, start } = calendar(false, { filter: { tag: "#home" } });
+    act("add-event", { id: "event:party", name: "Party", ...WHEN });
+    const engine = start();
+    await engine.run();
+    remote.writes.length = 0;
+    act("archive-event", { id: "event:party" });
+    await engine.run();
+    remote.change("evt1", { summary: "Party" });
+    await engine.run();
+    act("unarchive-event", { id: "event:party" });
+    expect((await engine.run()).said).toEqual(["Party was brought back here, and its event in Google Calendar is no longer one this connection keeps: it is kept here, and no longer in step"]);
+    remote.change("evt1", { location: "Elsewhere" });
+    expect((await engine.run()).said ?? []).toEqual([]);
+    expect([node("event:party")!["name"], remote.writes]).toEqual(["Party", []]);
+  });
+
+  it("takes nobody off and invites nobody new for a person set aside whose other addresses the event does not hold", async () => {
+    const { act, store, remote, start } = calendar(true);
+    act("add-event", { id: "event:party", name: "Party", ...WHEN });
+    const engine = start();
+    await engine.run();
+    remote.change("evt1", { attendees: [{ email: "ana@example.com" }] });
+    await engine.run();
+    act("add-person", ANA);
+    act("add-person", { id: "person:kay", name: "Kay", emails: ["k@example.com", "ana@example.com"], inviteMe: true });
+    act("merge-person", { id: "person:ana", into: "person:kay" });
+    act("archive-person", { id: "person:kay" });
+    remote.writes.length = 0;
+    await engine.run();
+    expect([remote.writes, store.graph.out("event:party", "who", { archived: "all" })]).toEqual([[], []]);
+    // A live person holding one of the addresses is the guest, and the other address stays as Google has it.
+    act("unarchive-person", { id: "person:kay" });
+    await engine.run();
+    remote.change("evt1", { attendees: ["a", "ana", "k"].map((one) => ({ email: `${one}@example.com` })) });
+    remote.writes.length = 0;
+    await engine.run();
+    await engine.run();
+    expect([remote.writes, store.graph.out("event:party", "who", { archived: "all" }).map((one) => one.id)]).toEqual([[], ["person:kay"]]);
+  });
+
   it("whose event was already deleted before this is sent nothing, then made there again when it is brought back, and said", async () => {
     const { act, remote, start } = calendar(false);
     act("add-event", { id: "event:party", name: "Party", ...WHEN });
     const first = start();
     await first.run();
     act("archive-event", { id: "event:party" });
-    remote.change("evt1", { status: "cancelled" });
+    remote.change("evt1", { status: CANCELED });
     remote.writes.length = 0;
     const second = start({ ...first.snapshot, links: {} });
     for (let pass = 0; pass < 2; pass += 1) expect((await second.run()).said ?? []).toEqual([]);

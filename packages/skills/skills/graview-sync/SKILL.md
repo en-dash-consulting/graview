@@ -111,9 +111,10 @@ a sentence, where that system owns it. Storing and serving the app is
 
    Set aside or merged away here, a record keeps its page or event and what
    changes there still lands (no guest is mailed); only one removed is
-   deleted there. Deleted there while aside, it stays here, and is made
-   there anew, said in `report.said`, when brought back, its guests invited
-   again under `notify`; so is one an earlier version deleted.
+   deleted there. Deleted there while aside, it stays here (unless
+   `"read"`), and is made there anew, said in `report.said`, when brought
+   back, guests invited again under `notify`; so is one an earlier version
+   deleted. Out of the filter by then, it is kept, no longer in step.
 
    What a change there lands through, credited to the system: a page or
    event made there becomes a record through `add-<kind>`, or else the

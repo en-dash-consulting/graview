@@ -176,7 +176,11 @@ export interface RemoteSystem {
    * no incremental API returns everything and a constant cursor; the engine
    * still behaves, it just does more work.
    */
-  pull(cursor?: string): Promise<{
+  pull(
+    cursor?: string,
+    /** Records brought back here since the last pull, by resource and id: read as they stand, for what became of them while they were aside. */
+    back?: readonly { readonly resource: string; readonly id: string }[],
+  ): Promise<{
     readonly changes: readonly RemoteChange[];
     readonly cursor: string;
     /** What the transport did to the remote to keep these records, or found there, as sentences: properties it made in Notion, one of another type it left. */
@@ -247,6 +251,8 @@ export interface SyncState {
    * sent for one until it is brought back; it is then made there, and said.
    */
   readonly alone?: readonly string[];
+  /** Records set aside here and linked, by our id, as the last pass left them: one brought back since is read again there (`RemoteSystem.pull`'s `back`). */
+  readonly aside?: readonly string[];
   /** The last pass, as `connectionStatus` reads it: when, and what it did. */
   readonly lastPass?: PassKept;
 }

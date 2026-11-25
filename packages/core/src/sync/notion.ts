@@ -583,7 +583,7 @@ export function notion(options: NotionOptions): RemoteSystem {
       /** What a push resolves against: the properties the last pull read, or read now. */
       resolved: async () => (schema ? resolve(schema) : ready()),
 
-      async pull(at: Cursor | undefined, resolved: Map<string, Property>, time: number): Promise<{ readonly changes: RemoteChange[]; readonly cursor: Cursor }> {
+      async pull(at: Cursor | undefined, resolved: Map<string, Property>, time: number, back: readonly string[]): Promise<{ readonly changes: RemoteChange[]; readonly cursor: Cursor }> {
         const whole = !at || time - at.swept >= (options.sweepEvery ?? DEFAULT_SWEEP);
         const pages = await query(whole ? undefined : at.since);
         let since = at?.since;
@@ -594,9 +594,11 @@ export function notion(options: NotionOptions): RemoteSystem {
           const archived = page["archived"] === true || page["in_trash"] === true;
           changes.push({ resource: spec.resource, id: String(page["id"]), version: notionVersion(page), ...(archived ? { deleted: true } : { fields: await fieldsOf(page, resolved) }) });
         }
-        if (whole && options.known) {
+        // A whole read asks after every page it knows that is not listed; any other, after those whose records were just brought back.
+        const asked = whole && options.known ? [...options.known(spec.resource), ...back] : back;
+        if (asked.length > 0) {
           const listedHere = new Set(pages.map((page) => notionKey(String(page["id"]))));
-          for (const id of options.known(spec.resource)) {
+          for (const id of new Set(asked)) {
             if (listedHere.has(notionKey(id))) continue;
             const how = await goneFromSource(id);
             if (how) changes.push({ resource: spec.resource, id, version: "gone", deleted: true, ...(how === "left" ? { left: true } : {}) });
@@ -641,7 +643,7 @@ export function notion(options: NotionOptions): RemoteSystem {
   return {
     name: "notion",
 
-    async pull(cursor) {
+    async pull(cursor, back) {
       fresh = [];
       const time = now();
       const cursors = readCursors(cursor);
@@ -651,7 +653,7 @@ export function notion(options: NotionOptions): RemoteSystem {
       const changes: RemoteChange[] = [];
       const next = new Map<string, Cursor>();
       for (const one of keepers) {
-        const pulled = await one.pull(cursors.get(one.resource), resolved.get(one.resource)!, time);
+        const pulled = await one.pull(cursors.get(one.resource), resolved.get(one.resource)!, time, (back ?? []).flatMap((record) => (record.resource === one.resource ? [record.id] : [])));
         changes.push(...pulled.changes);
         next.set(one.resource, pulled.cursor);
       }
@@ -693,6 +695,8 @@ export function notion(options: NotionOptions): RemoteSystem {
     for (const [ref, value] of Object.entries(write.fields ?? {})) {
       const property = resolved.get(ref);
       if (!property || NOTION_READ_ONLY.has(property.type)) continue;
+      // A relation as it was is not sent again: it may hold a page since put in the trash, which its record set aside here outlives.
+      if (property.type === "relation" && write.changed && !write.changed.includes(ref)) continue;
       properties[property.name] = notionProperty(property.type, property.options.length > 0 ? asOption(property, value) : value);
     }
     if (write.id && Object.keys(properties).length === 0) return { localId: write.localId, id: write.id, version: "" };

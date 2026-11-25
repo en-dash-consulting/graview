@@ -315,9 +315,10 @@ export interface SyncOptions<S extends AnySchema> {
    * A RECORD SET ASIDE WHOSE COUNTERPART IS DELETED THERE is kept here, with
    * nothing sent for it until it is brought back, when it is made there
    * again: the sentence for each, by its label. Absent: it is removed here,
-   * as a live one is. Read where the mapping says `aside: "keep"`.
+   * as a live one is. One whose counterpart had left what the sync keeps when
+   * it is brought back stays here, no longer in step (`left`). Read where the mapping says `aside: "keep"`.
    */
-  readonly setAside?: { gone(label: string): string; again(label: string): string };
+  readonly setAside?: { gone(label: string): string; left(label: string): string; again(label: string): string };
   /** The clock a pass and a sent guest list are stamped with; the runtime's when absent. */
   now?(): Date;
 }
@@ -868,6 +869,10 @@ export class SyncEngine<S extends AnySchema> {
     const policy = this.policy;
     const alone = this.alone();
     const goneAside: SaidSentence[] = [];
+    // Aside and linked as the last pass left them, and brought back since: what became of them there is asked.
+    const wasAside = new Set(this.options.setAside ? (this.state.aside ?? []) : []);
+    const back = new Set([...wasAside].filter((id) => !alone.has(id) && this.state.links[id] && this.options.store.graph.getNode(id) && !isArchived(this.options.store.graph.getNode(id))));
+    let pulled = false;
     const unsent = this.keepExisting();
     let offline = false;
     let problem: string | undefined;
@@ -902,7 +907,10 @@ export class SyncEngine<S extends AnySchema> {
 
     // --------------------------------------------------------------- inbound
     try {
-      const result = await this.options.remote.pull(cursor);
+      const result = await (back.size > 0
+        ? this.options.remote.pull(cursor, [...back].map((id) => ({ resource: links[id]!.resource, id: links[id]!.id })))
+        : this.options.remote.pull(cursor));
+      pulled = true;
       cursor = result.cursor;
       said = result.said;
       // Each sentence with its kind: the transport's resource, read through the mapping (request:notion-said-names-its-source).
@@ -931,7 +939,22 @@ export class SyncEngine<S extends AnySchema> {
           else if (!mapping.readonly && this.isAside(localId, mapping)) {
             if (change.left) continue;
             alone.add(localId);
+            // Its conflicts are nobody's to choose between any more.
+            for (const key of [...held.keys()]) if (held.get(key)!.localId === localId) held.delete(key);
             goneAside.push({ kind: mapping.kind, sentence: this.options.setAside.gone(this.labelOf(localId)) });
+            continue;
+          } else if (!mapping.readonly && back.has(localId)) {
+            // Brought back, and gone there while it was aside: made there anew; one that only left is kept here, unlinked.
+            for (const key of [...held.keys()]) if (held.get(key)!.localId === localId) held.delete(key);
+            if (!change.left) {
+              alone.add(localId);
+              continue;
+            }
+            gone.push(localId);
+            goneAside.push({ kind: mapping.kind, sentence: this.options.setAside.left(this.labelOf(localId)) });
+            const { [localId]: _left, ...rest } = links;
+            links = rest;
+            byRemoteId.delete(`${change.resource}:${change.id}`);
             continue;
           }
         }
@@ -1248,7 +1271,7 @@ export class SyncEngine<S extends AnySchema> {
       ...(this.state.skipped ? { skipped: this.state.skipped } : {}),
       ...(this.state.existing ? { existing: Object.fromEntries(Object.entries(this.state.existing).filter(([id]) => !links[id])) } : {}),
       ...(Object.keys(guestsKept).length > 0 ? { guests: guestsKept } : {}),
-      ...this.aloneState(alone, links),
+      ...this.aloneState(alone, links, pulled ? new Set() : back),
       lastPass,
     };
 
@@ -1353,15 +1376,16 @@ export class SyncEngine<S extends AnySchema> {
   }
 
   /** The records set aside that have nothing there: those known of, and every one no link is for. */
-  private aloneState(alone: ReadonlySet<string>, links: Readonly<Record<string, RemoteLink>>): { alone?: readonly string[] } {
+  private aloneState(alone: ReadonlySet<string>, links: Readonly<Record<string, RemoteLink>>, unasked: ReadonlySet<string>): Pick<SyncState, "alone" | "aside"> {
     if (!this.options.setAside) return {};
     const all = new Set(alone);
+    const aside = new Set(unasked);
     for (const node of this.options.store.graph.allNodes({ archived: true }) as unknown as Record<string, unknown>[]) {
       const id = node["id"] as string;
       const mapping = this.mappingFor(node["kind"] as string);
-      if (mapping?.aside === "keep" && mapping.kind === node["kind"] && !mapping.readonly && !links[id] && (!mapping.match || mapping.match(node))) all.add(id);
+      if (mapping?.aside === "keep" && mapping.kind === node["kind"] && !mapping.readonly && (!mapping.match || mapping.match(node))) (links[id] ? aside : all).add(id);
     }
-    return all.size > 0 ? { alone: [...all] } : {};
+    return { ...(all.size > 0 ? { alone: [...all] } : {}), ...(aside.size > 0 ? { aside: [...aside] } : {}) };
   }
 
   /** Records what the remote made of one of our writes. */
