@@ -1005,7 +1005,7 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 
 ## 0.2.15
 
-Published November 24, 2026 · the current version
+Published November 25, 2026 · the current version
 
 A toast stays clear of the page as it fills in, and a view’s link to the Scene works the moment it is drawn.
 
