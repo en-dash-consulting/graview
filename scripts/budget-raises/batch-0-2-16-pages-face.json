@@ -1,6 +1,6 @@
 {
   "budget": "the pages face alone",
-  "minified": 1854,
-  "gzipped": 500,
-  "note": "Raised when the 0.2.16 batch's branches were merged (a Todoist project kept in step as a connection, archiving that keeps a synced record's Notion page and calendar event, a view playing a YouTube or Vimeo video in a player the host draws, a custom page kept as it is left and standing at once when gone back to, the opening screen lifting once the page is painted, the pages face's bell coming with its bar, and a frame view's place as tall as it draws): together they come to 1,754 bytes minified and 0 gzipped over the budget, raised by 100 more minified and 500 more gzipped for the spread CI measures from build to build. Measured at 834,215 / 304,480 B against 832,461 / 304,648 B."
+  "minified": 3781,
+  "gzipped": 2369,
+  "note": "Raised when the 0.2.16 batch's branches were merged (a Todoist project kept in step as a connection, archiving that keeps a synced record's Notion page and calendar event, a view playing a YouTube or Vimeo video in a player the host draws, a custom page kept as it is left and fetched ahead of its first visit, the opening screen lifting once the page is painted, the pages face's bell coming with its bar, and a frame view's place as tall as it draws): together they come to 3,681 bytes minified and 1,869 gzipped over the budget, raised by 100 more minified and 500 more gzipped for the spread CI measures from build to build. Measured at 836,142 / 306,517 B against 832,461 / 304,648 B."
 }

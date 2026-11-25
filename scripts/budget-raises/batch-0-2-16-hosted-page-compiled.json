@@ -1,7 +1,7 @@
 {
   "budget": "a hosted page handed a compiled app",
-  "minified": 2523,
+  "minified": 2828,
   "gzipped": 100,
   "changeset": "the-0-2-16-batch-holds-together.md",
-  "note": "Raised when the 0.2.16 batch's branches were merged (the opening screen lifting once the page is painted, with what stands under the page counted apart; a custom page kept as it is left; the pages face's bell coming with its bar; and what a view's video and a frame's height say): together they come to 2,423 bytes minified up front over the budget and none gzipped, raised by 100 more of each for the spread a split build measures from build to build. Measured at 671,672 / 234,159 B against 669,249 / 234,272 B."
+  "note": "Raised when the 0.2.16 batch's branches were merged (the opening screen lifting once the page is painted, with what stands under the page counted apart; a custom page kept as it is left and fetched ahead of its first visit; the pages face's bell coming with its bar; and what a view's video and a frame's height say): together they come to 2,728 bytes minified up front over the budget and none gzipped, raised by 100 more of each for the spread a split build measures from build to build. Measured at 671,977 / 234,214 B against 669,249 / 234,272 B."
 }
