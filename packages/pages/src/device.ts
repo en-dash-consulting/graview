@@ -128,7 +128,9 @@ export interface RenderedScreen {
 /**
  * The profile's sixteen grays, black to white: every color the screen's sheet names is one of them. The
  * framework does not rasterize: a browser's antialiased type draws grays between them, and the host
- * quantizes the picture to its panel.
+ * quantizes the picture to its panel. On Linux a browser smooths type in color (LCD antialiasing, which no
+ * font property turns off there), so the whole screen is drawn through a grayscale filter: type and pictures
+ * alike reach the panel gray, whatever the host's browser smooths with.
  */
 export const EINK_GRAYS: readonly string[] = Array.from({ length: 16 }, (_, at) => `#${(at * 17).toString(16).padStart(2, "0").repeat(3)}`);
 /** The least a press measures on each side, in CSS pixels: a finger, not a pointer. */
@@ -157,7 +159,7 @@ const LEAST_VIEWPORT = { width: 320, height: HEIGHT.head + HEIGHT.strip + HEIGHT
 export function einkCss(): string {
   return `html, body { margin: 0; padding: 0; background: ${PAPER}; color: ${INK}; overflow: hidden; }
 body { font: 400 24px/1.25 "Helvetica Neue", Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; font-synthesis: none; text-rendering: geometricPrecision; }
-.gv-screen { position: relative; overflow: hidden; background: ${PAPER}; }
+.gv-screen { position: relative; overflow: hidden; background: ${PAPER}; filter: grayscale(1); }
 .gv-at { position: absolute; box-sizing: border-box; overflow: hidden; margin: 0; padding: 0 ${GUTTER}px; white-space: nowrap; color: ${INK}; text-decoration: none; }
 .gv-line { display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; margin: 0; }
 .gv-head { border-bottom: 3px solid ${INK}; }

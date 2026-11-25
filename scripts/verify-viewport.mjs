@@ -40,6 +40,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { arriveWithoutWebfonts, launchEngine } from "./lib/engine.mjs";
 import { graviewSources } from "./lib/graview-sources.mjs";
+import { deadline } from "./lib/deadline.mjs";
 import { at, portFor } from "./lib/ports.mjs";
 import { serving, vacant } from "./lib/serve.mjs";
 
@@ -53,6 +54,12 @@ const RECON = resolve(repoRoot, "packages/core/tests/document/fixtures/recon.gdd
 const RECON_SEED = resolve(repoRoot, "packages/core/tests/document/fixtures/recon.seed.json");
 /** The iPads, upright and turned: Playwright's own, touch and all. The Mini turned is 1024 wide, where the bar ran past the screen. */
 const IPADS = ["iPad Pro 11", "iPad (gen 7)", "iPad Mini"].flatMap((name) => [name, `${name} landscape`]);
+/**
+ * Playwright's WebKit on Linux crashes the page, any page that draws, when
+ * a window emulated as mobile is made shorter after it was made taller;
+ * without that emulation it does not, and on a Mac neither does.
+ */
+const BACK_CRASHES = process.platform === "linux";
 /** What Safari's toolbar gives back when it folds away. */
 const TOOLBAR = 70;
 const SEED = {
@@ -186,8 +193,8 @@ async function turnAndMeasure(page, root) {
  * Safari's toolbar, its width the same.
  */
 async function onAnIpad(browser, engine) {
-  const open = async (device, url, ready) => {
-    const context = await browser.newContext({ ...devices[device] });
+  const open = async (device, url, ready, emulated = {}) => {
+    const context = await browser.newContext({ ...devices[device], ...emulated });
     const page = await context.newPage();
     page.on("pageerror", (error) => errors.push(`${engine} ${device} ${url}: ${error.message}`));
     await arriveWithoutWebfonts(page, url);
@@ -198,6 +205,7 @@ async function onAnIpad(browser, engine) {
   const todoReady = () => "__todoReady" in window;
   const embedReady = () => window.__ready === true;
   for (const device of IPADS) {
+    reach("theBarFitsAnIpadInBothOrientations");
     for (const [app, url, ready] of [
       ["todo, the scene", `${at("todo")}/?today=2026-09-01`, todoReady],
       ["todo, the pages", `${at("todo")}/?today=2026-09-01&face=pages`, todoReady],
@@ -217,6 +225,7 @@ async function onAnIpad(browser, engine) {
    * as a glide takes and twice that.
    */
   for (const device of ["iPad Pro 11", "iPad Pro 11 landscape"]) {
+    reach("aTapOnTheSceneMovesTheCameraOnce");
     const { context, page } = await open(device, `${at("viewport-host")}/?doc=recon&face=scene&height=viewport`, embedReady);
     const tapped = new Set();
     for (let tap = 0; tap < 6; tap++) {
@@ -231,35 +240,55 @@ async function onAnIpad(browser, engine) {
       const next = atTheEdge ? edge : sight.find((one) => !tapped.has(one.id));
       if (!next) break;
       tapped.add(next.id);
-      const following = followTheCity(page, 1600);
-      await page.touchscreen.tap(next.x, next.y);
-      const move = oneMove(await following);
+      const move = oneMove(await followTheCity(page, 1600, () => page.touchscreen.tap(next.x, next.y)));
       // The first tap opens the panel and the city fits what is left: one move.
       const still = tap > 0 && !atTheEdge;
       seen.taps.push({ device, tapped: next.id, ...move, inSight: still, ok: move.districts > 0 && move.turns === 0 && (!still || move.moved <= 1) });
     }
     // Safari's toolbar folds away: the window grows by it, the width the same.
-    const size = page.viewportSize();
-    for (const height of [size.height + TOOLBAR, size.height]) {
-      const box = await page.evaluate(() => document.querySelector("[data-graview-box]")?.getAttribute("data-graview-box"));
-      const following = followTheCity(page, 1600);
-      await page.setViewportSize({ width: size.width, height });
-      const move = oneMove(await following);
-      const after = await page.evaluate(() => document.querySelector("[data-graview-box]")?.getAttribute("data-graview-box"));
-      seen.toolbar.push({ device, app: "ten kinds, the scene", to: height, box, after, ...move, ok: move.districts > 0 && move.moved <= 1 && box === after });
-    }
+    reach("theSceneHoldsStillWhenSafarisToolbarCollapses");
+    await toolbarFolds(page, device, "ten kinds, the scene", true);
     await context.close();
   }
   // And the todo example's Shell, on the ground: the window grows by the toolbar and back.
   const { context, page } = await open("iPad Pro 11", `${at("todo")}/?today=2026-09-01`, todoReady);
-  const size = page.viewportSize();
-  for (const height of [size.height + TOOLBAR, size.height]) {
-    const following = followTheCity(page, 1600);
-    await page.setViewportSize({ width: size.width, height });
-    const move = oneMove(await following);
-    seen.toolbar.push({ device: "iPad Pro 11", app: "todo, the scene", to: height, ...move, ok: move.districts > 0 && move.moved <= 1 });
-  }
+  await toolbarFolds(page, "iPad Pro 11", "todo, the scene", true);
   await context.close();
+  if (!BACK_CRASHES) return;
+  /*
+   * AND BACK, where the mobile emulation cannot be turned back: the same
+   * iPads, touch and size and density, the emulated viewport alone off, the
+   * panel opened by the same first tap.
+   */
+  for (const [device, app, url, ready] of [
+    ["iPad Pro 11", "ten kinds, the scene", `${at("viewport-host")}/?doc=recon&face=scene&height=viewport`, embedReady],
+    ["iPad Pro 11 landscape", "ten kinds, the scene", `${at("viewport-host")}/?doc=recon&face=scene&height=viewport`, embedReady],
+    ["iPad Pro 11", "todo, the scene", `${at("todo")}/?today=2026-09-01`, todoReady],
+  ]) {
+    reach("theSceneHoldsStillWhenSafarisToolbarCollapses");
+    const { context, page } = await open(device, url, ready, { isMobile: false });
+    if (app.startsWith("ten kinds")) {
+      const { sight } = await inSight(page);
+      await followTheCity(page, 1600, () => page.touchscreen.tap(sight[0].x, sight[0].y));
+    }
+    await toolbarFolds(page, device, app, false);
+    await context.close();
+  }
+}
+
+/**
+ * Safari's toolbar folds away and comes back: the window grows by it and
+ * gives it back, the width the same, and nothing on the scene moves.
+ */
+async function toolbarFolds(page, device, app, mobile) {
+  const size = page.viewportSize();
+  const laidOut = () => page.evaluate(() => document.querySelector("[data-graview-box]")?.getAttribute("data-graview-box"));
+  for (const height of mobile && BACK_CRASHES ? [size.height + TOOLBAR] : [size.height + TOOLBAR, size.height]) {
+    const box = await laidOut();
+    const move = oneMove(await followTheCity(page, 1600, () => page.setViewportSize({ width: size.width, height })));
+    const after = await laidOut();
+    seen.toolbar.push({ device, app, mobile, to: height, box, after, ...move, ok: move.districts > 0 && move.moved <= 1 && (app.startsWith("todo") || box === after) });
+  }
 }
 
 /** The bar as an iPad draws it: the page's width against the screen's, and whatever on the bar stands past either edge. */
@@ -283,9 +312,14 @@ function barFits(page) {
 }
 const fitsTheScreen = (m) => m !== null && m.page <= m.screen && m.past.length === 0;
 
-/** Every district's box, a frame at a time, from now until `ms` have passed: where the city is on the way. */
-function followTheCity(page, ms) {
-  return page.evaluate(
+/**
+ * Every district's box, a frame at a time, while `act` is done and until
+ * `ms` have passed: where the city is on the way. The two are awaited
+ * together, so an act that fails is the failure said, and the frames never
+ * reject with nobody listening once the browser is closed after it.
+ */
+async function followTheCity(page, ms, act) {
+  const following = page.evaluate(
     (ms) =>
       new Promise((done) => {
         const frames = [];
@@ -304,6 +338,8 @@ function followTheCity(page, ms) {
       }),
     ms,
   );
+  const [frames] = await Promise.all([following, act()]);
+  return frames;
 }
 
 /**
@@ -359,10 +395,22 @@ const report = { at: new Date().toISOString(), engines, portrait: PORTRAIT, land
 const errors = [];
 const seen = { embed: [], shell: [], zero: [], bar: [], taps: [], toolbar: [] };
 let browser;
-const host = await buildHost();
-const todo = await serving("todo", portFor("todo"), repoRoot);
+let host;
+let todo;
+/** Puts the browser and the servers away; a browser that crashed may say so, or never close. */
+const cleanup = async () => {
+  await Promise.race([browser?.close().catch(() => {}), new Promise((done) => setTimeout(done, 10_000))]);
+  host?.stop();
+  todo?.stop();
+};
+/** The claim being measured: what a run that stops, or hangs, is said to have failed. */
+const reach = deadline({ verdict: resolve(repoRoot, "docs/viewport.json"), report, cleanup });
+reach("theEmbedFillsThePhoneAfterEachTurnOnBothFaces");
 try {
+  host = await buildHost();
+  todo = await serving("todo", portFor("todo"), repoRoot);
   for (const engine of engines) {
+    reach("theEmbedFillsThePhoneAfterEachTurnOnBothFaces");
     browser = await launchEngine(engine);
     for (const face of FACES) {
       for (const height of HEIGHTS) {
@@ -380,6 +428,7 @@ try {
          * itself out for the box it has now, not the one before.
          */
         if (face === "scene" && height === "viewport") {
+          reach("aSceneWhoseBoxWentToNothingFollowsItBack");
           await page.evaluate(() => (document.getElementById("app").style.display = "none"));
           await page.setViewportSize(LANDSCAPE);
           await page.waitForTimeout(SETTLE);
@@ -387,10 +436,12 @@ try {
           await page.waitForTimeout(SETTLE);
           const back = await measure(page, "embed");
           seen.zero.push({ engine, back, ok: fills(back) });
+          reach("theEmbedFillsThePhoneAfterEachTurnOnBothFaces");
         }
         await context.close();
       }
     }
+    reach("theShellFillsThePhoneAfterEachTurn");
     // The whole-page Shell: the todo example, as its own window.
     const context = await browser.newContext({ viewport: PORTRAIT, hasTouch: true });
     const page = await context.newPage();
@@ -405,31 +456,36 @@ try {
     await browser.close();
     browser = undefined;
   }
-
-  const every = (list) => list.length > 0 && list.every((one) => one.ok);
-  report.checks.theEmbedFillsThePhoneAfterEachTurnOnBothFaces = { held: seen.embed, ok: every(seen.embed) };
-  report.checks.theShellFillsThePhoneAfterEachTurn = { held: seen.shell, ok: every(seen.shell) };
-  report.checks.aSceneWhoseBoxWentToNothingFollowsItBack = { held: seen.zero, ok: every(seen.zero) };
-  if (engines.includes("webkit")) {
-    report.checks.theBarFitsAnIpadInBothOrientations = { held: seen.bar, ok: every(seen.bar) };
-    // Every tap one move the one way; a district already in sight chosen with nothing moving.
-    report.checks.aTapOnTheSceneMovesTheCameraOnce = { held: seen.taps, ok: every(seen.taps) && seen.taps.some((tap) => tap.inSight) };
-    report.checks.theSceneHoldsStillWhenSafarisToolbarCollapses = { held: seen.toolbar, ok: every(seen.toolbar) };
-  }
-  report.checks.noPageThrew = { errors, ok: errors.length === 0 };
-  report.passed = Object.values(report.checks).every((check) => check.ok);
 } catch (error) {
   report.error = String(error?.stack ?? error);
-  report.passed = false;
 } finally {
-  await browser?.close();
-  host.stop();
-  todo.stop();
+  reach.done();
+  await cleanup();
 }
+
+const every = (list) => list.length > 0 && list.every((one) => one.ok);
+report.checks.theEmbedFillsThePhoneAfterEachTurnOnBothFaces = { held: seen.embed, ok: every(seen.embed) };
+report.checks.theShellFillsThePhoneAfterEachTurn = { held: seen.shell, ok: every(seen.shell) };
+report.checks.aSceneWhoseBoxWentToNothingFollowsItBack = { held: seen.zero, ok: every(seen.zero) };
+if (engines.includes("webkit")) {
+  report.checks.theBarFitsAnIpadInBothOrientations = { held: seen.bar, ok: every(seen.bar) };
+  // Every tap one move the one way; a district already in sight chosen with nothing moving.
+  report.checks.aTapOnTheSceneMovesTheCameraOnce = { held: seen.taps, ok: every(seen.taps) && seen.taps.some((tap) => tap.inSight) };
+  report.checks.theSceneHoldsStillWhenSafarisToolbarCollapses = { held: seen.toolbar, ok: every(seen.toolbar) };
+}
+// A run that stopped part way failed the claim it was measuring, by name, and says what stopped it. Of the others, one measured false is false; the rest were not measured to their end, so they are not said to hold.
+if (report.error) {
+  for (const [name, check] of Object.entries(report.checks)) {
+    if (name === reach.at()) report.checks[name] = { ...check, stopped: report.error, ok: false };
+    else if (check.held.every((one) => one.ok)) report.checks[name] = { held: check.held, unfinished: true };
+  }
+}
+report.checks.noPageThrew = { errors, ok: errors.length === 0 };
+report.passed = !report.error && Object.values(report.checks).every((check) => check.ok);
 
 mkdirSync(resolve(repoRoot, "docs"), { recursive: true });
 writeFileSync(resolve(repoRoot, "docs/viewport.json"), `${JSON.stringify(report, null, 2)}\n`);
-for (const [name, check] of Object.entries(report.checks)) process.stdout.write(`${check.ok ? "ok  " : "FAIL"} ${name}\n`);
+for (const [name, check] of Object.entries(report.checks)) process.stdout.write(`${check.unfinished ? "--  " : check.ok ? "ok  " : "FAIL"} ${name}\n`);
 if (report.error) process.stdout.write(`${report.error}\n`);
 process.stdout.write("wrote docs/viewport.json\n");
 process.exit(report.passed ? 0 : 1);

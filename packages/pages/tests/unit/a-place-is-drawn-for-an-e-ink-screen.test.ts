@@ -75,6 +75,10 @@ describe("every example drawn on the e-ink profile", () => {
         }
       });
 
+      it("draws the whole screen through a grayscale filter, so type smoothed in color reaches the panel gray", () => {
+        for (const { place, screen } of screens) expect(screen.css, place).toMatch(/\.gv-screen \{[^}]*filter: grayscale\(1\)/);
+      });
+
       it("has no transition, animation or hover rule, no script and nothing to fetch", () => {
         for (const { place, screen } of screens) {
           expect(screen.css, place).not.toMatch(/transition|animation|@keyframes|:hover|:focus|cursor/i);
