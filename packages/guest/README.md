@@ -691,6 +691,49 @@ nothing and `onProblem` says why; a headless run says the same among its
 problems, and lists a reel it plays in `videos` with `app: "reel"` in
 place of `record` and `field`.
 
+#### A video on YouTube or Vimeo
+
+A view names the video, by provider and id or by its watch address, and
+the host draws all of it (HQ f-view-video-embeds):
+
+```html
+<graview-video data-provider="youtube" data-video="dQw4w9WgXcQ" data-start="1m30s" title="The keynote" poster="${talk.photo.src}"></graview-video>
+<graview-video data-watch="${talk.link}" title="${talk.label}"></graview-video>
+```
+
+The providers are a closed list (`EMBED_PROVIDERS`: YouTube's no-cookie
+player and Vimeo's). What the view says is read down to a checked id — an
+unlisted Vimeo video's key after a slash — and whole seconds to start at,
+and the host builds the only address the player may have
+(`https://www.youtube-nocookie.com/embed/<id>`,
+`https://player.vimeo.com/video/<id>`); the rest of a watch address is
+dropped. Anything else draws nothing and is said to `onProblem` as
+`embed-refused`, and by a headless run among its problems with the same
+`code`.
+
+A poster and a play button stand first: the host's own ground with the
+`title`, or `poster`, a picture the view may draw already, judged as an
+`<img src>` is. Nothing is asked of the provider until a person presses
+play. Then the player is a sandboxed frame (its scripts and its own
+storage) in the box the poster stood in, `data-shape` `16:9` (a Short
+`9:16`), `4:3`, `1:1` or `9:16`, so nothing moves; it is told the page's
+origin alone, which YouTube's player needs. It plays on across the view's
+redraws, and goes back to its poster when another plays, or when it is
+hidden or off the page. A link out stands below it throughout, and printed
+it is the poster and the address. In the Scene's card it is the poster and
+the link.
+
+A host whose page has a policy allows the two frames (`frame-src
+https://www.youtube-nocookie.com https://player.vimeo.com`,
+`EMBED_ORIGINS`); where it does not, a pressed video says so and keeps its
+link, and `onProblem` hears `embed-not-allowed`. `embeds: { providers:
+["vimeo"] }` on `mountWorkerView`, a registered view's definition or
+`runWorkerViewHeadless` plays from that one alone, and `{ providers: [] }`
+from none: a provider turned off is drawn as its link. A headless run
+lists each in `videos` with `provider` and `link`. A frame guest has no
+`<graview-video>`; what its own document frames is its sandbox's and its
+own policy's to allow.
+
 ### Files a person drops on it
 
 A worker view takes files a person drops on what it drew (FR-193). Its
@@ -944,6 +987,8 @@ view, the relation and the kind — so a host files a standing fault once. The l
 | `jump-goes-nowhere` | A jump within the view names no element it drew. |
 | `file-link-goes-nowhere` | A file link is not followed: it is not an `<a>`, names no record the view was shown, or names no field holding a file. |
 | `media-not-drawn` | A record's video or the full-screen viewer is not drawn. |
+| `embed-refused` | A video on a provider the view named is refused: a provider not on the list, or no id of a video. |
+| `embed-not-allowed` | The page's policy allows no frame from the provider's player, so the video's link stands alone. |
 | `drop-not-offered` | A drop target the view drew is not offered. |
 | `gestures-not-declared` | The view listens for a gesture its manifest does not say it hears. |
 | `press-refused` | A press was refused, and the note beside it could not be drawn. |

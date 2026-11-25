@@ -53,7 +53,7 @@ export function sayRefusal(refusal: ViewRefusal, host: ImageHost & { readonly li
       return { at: `drawing ${element}${name}`, says: `Not drawn: the value of${name} is not one the open kit takes.${why(refusal.name)}` };
     case "url":
       if ("element" in refusal && refusal.element === "a" && refusal.address !== undefined) return { at: `drawing ${element}${name}`, says: `Not drawn: ${linkRefusedWords(refusal.address, host.linkOrigins)}` };
-      return { at: `drawing ${element}${name}`, says: refusal.address !== undefined && "element" in refusal && refusal.element === "img" ? `Not drawn: ${imageRefusedWords(refusal.address, host, "length" in refusal ? refusal.length : undefined)}` : `Not drawn: an address. A view loads nothing; an image is a data: image.` };
+      return { at: `drawing ${element}${name}`, says: refusal.address !== undefined && "element" in refusal && (refusal.element === "img" || refusal.element === "graview-video") ? `Not drawn: ${imageRefusedWords(refusal.address, host, "length" in refusal ? refusal.length : undefined)}` : `Not drawn: an address. A view loads nothing; an image is a data: image.` };
     case "child":
       return { at: `drawing ${element}`, says: `Not drawn: ${element} holds nothing.` };
     case "record":
@@ -96,7 +96,7 @@ export function judgeTranscript(transcript: HeadlessTranscript, input: HeadlessI
   // A kind's list is somewhere a view may go by name too, by its plural or the kind's name.
   const goes = [...input.places, ...(input.lists ?? []).filter((slug) => !input.places.some((place) => place.as === slug)).map((slug) => ({ as: slug }))];
   const unsure = input.placesUnsure === true;
-  const said = describeDrawing(drawn.root, { props: input.props, places: goes, ...(unsure ? { placesUnsure: true } : {}), ...(input.accepts ? { accepts: input.accepts } : {}) });
+  const said = describeDrawing(drawn.root, { props: input.props, places: goes, ...(unsure ? { placesUnsure: true } : {}), ...(input.accepts ? { accepts: input.accepts } : {}), ...(input.embeds ? { embeds: { providers: input.embeds } } : {}) });
   for (const act of said.acts) {
     if (!acts.has(act)) return { ok: false, reason: "act", detail: `It binds a press to the act "${act}" (data-act), which its manifest does not name.` };
   }

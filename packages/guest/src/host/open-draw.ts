@@ -63,6 +63,8 @@ ${VIEW_LAYERS}
 :where([data-graview-view-root]) :where(button) { font: inherit; color: inherit; background: none; border: 0; padding: 0; margin: 0; text-align: inherit; appearance: none; cursor: pointer; }
 :where([data-graview-view-root]) :where(a[data-graview-link]) { color: inherit; text-decoration: none; }
 [data-graview-view-root] :is([data-graview-link], [data-graview-press]) { cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: rgb(128 128 128 / 0.16); }
+:where([data-graview-view-root] graview-video:is([data-provider], [data-watch])) { display: block; }
+:where([data-graview-view-root] graview-video:is([data-provider], [data-watch]):not([data-graview-player]))::before { content: ""; display: block; aspect-ratio: 16 / 9; margin-bottom: calc(1.225rem + 12px); }
 [data-graview-view-root] :focus-visible { outline-style: solid !important; outline-width: clamp(2px, var(--graview-focus-width, 2px), 8px) !important; outline-color: var(--graview-focus-color, var(--graview-ring-color, Highlight)) !important; outline-offset: clamp(-2px, var(--graview-focus-offset, 2px), 8px) !important; transition: none !important; }
 [data-graview-view-root] [data-graview-ring-inside]:focus-visible { outline-offset: calc(-1 * clamp(2px, var(--graview-focus-width, 2px), 8px)) !important; }
 [data-graview-view-root] .graview-sr { position: absolute !important; width: 1px !important; height: 1px !important; margin: -1px !important; padding: 0 !important; border: 0 !important; overflow: hidden !important; clip-path: inset(50%) !important; white-space: nowrap !important; }

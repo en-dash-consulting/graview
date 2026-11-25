@@ -48,6 +48,10 @@ export const VIEW_PROBLEM_CODES = [
   "file-link-goes-nowhere",
   /** A record's video or the full-screen viewer the view placed is not drawn. */
   "media-not-drawn",
+  /** A video on a provider the view named (`<graview-video data-provider data-video>`, `data-watch`) is refused: a provider not on the list, or no id of a video. */
+  "embed-refused",
+  /** A video on a provider was not played: the page's own policy allows no frame from the provider's player (`frame-src`), so its link stands alone. */
+  "embed-not-allowed",
   /** A drop target the view drew (`data-drop`) is not offered. */
   "drop-not-offered",
   /** The view listens for a wheel, a drag or a pinch its manifest does not say it hears (`gestures`). */

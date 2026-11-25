@@ -135,6 +135,8 @@ const CHAIN = [
   ["growing", "verify-growing.mjs"],
   // A picture or a document put on a record from the page — picked, pasted, a PDF inline, full size, refused in words, taken back — on both faces, in three engines (FR-162, FR-163).
   ["files", "verify-files.mjs"],
+  // A view's YouTube and Vimeo videos play in place against stand-in providers: nothing asked before the press, the same box, on through a redraw, refused off the list, its link alone where a host or its policy says no — the pages, the one face and the Scene's card, in three engines (HQ f-view-video-embeds).
+  ["video-embeds", "verify-video-embeds.mjs"],
   // The app as it was: from a row of Activity, a timeline with a tick per change, scrubbed from the start to now on the scene and the routed face, each stop exactly as `store.at` says, nothing to change in the past (Roadmap f-playback).
   ["playback", "verify-playback.mjs"],
   // A record that links another app drawn as the app its host names, refused as no access, plainly without a resolver, on both faces at desk width, in three engines (FR-171).
