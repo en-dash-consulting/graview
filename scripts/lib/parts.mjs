@@ -17,17 +17,70 @@
  */
 import { existsSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { mergeJourneys } from "./journeys-verdict.mjs";
 
 export const PART_ENV = "GRAVIEW_PART";
 
 /** The harnesses run in parts: each part's name, its arguments, the engine whose watch it writes, and the verdict the parts make. */
 const byEngine = (verdict, engines = ["chromium", "webkit", "firefox"]) => ({ verdict, parts: engines.map((engine) => ({ part: engine, args: [`--engine=${engine}`], engine })) });
 
+/**
+ * A harness whose parts are steps of one engine: each part takes the steps
+ * named (a name, or every name under it: `phone` is `phone/button` and the
+ * rest of the phone's), and the part called `rest` takes every step no other
+ * part does — so a step added to the harness later is run by `rest` and
+ * never by nobody. The harness chooses its steps with `chooseSteps`.
+ */
+const bySteps = (verdict, taken, more = {}) => ({
+  verdict,
+  ...more,
+  parts: [
+    ...Object.entries(taken).map(([part, steps]) => ({ part, args: [`--steps=${steps.join(",")}`], engine: "chromium" })),
+    { part: "rest", args: [`--not=${Object.values(taken).flat().join(",")}`], engine: "chromium" },
+  ],
+});
+
+const under = (name, pattern) => name === pattern || name.startsWith(`${pattern}/`);
+
+/**
+ * The steps a run takes of a harness's own, each `{ name, … }`: those
+ * `--steps` names, or all but those `--not` names, or every one. A name that
+ * is no step's throws, since the steps it was meant to name would be run by
+ * no part. `--list-steps` prints the names this run would take and ends.
+ */
+export function chooseSteps(steps, argv = process.argv.slice(2)) {
+  const said = (flag) => argv.find((arg) => arg.startsWith(`${flag}=`))?.slice(flag.length + 1).split(",").filter(Boolean) ?? null;
+  const take = said("--steps");
+  const leave = said("--not");
+  const lost = [...(take ?? []), ...(leave ?? [])].filter((pattern) => !steps.some((step) => under(step.name, pattern)));
+  if (lost.length > 0) throw new Error(`No step called ${lost.join(", ")}. Known: ${steps.map((step) => step.name).join(", ")}`);
+  const chosen = steps.filter((step) => (!take || take.some((one) => under(step.name, one))) && !leave?.some((one) => under(step.name, one)));
+  if (argv.includes("--list-steps")) {
+    process.stdout.write(`${chosen.map((step) => step.name).join("\n")}\n`);
+    process.exit(0);
+  }
+  return chosen;
+}
+
 export const PARTS = {
   /* The next longest, each an engine at a time with nothing shared between engines: 627 s, 623 s and 386 s on a laptop. */
   address: byEngine("docs/address.json"),
   "scene-hands": byEngine("docs/scene-hands.json", ["chromium", "webkit"]),
   "drawn-once": byEngine("docs/drawn-once.json"),
+  /*
+   * The longest three left: 1,005 s, 525 s and 677 s on a runner, where a
+   * shard's set-up is another two and a half minutes and a second look as
+   * long again. Journeys by app, and Gauntlet, a third of it, by face: a
+   * job's pointer and keyboard are compared within a face. `rest` is the
+   * apps no other part names.
+   */
+  journeys: bySteps("docs/journeys.json", { todo: ["todo"], seedbed: ["seedbed"], discography: ["discography", "discography-past"], "gauntlet-scene": ["gauntlet/scene"], "gauntlet-pages": ["gauntlet/pages"] }, { merge: mergeJourneys }),
+  site: bySteps("docs/site-check.json", { page: ["sweep/index.html"], tour: ["sweep/tour.html"], "progression-light": ["sweep/progression.html/light"], "progression-dark": ["sweep/progression.html/dark"] }),
+  "one-face": bySteps("docs/one-face.json", {
+    desk: ["desk/switch", "desk/button", "desk/node", "desk/views", "desk/chosen", "desk/free", "desk/overshoot", "desk/bar", "desk/viewLines"],
+    phone: ["phone", "homeReads"],
+    rich: ["rich", "richPhoneLines"],
+  }),
   /*
    * quiet, each engine as six parts: its five sections that run alone
    * (`--steady`, `--standing`, `--picks`, `--boxes`, `--notices`) and the
@@ -97,10 +150,31 @@ export function mergeParts(parts) {
   }
   const missing = parts.filter((one) => !wrote.includes(one)).map((one) => one.part);
   merged.checks = { ...(merged.checks ?? {}), everyPartWroteAVerdict: { ok: missing.length === 0, ...(missing.length > 0 ? { missing } : {}) } };
+  /*
+   * A CLAIM NO PART MADE. A part says which of the harness's claims it had
+   * nothing to judge (`unmade`): another part's steps are what they are
+   * about. One that every part left is a claim the whole would have failed
+   * for want of anything seen, and fails here too.
+   */
+  for (const claim of new Set(wrote.flatMap((one) => one.verdict.unmade ?? [])))
+    if (!CLAIM_HOLDERS.some((holder) => merged[holder] && claim in merged[holder])) merged.checks[claim] = { ok: false, unmade: merged.parts };
   merged.passed = missing.length === 0 && wrote.every((one) => one.verdict.passed !== false && one.verdict.ok !== false) && Object.values(merged.checks).every((check) => check.ok);
   // What each part said beyond its claims (its counts, its definitions), kept under its own name.
-  merged.byPart = Object.fromEntries(wrote.map((one) => [one.part, Object.fromEntries(Object.entries(one.verdict).filter(([key]) => ![...CLAIM_HOLDERS, "at", "passed", "ok", "timing"].includes(key)))]));
+  merged.byPart = Object.fromEntries(wrote.map((one) => [one.part, Object.fromEntries(Object.entries(one.verdict).filter(([key]) => ![...CLAIM_HOLDERS, "at", "passed", "ok", "timing", "unmade"].includes(key)))]));
   return merged;
+}
+
+/**
+ * What a merged verdict says failed that no part said: a claim none of them
+ * made, or one only the whole can judge. The parts all held, so the harness
+ * fails by these, as the one process it was would have.
+ */
+export function missedByTheWhole(repoRoot, name) {
+  const path = resolve(repoRoot, PARTS[name].verdict);
+  const verdict = existsSync(path) ? JSON.parse(readFileSync(path, "utf8")) : null;
+  if (!verdict?.parts || verdict.passed !== false) return [];
+  const missed = CLAIM_HOLDERS.flatMap((holder) => Object.entries(verdict[holder] ?? {}).filter(([, value]) => !held(value)).map(([claim]) => claim));
+  return missed.length > 0 ? missed : ["its parts held and its verdict does not pass"];
 }
 
 /**
@@ -132,7 +206,7 @@ export function writeMerged(repoRoot, name, { whole = false, since = 0, only = n
       return { part, verdict: null };
     }
   });
-  writeFileSync(resolve(repoRoot, spec.verdict), `${JSON.stringify(mergeParts(parts), null, 2)}\n`);
+  writeFileSync(resolve(repoRoot, spec.verdict), `${JSON.stringify((spec.merge ?? mergeParts)(parts), null, 2)}\n`);
   for (const { path } of files) rmSync(path, { force: true });
   return spec.verdict;
 }

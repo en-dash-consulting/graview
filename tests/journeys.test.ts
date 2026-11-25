@@ -5,7 +5,7 @@ import { spawnSync } from "node:child_process";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 // @ts-expect-error — a plain module of the harness, with no types of its own.
-import { appsNamed, frictionOf, keyboardChecks, keyboardWhy, partOf, planJobs, regressionsOf, storeHookInPage } from "../scripts/lib/journeys.mjs";
+import { appsNamed, drivenOnly, frictionOf, keyboardChecks, keyboardWhy, mergeJourneys, partOf, planJobs, regressionsOf, storeHookInPage } from "../scripts/lib/journeys.mjs";
 // @ts-expect-error — a plain module of the harness, with no types of its own.
 import { portFor } from "../scripts/lib/ports.mjs";
 
@@ -60,6 +60,41 @@ describe("the friction, ranked", () => {
       "todo: Finding a task by part of its name works but breaks keyboard-lands-nowhere: Enter on <input> left the keyboard on <body> — on the pages on a laptop with the pointer.",
       "todo: Finding a task by part of its name on the scene on a laptop from the keyboard takes 30 presses; on the scene on a laptop with the pointer, 3.",
     ]);
+  });
+});
+
+describe("a verdict made from its parts", () => {
+  const runs = {
+    "scene/1440/pointer": run(true, 3),
+    "scene/1440/keyboard": run(true, 30),
+    "pages/1440/pointer": run(true, 12),
+    "pages/1440/keyboard": run(false, 0, { deadEnd: "there is no Find box on the screen" }),
+  };
+  const face = (one: string) => Object.fromEntries(Object.entries(runs).filter(([key]) => key.startsWith(one)));
+  const part = (one: string, regressions: string[]) => ({ ...report(face(one)), at: one, regressions, took: 10, passed: regressions.length === 0 });
+
+  it("is the whole's: every run, the friction across both faces, the keyboard's claims and the regressions", () => {
+    const merged = mergeJourneys([
+      { part: "scene", verdict: part("scene", []) },
+      { part: "pages", verdict: part("pages", ["todo: one got worse."]) },
+    ]);
+    const whole = drivenOnly(report(runs));
+    expect(merged.apps).toEqual(whole.apps);
+    expect(merged.friction).toEqual(frictionOf(whole));
+    // The scene's cheapest way is what the pages' is compared with: the pages' part alone does not see it.
+    expect(merged.friction.length).toBeGreaterThan(frictionOf(report(face("scene"))).length + frictionOf(report(face("pages"))).length);
+    expect(merged.checks).toMatchObject(keyboardChecks(whole));
+    expect(merged.regressions).toEqual(["todo: one got worse."]);
+    expect(merged.passed).toBe(false);
+  });
+
+  it("does not pass where a part wrote nothing", () => {
+    const merged = mergeJourneys([
+      { part: "scene", verdict: part("scene", []) },
+      { part: "pages", verdict: null },
+    ]);
+    expect(merged.checks.everyPartWroteAVerdict).toEqual({ ok: false, missing: ["pages"] });
+    expect(merged.passed).toBe(false);
   });
 });
 

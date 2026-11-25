@@ -48,6 +48,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { chromium, devices } from "playwright";
 import { launchEngine } from "./lib/engine.mjs";
+import { chooseSteps, partPath } from "./lib/parts.mjs";
 import { at, portFor } from "./lib/ports.mjs";
 import { serving } from "./lib/serve.mjs";
 import { serveRich } from "./lib/one-face-rich-host.mjs";
@@ -3568,92 +3569,128 @@ async function pinchAndPan(page, where, { level }) {
 /* ------------------------------------------------------------------ */
 
 let browser;
+/** One gesture on a page of its own, what it answers kept in `list`. */
+const gesture = (name, list, options, device, run) => ({
+  name,
+  keys: [Object.keys(seen).find((key) => seen[key] === list)],
+  run: async (engine) => {
+    const context = await browser.newContext(options(engine));
+    const page = await context.newPage();
+    page.on("pageerror", (error) => errors.push(`${engine} ${device}: ${error.message}`));
+    const where = { engine, device };
+    try {
+      list.push(await run(page, where));
+    } catch (error) {
+      list.push({ where, ok: false, error: String(error?.message ?? error) });
+    }
+    await context.close().catch(() => {});
+  },
+});
+const onDesk = (name, list, run) => gesture(`desk/${name}`, list, () => ({ viewport: DESK }), "desk 1440×900", run);
+const onPhone = (name, list, run, more = {}) => ({ ...gesture(`phone/${name}`, list, (engine) => ({ ...devices[PHONE], ...(engine === "chromium" ? {} : { isMobile: false }) }), PHONE, run), ...more });
+const CHROMIUM = { engines: ["chromium"] };
+const sized = ({ width, height }) => `${width}x${height}`;
+/*
+ * THE STEPS, each on pages of its own, so the chain runs them in parts
+ * (lib/parts.mjs): `--steps=phone,rich` takes those, `--not=…` the rest.
+ * `keys` are the lists `--only` names a step by; a step with none runs only
+ * when `--only` names nothing, and `engines` is where it runs at all.
+ */
+const steps = chooseSteps([
+  onDesk("switch", seen.switch, (page, where) => noSwitch(page, where)),
+  onDesk("button", seen.button, (page, where) => theButton(page, where, false)),
+  onDesk("node", seen.node, (page, where) => sameNode(page, where, false)),
+  onDesk("views", seen.views, (page, where) => views(page, where)),
+  onDesk("chosen", seen.chosen, (page, where) => chosen(page, where)),
+  onDesk("free", seen.free, (page, where) => freeCity(page, where)),
+  onDesk("overshoot", seen.overshoot, (page, where) => noOvershoot(page, where)),
+  onDesk("bar", seen.bar, (page, where) => bar(page, where)),
+  onDesk("viewLines", seen.viewLines, (page, where) => linesOfEveryView(page, where)),
+  onDesk("risen", seen.risen, (page, where) => history(page, where)),
+  onDesk("resize", seen.resize, (page, where) => resize(page, where, false)),
+  onDesk("chosenRecord", seen.chosenRecord, (page, where) => chosenRecord(page, where)),
+  onDesk("offSight", seen.offSight, (page, where) => offSight(page, where)),
+  onDesk("shortcutsRun", seen.shortcutsRun, (page, where) => shortcuts(page, where)),
+  onDesk("sliderRun", seen.sliderRun, (page, where) => slider(page, where)),
+  onDesk("legend", seen.legend, (page, where) => legend(page, where)),
+  onDesk("nearbyZoom", seen.nearbyZoom, (page, where) => nearbyByHand(page, where)),
+  onDesk("panelPinch", seen.panelPinch, (page, where) => panelByHand(page, where)),
+  onDesk("panelWidth", seen.panelWidth, (page, where) => panelWidth(page, where)),
+  onDesk("panelSpacing", seen.panelSpacing, (page, where) => panelSpacing(page, where)),
+  onDesk("panStill/nearby", seen.panStill, (page, where) => panStill(page, where, { level: 1, phone: false })),
+  onDesk("panStill/city", seen.panStill, (page, where) => panStill(page, where, { level: 2, phone: false })),
+  onPhone("button", seen.button, (page, where) => theButton(page, where, true)),
+  onPhone("node", seen.node, (page, where) => sameNode(page, where, true)),
+  onPhone("views", seen.views, (page, where) => views(page, where)),
+  onPhone("overshoot", seen.overshoot, (page, where) => noOvershoot(page, where)),
+  onPhone("bar", seen.bar, (page, where) => bar(page, where)),
+  onPhone("resize", seen.resize, (page, where) => resize(page, where, true)),
+  onPhone("pinch", seen.pinch, (page, where) => pinch(page, where), CHROMIUM),
+  onPhone("sliderRun", seen.sliderRun, (page, where) => slider(page, where)),
+  onPhone("phoneCity", seen.phoneCity, (page, where) => phoneCityByHand(page, where), CHROMIUM),
+  onPhone("panStill/nearby", seen.panStill, (page, where) => panStill(page, where, { level: 1, phone: true }), CHROMIUM),
+  onPhone("panStill/city", seen.panStill, (page, where) => panStill(page, where, { level: 2, phone: true }), CHROMIUM),
+  onPhone("pinchPan/nearby", seen.pinchPan, (page, where) => pinchAndPan(page, where, { level: 1 }), CHROMIUM),
+  onPhone("pinchPan/city", seen.pinchPan, (page, where) => pinchAndPan(page, where, { level: 2 }), CHROMIUM),
+  { name: "viewInPanel", keys: ["viewInPanel"], run: async () => seen.viewInPanel.push(await viewRootInPanel(browser)) },
+  {
+    name: "root",
+    keys: ["switch"],
+    run: async (engine) => seen.switch.push(await rootIsTheOneFace(browser, { engine, device: "desk 1440×900" }).catch((error) => ({ ok: false, error: String(error?.message ?? error) }))),
+  },
+  ...[{ width: 1520, height: 900 }, { width: 1280, height: 800 }, { width: 390, height: 844 }, { width: 844, height: 390 }, { width: 768, height: 1024 }, { width: 360, height: 640 }].map((device) => ({
+    name: `rich/${sized(device)}`,
+    keys: ["rich"],
+    run: () => rich(browser, device),
+  })),
+  ...[{ width: 390, height: 844 }, { width: 412, height: 915 }].map((device) => ({
+    name: `richPhoneLines/${sized(device)}`,
+    keys: ["rich"],
+    run: async () => seen.richPhoneLines.push(await richPhoneLines(browser, device)),
+  })),
+  ...["deep-time", "harbor"].flatMap((app) =>
+    [{ width: 1520, height: 900 }, { width: 1280, height: 800 }, { width: 390, height: 844 }, { width: 768, height: 1024 }, { width: 844, height: 390 }].map((device) => ({
+      name: `homeReads/${app}/${sized(device)}`,
+      keys: ["rich", "homeReads"],
+      run: async () => {
+        const read = await homeReads(browser, device, app);
+        seen.homeReadSize.push({ where: read.where, zoom: read.zoom, least: read.least, error: read.error, ok: Boolean(!read.error && read.least && read.least.times >= HOME_READS) });
+        seen.homeReadBeside.push({ where: read.where, names: read.names, boards: read.boards, error: read.error, ok: Boolean(!read.error && read.names.seen > 0 && read.names.astray.length === 0 && read.names.unnamed.length === 0 && read.boards.astray.length === 0) });
+      },
+    })),
+  ),
+  { name: "recordInPlace", keys: ["rich"], ...CHROMIUM, run: () => recordInPlace(browser) },
+  { name: "drawnOnce", keys: ["rich"], ...CHROMIUM, run: () => drawnOnce(browser) },
+  ...["light", "dark"].map((scheme) => ({
+    name: `strips/${scheme}`,
+    ...CHROMIUM,
+    run: async () => {
+      const taken = [await strip(browser, { viewport: DESK, colorScheme: scheme }, `desk-${scheme}`), await strip(browser, { ...devices[PHONE], colorScheme: scheme }, `phone-${scheme}`)];
+      report.strips = [...(report.strips ?? []), ...taken.map((path) => path.slice(repoRoot.length + 1))];
+    },
+  })),
+  { name: "duplicate", once: true, run: async () => seen.duplicate.push(await duplicate().catch((error) => ({ ok: false, error: String(error?.message ?? error) }))) },
+]);
+const asksOf = (step) => !only || (step.keys ?? []).some((key) => only.includes(key));
+/** A run of some of the steps: a claim none of them was about is left unmade, for the part that has its step to make. */
+const partial = process.argv.some((arg) => arg.startsWith("--steps=") || arg.startsWith("--not="));
 const todo = await serving("todo", portFor("todo"), repoRoot);
 const richHost = await serveRich(repoRoot);
 try {
   mkdirSync(STRIPS, { recursive: true });
+  const timed = async (step, engine) => {
+    const began = Date.now();
+    await step.run(engine);
+    const name = engine === "chromium" || engine === undefined ? step.name : `${step.name} (${engine})`;
+    (report.stepSeconds ??= {})[name] = Math.round((Date.now() - began) / 100) / 10;
+  };
   for (const engine of engines) {
     browser = await launchEngine(engine);
-    const run = async (options, device, gestures) => {
-      for (const [list, gesture] of gestures) {
-        if (only && !only.includes(Object.keys(seen).find((key) => seen[key] === list))) continue;
-        const context = await browser.newContext(options);
-        const page = await context.newPage();
-        page.on("pageerror", (error) => errors.push(`${engine} ${device}: ${error.message}`));
-        const where = { engine, device };
-        try {
-          list.push(await gesture(page, where));
-        } catch (error) {
-          list.push({ where, ok: false, error: String(error?.message ?? error) });
-        }
-        await context.close().catch(() => {});
-      }
-    };
-    await run({ viewport: DESK }, "desk 1440×900", [
-      [seen.switch, (page, where) => noSwitch(page, where)],
-      [seen.button, (page, where) => theButton(page, where, false)],
-      [seen.node, (page, where) => sameNode(page, where, false)],
-      [seen.views, (page, where) => views(page, where)],
-      [seen.chosen, (page, where) => chosen(page, where)],
-      [seen.free, (page, where) => freeCity(page, where)],
-      [seen.overshoot, (page, where) => noOvershoot(page, where)],
-      [seen.bar, (page, where) => bar(page, where)],
-      [seen.viewLines, (page, where) => linesOfEveryView(page, where)],
-      [seen.risen, (page, where) => history(page, where)],
-      [seen.resize, (page, where) => resize(page, where, false)],
-      [seen.chosenRecord, (page, where) => chosenRecord(page, where)],
-      [seen.offSight, (page, where) => offSight(page, where)],
-      [seen.shortcutsRun, (page, where) => shortcuts(page, where)],
-      [seen.sliderRun, (page, where) => slider(page, where)],
-      [seen.legend, (page, where) => legend(page, where)],
-      [seen.nearbyZoom, (page, where) => nearbyByHand(page, where)],
-      [seen.panelPinch, (page, where) => panelByHand(page, where)],
-      [seen.panelWidth, (page, where) => panelWidth(page, where)],
-      [seen.panelSpacing, (page, where) => panelSpacing(page, where)],
-      [seen.panStill, (page, where) => panStill(page, where, { level: 1, phone: false })],
-      [seen.panStill, (page, where) => panStill(page, where, { level: 2, phone: false })],
-    ]);
-    const phone = { ...devices[PHONE], ...(engine === "chromium" ? {} : { isMobile: false }) };
-    await run(phone, PHONE, [
-      [seen.button, (page, where) => theButton(page, where, true)],
-      [seen.node, (page, where) => sameNode(page, where, true)],
-      [seen.views, (page, where) => views(page, where)],
-      [seen.overshoot, (page, where) => noOvershoot(page, where)],
-      [seen.bar, (page, where) => bar(page, where)],
-      [seen.resize, (page, where) => resize(page, where, true)],
-      ...(engine === "chromium" ? [[seen.pinch, (page, where) => pinch(page, where)]] : []),
-      [seen.sliderRun, (page, where) => slider(page, where)],
-      ...(engine === "chromium" ? [[seen.phoneCity, (page, where) => phoneCityByHand(page, where)]] : []),
-      ...(engine === "chromium" ? [[seen.panStill, (page, where) => panStill(page, where, { level: 1, phone: true })], [seen.panStill, (page, where) => panStill(page, where, { level: 2, phone: true })]] : []),
-      ...(engine === "chromium" ? [[seen.pinchPan, (page, where) => pinchAndPan(page, where, { level: 1 })], [seen.pinchPan, (page, where) => pinchAndPan(page, where, { level: 2 })]] : []),
-    ]);
-    if (!only || only.includes("viewInPanel")) seen.viewInPanel.push(await viewRootInPanel(browser));
-    if (!only || only.includes("switch")) seen.switch.push(await rootIsTheOneFace(browser, { engine, device: "desk 1440×900" }).catch((error) => ({ ok: false, error: String(error?.message ?? error) })));
-    if (!only || only.includes("rich")) for (const device of [{ width: 1520, height: 900 }, { width: 1280, height: 800 }, { width: 390, height: 844 }, { width: 844, height: 390 }, { width: 768, height: 1024 }, { width: 360, height: 640 }]) await rich(browser, device);
-    if (!only || only.includes("rich")) for (const device of [{ width: 390, height: 844 }, { width: 412, height: 915 }]) seen.richPhoneLines.push(await richPhoneLines(browser, device));
-    if (!only || only.includes("rich") || only.includes("homeReads"))
-      for (const app of ["deep-time", "harbor"])
-        for (const device of [{ width: 1520, height: 900 }, { width: 1280, height: 800 }, { width: 390, height: 844 }, { width: 768, height: 1024 }, { width: 844, height: 390 }]) {
-          const read = await homeReads(browser, device, app);
-          seen.homeReadSize.push({ where: read.where, zoom: read.zoom, least: read.least, error: read.error, ok: Boolean(!read.error && read.least && read.least.times >= HOME_READS) });
-          seen.homeReadBeside.push({ where: read.where, names: read.names, boards: read.boards, error: read.error, ok: Boolean(!read.error && read.names.seen > 0 && read.names.astray.length === 0 && read.names.unnamed.length === 0 && read.boards.astray.length === 0) });
-        }
-    if (engine === "chromium" && (!only || only.includes("rich"))) {
-      await recordInPlace(browser);
-      await drawnOnce(browser);
-    }
-    if (engine === "chromium" && !only) {
-      report.strips = [];
-      for (const scheme of ["light", "dark"]) {
-        report.strips.push(await strip(browser, { viewport: DESK, colorScheme: scheme }, `desk-${scheme}`));
-        report.strips.push(await strip(browser, { ...devices[PHONE], colorScheme: scheme }, `phone-${scheme}`));
-      }
-      report.strips = report.strips.map((path) => path.slice(repoRoot.length + 1));
-    }
+    for (const step of steps) if (!step.once && asksOf(step) && (!step.engines || step.engines.includes(engine))) await timed(step, engine);
     await browser.close();
     browser = undefined;
   }
-  if (!only) seen.duplicate.push(await duplicate().catch((error) => ({ ok: false, error: String(error?.message ?? error) })));
+  for (const step of steps) if (step.once && asksOf(step)) await timed(step);
 
   // One run of the history holds three claims.
   for (const run of seen.risen.splice(0)) {
@@ -3759,6 +3796,13 @@ try {
   report.checks.noPageThrew = { errors, ok: errors.length === 0 };
   // A run of some claims alone (`--only=nearbyZoom,panelWidth`, while working on them) says only those.
   if (only) for (const [name, check] of Object.entries(report.checks)) if (name !== "noPageThrew" && Array.isArray(check.held) && check.held.length === 0) delete report.checks[name];
+  // A part of the steps makes the claims its steps are about, and says which it had nothing to judge: the whole verdict asks that some part made each (mergeParts).
+  if (partial && !only) {
+    report.unmade = Object.entries(report.checks)
+      .filter(([name, check]) => (Array.isArray(check.held) && check.held.length === 0) || (name === "theFaceComesToRestAfterEveryMove" && check.waits === 0))
+      .map(([name]) => name);
+    for (const name of report.unmade) delete report.checks[name];
+  }
   // A run of some claims alone is never the verdict: it says what it ran, and does not pass.
   report.passed = !only && Object.values(report.checks).every((check) => check.ok);
   if (only) report.only = only;
@@ -3771,8 +3815,10 @@ try {
   richHost.stop();
 }
 
-writeFileSync(resolve(repoRoot, "docs/one-face.json"), `${JSON.stringify(report, null, 2)}\n`);
+// A part writes beside the whole verdict, which the chain makes from the parts (lib/parts.mjs).
+const out = partPath(resolve(repoRoot, "docs/one-face.json"));
+writeFileSync(out, `${JSON.stringify(report, null, 2)}\n`);
 for (const [name, check] of Object.entries(report.checks)) process.stdout.write(`${check.ok ? "ok  " : "FAIL"} ${name}\n`);
 if (report.error) process.stdout.write(`${report.error}\n`);
-process.stdout.write("wrote docs/one-face.json\n");
+process.stdout.write(`wrote ${out.slice(repoRoot.length + 1)}\n`);
 process.exit(report.passed ? 0 : 1);
