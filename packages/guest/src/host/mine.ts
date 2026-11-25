@@ -110,6 +110,10 @@ interface Shared {
   readonly writes: number[];
   readonly lines: Map<string, Line>;
   readonly drawings: Set<Drawing>;
+  /** What the view was last known to keep, read or written on this page, and by which read: a drawing after the first is first drawn with it. */
+  last?: Map<string, string>;
+  lastRead?: number;
+  reads?: number;
 }
 const sharedAt = new WeakMap<ViewerState, Map<string, Shared>>();
 function sharedOf(state: ViewerState, viewer: string, view: string): Shared {
@@ -159,28 +163,47 @@ export function createMine({ view, viewer = "", state, onRefused, onLate, readMs
   const { writes, lines, drawings } = shared;
   const drawing: Drawing = {
     landed(key, value) {
-      if (read) hold(key, value);
-      else landedWhileReading.set(key, value);
+      if (read || started) hold(key, value);
+      if (!read) landedWhileReading.set(key, value);
     },
     onRefused,
     onLate,
   };
   drawings.add(drawing);
+  /*
+   * A VIEW DRAWN AGAIN IS FIRST DRAWN WITH WHAT IT WAS LAST KNOWN TO KEEP
+   * (Graview HQ f-custom-pages-do-not-flash): the same viewer's, this page's
+   * memory; a viewer with no name of their own has none. The host is asked
+   * again beside it, and where it says otherwise the view is pushed that. What
+   * it asks for by key, and what it writes, wait for the host as ever: only
+   * the drawing does not.
+   */
+  if (shared.last) held = new Map(shared.last);
+  const started = shared.last !== undefined;
+  const turn = (shared.reads = (shared.reads ?? 0) + 1);
   const refused = (sentence: string): ViewerStateAnswer => {
     onRefused?.(sentence);
     return { ok: false, sentence };
   };
   const reading = (async () => {
     try {
-      held = new Map(Object.entries(await state.read(view)).filter(([, value]) => typeof value === "string"));
+      const answered = new Map(Object.entries(await state.read(view)).filter(([, value]) => typeof value === "string"));
+      const was = held;
+      held = answered;
       for (const [key, value] of landedWhileReading) hold(key, value);
+      const moved = started && (was.size !== held.size || [...held].some(([key, value]) => was.get(key) !== value));
       read = true;
-      if (waited) onLate?.();
+      /* A read begun before another's, or by a drawing that no longer hears what is written, never stands over a newer one. */
+      if (viewer !== "" && drawings.has(drawing) && turn > (shared.lastRead ?? 0)) {
+        shared.last = new Map(held);
+        shared.lastRead = turn;
+      }
+      if ((waited || moved) && drawings.has(drawing)) onLate?.();
     } catch {
       onRefused?.(UNREAD);
     }
   })();
-  const ready = new Promise<void>((resolve) => {
+  const settled = new Promise<void>((resolve) => {
     const timer = setTimeout(() => {
       waited = true;
       if (!read) onRefused?.(UNREAD);
@@ -191,11 +214,12 @@ export function createMine({ view, viewer = "", state, onRefused, onLate, readMs
       resolve();
     });
   });
+  const ready = started ? Promise.resolve() : settled;
   return {
     ready,
     values: () => Object.fromEntries(held),
     get: (key) =>
-      ready.then(
+      settled.then(
         () =>
           new Promise<GuestMineAnswer<string | null>>((resolve) => {
             const answer = () => {
@@ -213,7 +237,7 @@ export function createMine({ view, viewer = "", state, onRefused, onLate, readMs
       if (refusal) return Promise.resolve(refused(refusal));
       const asked = key as string;
       const wanted = value as string | null;
-      return ready.then(
+      return settled.then(
         () =>
           new Promise<ViewerStateAnswer>((resolve) => {
             if (!read) return resolve(refused(`${UNREAD} So this value was not kept.`));
@@ -269,6 +293,8 @@ function send(state: ViewerState, view: string, shared: Shared, key: string, lin
       if (kept) {
         /* Every drawing holds it, and is pushed it, but one told just now that it was kept. */
         const answered = new Set(past ? [] : told.map((waiting) => waiting.drawing));
+        if (value === null) shared.last?.delete(key);
+        else shared.last?.set(key, value);
         for (const drawing of shared.drawings) {
           drawing.landed(key, value);
           if (!answered.has(drawing)) line.moved.add(drawing);

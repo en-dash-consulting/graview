@@ -2,7 +2,7 @@ import { isArchived, isLeftAlone, isWithheld, labelOf, nounOf, type AnySchema, t
 import { describeNode, keptInStepWith } from "@graview/core/words";
 import { lineageWords } from "@graview/core/provenance";
 import { DefaultViewElsewhere, RecordInteractionsDoor, EditableValue, Files, NotifyButton, pageSays, ROVING_ITEM, useLined, useRoving } from "@graview/primitives/pages";
-import { bleeds, bleedsFull, isDefaultView, replacesPage, useGraviewIfAny, type ViewProps } from "@graview/react/provider";
+import { PageOfItsOwn, bleeds, bleedsFull, isDefaultView, replacesPage, useGraviewIfAny, type ViewProps } from "@graview/react/provider";
 import { ViewBoundary } from "@graview/react/drawing";
 import type { ComponentType } from "react";
 import { Link, useParams, useSearchParams } from "react-router";
@@ -263,7 +263,9 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
               {/* A view that throws says so in its own slot, and the slot is the column again; the record's facts stand under it. */}
               {/* Keyed by the record, so a panel one record's view left is not what the next record's page opens on. */}
               <ViewBoundary key={id} kind={facts.kind} view={`This ${nounOf(definition, facts.kind)}'s view`} said="" reset={[tick]} onCaught={() => setThrewOn({ id, tick })}>
-                <PageView node={node as never} cardinality="one" fidelity="full" mode="fullscreen" selected={false} {...(facts.violations.length > 0 ? { flagged: [id] } : {})} />
+                <PageOfItsOwn.Provider value={`record ${id}`}>
+                  <PageView node={node as never} cardinality="one" fidelity="full" mode="fullscreen" selected={false} {...(facts.violations.length > 0 ? { flagged: [id] } : {})} />
+                </PageOfItsOwn.Provider>
               </ViewBoundary>
             </Bleed>
           </DefaultViewElsewhere>

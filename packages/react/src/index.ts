@@ -1,4 +1,6 @@
 export { GraviewProvider, hasLanded, markLanded, matchWith, openingView, PLACE_MENU_EVENT, ROBOT_REST_MS, useFound, useGraph, useGraview, useGraviewIfAny, useNode, useRobots, useScenePointer, useTheWatchKnowsWhatIsUnseen, useViewMode, useWhereIs, ViewModeProvider } from "./context.js";
+export { PageOfItsOwn, useKeptDrawings } from "./kept-drawings.js";
+export type { KeptDrawing, KeptDrawings } from "./kept-drawings.js";
 export { GoToContext, useGoTo } from "./go.js";
 export { HostMenuItems, MenuSections, useMenuPrepare, useMenuSections } from "./menu-sections.js";
 export type { HostMenuAt, HostMenuItem, MenuColumn, MenuItem, MenuMode, MenuPage, MenuReadying, MenuSection, MenuSectionSource, MenuTarget } from "./menu-types.js";

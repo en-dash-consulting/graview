@@ -1,0 +1,2542 @@
+{
+  "at": "2026-11-25T21:49:10.670Z",
+  "engines": [
+    "chromium",
+    "webkit",
+    "firefox"
+  ],
+  "lateMs": 120,
+  "returnMs": 120,
+  "slow": 1,
+  "movesFrames": {
+    "chromium": false,
+    "webkit": false,
+    "firefox": false
+  },
+  "moves": [
+    {
+      "engine": "chromium",
+      "face": "pages",
+      "move": "first",
+      "place": "alpha",
+      "drawnAt": 192,
+      "frames": [
+        {
+          "what": "other",
+          "from": 1,
+          "frames": 2
+        },
+        {
+          "what": "blank",
+          "from": 26,
+          "frames": 10
+        },
+        {
+          "what": "drawn",
+          "from": 192,
+          "frames": 16
+        }
+      ]
+    },
+    {
+      "engine": "chromium",
+      "face": "pages",
+      "move": "first",
+      "place": "beta",
+      "drawnAt": 147,
+      "frames": [
+        {
+          "what": "blank",
+          "from": 14,
+          "frames": 8
+        },
+        {
+          "what": "drawn",
+          "from": 147,
+          "frames": 16
+        }
+      ]
+    },
+    {
+      "engine": "chromium",
+      "face": "pages",
+      "move": "return",
+      "place": "alpha",
+      "drawnAt": 14,
+      "frames": [
+        {
+          "what": "drawn",
+          "from": 14,
+          "frames": 16
+        }
+      ]
+    },
+    {
+      "engine": "chromium",
+      "face": "pages",
+      "move": "return",
+      "place": "beta",
+      "drawnAt": 15,
+      "frames": [
+        {
+          "what": "drawn",
+          "from": 15,
+          "frames": 17
+        }
+      ]
+    },
+    {
+      "engine": "chromium",
+      "face": "pages",
+      "move": "first",
+      "place": "record",
+      "drawnAt": 165,
+      "frames": [
+        {
+          "what": "blank",
+          "from": 21,
+          "frames": 9
+        },
+        {
+          "what": "drawn",
+          "from": 165,
+          "frames": 17
+        }
+      ]
+    },
+    {
+      "engine": "chromium",
+      "face": "pages",
+      "move": "first",
+      "place": "home",
+      "drawnAt": 148,
+      "frames": [
+        {
+          "what": "blank",
+          "from": 15,
+          "frames": 8
+        },
+        {
+          "what": "drawn",
+          "from": 148,
+          "frames": 16
+        }
+      ]
+    },
+    {
+      "engine": "chromium",
+      "face": "pages",
+      "move": "return",
+      "place": "record",
+      "drawnAt": 15,
+      "frames": [
+        {
+          "what": "drawn",
+          "from": 15,
+          "frames": 17
+        }
+      ]
+    },
+    {
+      "engine": "chromium",
+      "face": "pages",
+      "move": "return",
+      "place": "home",
+      "drawnAt": 16,
+      "frames": [
+        {
+          "what": "drawn",
+          "from": 16,
+          "frames": 17
+        }
+      ]
+    },
+    {
+      "engine": "chromium",
+      "face": "pages",
+      "move": "first",
+      "place": "frame",
+      "drawnAt": 149,
+      "frames": [
+        {
+          "what": "blank",
+          "from": 15,
+          "frames": 8
+        },
+        {
+          "what": "drawn",
+          "from": 149,
+          "frames": 17
+        }
+      ],
+      "loads": 1
+    },
+    {
+      "engine": "chromium",
+      "face": "pages",
+      "move": "via",
+      "place": "alpha",
+      "drawnAt": 16,
+      "frames": [
+        {
+          "what": "drawn",
+          "from": 16,
+          "frames": 17
+        }
+      ]
+    },
+    {
+      "engine": "chromium",
+      "face": "pages",
+      "move": "return",
+      "place": "frame",
+      "drawnAt": 149,
+      "frames": [
+        {
+          "what": "blank",
+          "from": 16,
+          "frames": 8
+        },
+        {
+          "what": "drawn",
+          "from": 149,
+          "frames": 17
+        }
+      ],
+      "loads": 1
+    },
+    {
+      "engine": "chromium",
+      "face": "one",
+      "move": "first",
+      "place": "alpha",
+      "drawnAt": 186,
+      "frames": [
+        {
+          "what": "other",
+          "from": 8,
+          "frames": 1
+        },
+        {
+          "what": "blank",
+          "from": 23,
+          "frames": 10
+        },
+        {
+          "what": "drawn",
+          "from": 186,
+          "frames": 17
+        }
+      ]
+    },
+    {
+      "engine": "chromium",
+      "face": "one",
+      "move": "first",
+      "place": "beta",
+      "drawnAt": 148,
+      "frames": [
+        {
+          "what": "blank",
+          "from": 15,
+          "frames": 8
+        },
+        {
+          "what": "drawn",
+          "from": 148,
+          "frames": 16
+        }
+      ]
+    },
+    {
+      "engine": "chromium",
+      "face": "one",
+      "move": "return",
+      "place": "alpha",
+      "drawnAt": 16,
+      "frames": [
+        {
+          "what": "drawn",
+          "from": 16,
+          "frames": 17
+        }
+      ]
+    },
+    {
+      "engine": "chromium",
+      "face": "one",
+      "move": "return",
+      "place": "beta",
+      "drawnAt": 15,
+      "frames": [
+        {
+          "what": "drawn",
+          "from": 15,
+          "frames": 17
+        }
+      ]
+    },
+    {
+      "engine": "chromium",
+      "face": "one",
+      "move": "first",
+      "place": "record",
+      "drawnAt": 165,
+      "frames": [
+        {
+          "what": "blank",
+          "from": 27,
+          "frames": 9
+        },
+        {
+          "what": "drawn",
+          "from": 165,
+          "frames": 17
+        }
+      ]
+    },
+    {
+      "engine": "chromium",
+      "face": "one",
+      "move": "first",
+      "place": "home",
+      "drawnAt": 148,
+      "frames": [
+        {
+          "what": "blank",
+          "from": 15,
+          "frames": 8
+        },
+        {
+          "what": "drawn",
+          "from": 148,
+          "frames": 16
+        }
+      ]
+    },
+    {
+      "engine": "chromium",
+      "face": "one",
+      "move": "return",
+      "place": "record",
+      "drawnAt": 16,
+      "frames": [
+        {
+          "what": "drawn",
+          "from": 16,
+          "frames": 17
+        }
+      ]
+    },
+    {
+      "engine": "chromium",
+      "face": "one",
+      "move": "return",
+      "place": "home",
+      "drawnAt": 15,
+      "frames": [
+        {
+          "what": "drawn",
+          "from": 15,
+          "frames": 17
+        }
+      ]
+    },
+    {
+      "engine": "chromium",
+      "face": "one",
+      "move": "first",
+      "place": "frame",
+      "drawnAt": 148,
+      "frames": [
+        {
+          "what": "blank",
+          "from": 16,
+          "frames": 8
+        },
+        {
+          "what": "drawn",
+          "from": 148,
+          "frames": 17
+        }
+      ],
+      "loads": 1
+    },
+    {
+      "engine": "chromium",
+      "face": "one",
+      "move": "via",
+      "place": "alpha",
+      "drawnAt": 15,
+      "frames": [
+        {
+          "what": "drawn",
+          "from": 15,
+          "frames": 17
+        }
+      ]
+    },
+    {
+      "engine": "chromium",
+      "face": "one",
+      "move": "return",
+      "place": "frame",
+      "drawnAt": 149,
+      "frames": [
+        {
+          "what": "blank",
+          "from": 16,
+          "frames": 8
+        },
+        {
+          "what": "drawn",
+          "from": 149,
+          "frames": 17
+        }
+      ],
+      "loads": 1
+    },
+    {
+      "engine": "webkit",
+      "face": "pages",
+      "move": "first",
+      "place": "alpha",
+      "drawnAt": 435,
+      "frames": [
+        {
+          "what": "other",
+          "from": 171,
+          "frames": 2
+        },
+        {
+          "what": "blank",
+          "from": 205,
+          "frames": 14
+        },
+        {
+          "what": "drawn",
+          "from": 435,
+          "frames": 18
+        }
+      ]
+    },
+    {
+      "engine": "webkit",
+      "face": "pages",
+      "move": "first",
+      "place": "beta",
+      "drawnAt": 159,
+      "frames": [
+        {
+          "what": "blank",
+          "from": 15,
+          "frames": 9
+        },
+        {
+          "what": "drawn",
+          "from": 159,
+          "frames": 17
+        }
+      ]
+    },
+    {
+      "engine": "webkit",
+      "face": "pages",
+      "move": "return",
+      "place": "alpha",
+      "drawnAt": 18,
+      "frames": [
+        {
+          "what": "drawn",
+          "from": 18,
+          "frames": 17
+        }
+      ]
+    },
+    {
+      "engine": "webkit",
+      "face": "pages",
+      "move": "return",
+      "place": "beta",
+      "drawnAt": 19,
+      "frames": [
+        {
+          "what": "drawn",
+          "from": 19,
+          "frames": 17
+        }
+      ]
+    },
+    {
+      "engine": "webkit",
+      "face": "pages",
+      "move": "first",
+      "place": "record",
+      "drawnAt": 223,
+      "frames": [
+        {
+          "what": "other",
+          "from": 51,
+          "frames": 1
+        },
+        {
+          "what": "blank",
+          "from": 65,
+          "frames": 10
+        },
+        {
+          "what": "drawn",
+          "from": 223,
+          "frames": 17
+        }
+      ]
+    },
+    {
+      "engine": "webkit",
+      "face": "pages",
+      "move": "first",
+      "place": "home",
+      "drawnAt": 159,
+      "frames": [
+        {
+          "what": "blank",
+          "from": 14,
+          "frames": 9
+        },
+        {
+          "what": "drawn",
+          "from": 159,
+          "frames": 17
+        }
+      ]
+    },
+    {
+      "engine": "webkit",
+      "face": "pages",
+      "move": "return",
+      "place": "record",
+      "drawnAt": 20,
+      "frames": [
+        {
+          "what": "drawn",
+          "from": 20,
+          "frames": 17
+        }
+      ]
+    },
+    {
+      "engine": "webkit",
+      "face": "pages",
+      "move": "return",
+      "place": "home",
+      "drawnAt": 14,
+      "frames": [
+        {
+          "what": "drawn",
+          "from": 14,
+          "frames": 17
+        }
+      ]
+    },
+    {
+      "engine": "webkit",
+      "face": "pages",
+      "move": "first",
+      "place": "frame",
+      "drawnAt": 164,
+      "frames": [
+        {
+          "what": "blank",
+          "from": 10,
+          "frames": 10
+        },
+        {
+          "what": "drawn",
+          "from": 164,
+          "frames": 17
+        }
+      ],
+      "loads": 1
+    },
+    {
+      "engine": "webkit",
+      "face": "pages",
+      "move": "via",
+      "place": "alpha",
+      "drawnAt": 17,
+      "frames": [
+        {
+          "what": "drawn",
+          "from": 17,
+          "frames": 17
+        }
+      ]
+    },
+    {
+      "engine": "webkit",
+      "face": "pages",
+      "move": "return",
+      "place": "frame",
+      "drawnAt": 159,
+      "frames": [
+        {
+          "what": "blank",
+          "from": 12,
+          "frames": 10
+        },
+        {
+          "what": "drawn",
+          "from": 159,
+          "frames": 17
+        }
+      ],
+      "loads": 1
+    },
+    {
+      "engine": "webkit",
+      "face": "one",
+      "move": "first",
+      "place": "alpha",
+      "drawnAt": 222,
+      "frames": [
+        {
+          "what": "other",
+          "from": 1,
+          "frames": 1
+        },
+        {
+          "what": "blank",
+          "from": 43,
+          "frames": 11
+        },
+        {
+          "what": "drawn",
+          "from": 222,
+          "frames": 18
+        }
+      ]
+    },
+    {
+      "engine": "webkit",
+      "face": "one",
+      "move": "first",
+      "place": "beta",
+      "drawnAt": 166,
+      "frames": [
+        {
+          "what": "blank",
+          "from": 26,
+          "frames": 10
+        },
+        {
+          "what": "drawn",
+          "from": 166,
+          "frames": 17
+        }
+      ]
+    },
+    {
+      "engine": "webkit",
+      "face": "one",
+      "move": "return",
+      "place": "alpha",
+      "drawnAt": 34,
+      "frames": [
+        {
+          "what": "drawn",
+          "from": 34,
+          "frames": 17
+        }
+      ]
+    },
+    {
+      "engine": "webkit",
+      "face": "one",
+      "move": "return",
+      "place": "beta",
+      "drawnAt": 27,
+      "frames": [
+        {
+          "what": "drawn",
+          "from": 27,
+          "frames": 18
+        }
+      ]
+    },
+    {
+      "engine": "webkit",
+      "face": "one",
+      "move": "first",
+      "place": "record",
+      "drawnAt": 192,
+      "frames": [
+        {
+          "what": "other",
+          "from": 15,
+          "frames": 1
+        },
+        {
+          "what": "blank",
+          "from": 43,
+          "frames": 10
+        },
+        {
+          "what": "drawn",
+          "from": 192,
+          "frames": 17
+        }
+      ]
+    },
+    {
+      "engine": "webkit",
+      "face": "one",
+      "move": "first",
+      "place": "home",
+      "drawnAt": 159,
+      "frames": [
+        {
+          "what": "blank",
+          "from": 19,
+          "frames": 9
+        },
+        {
+          "what": "drawn",
+          "from": 159,
+          "frames": 17
+        }
+      ]
+    },
+    {
+      "engine": "webkit",
+      "face": "one",
+      "move": "return",
+      "place": "record",
+      "drawnAt": 30,
+      "frames": [
+        {
+          "what": "drawn",
+          "from": 30,
+          "frames": 17
+        }
+      ]
+    },
+    {
+      "engine": "webkit",
+      "face": "one",
+      "move": "return",
+      "place": "home",
+      "drawnAt": 18,
+      "frames": [
+        {
+          "what": "drawn",
+          "from": 18,
+          "frames": 17
+        }
+      ]
+    },
+    {
+      "engine": "webkit",
+      "face": "one",
+      "move": "first",
+      "place": "frame",
+      "drawnAt": 162,
+      "frames": [
+        {
+          "what": "blank",
+          "from": 17,
+          "frames": 9
+        },
+        {
+          "what": "drawn",
+          "from": 162,
+          "frames": 17
+        }
+      ],
+      "loads": 1
+    },
+    {
+      "engine": "webkit",
+      "face": "one",
+      "move": "via",
+      "place": "alpha",
+      "drawnAt": 24,
+      "frames": [
+        {
+          "what": "other",
+          "from": 5,
+          "frames": 1
+        },
+        {
+          "what": "drawn",
+          "from": 24,
+          "frames": 17
+        }
+      ]
+    },
+    {
+      "engine": "webkit",
+      "face": "one",
+      "move": "return",
+      "place": "frame",
+      "drawnAt": 160,
+      "frames": [
+        {
+          "what": "blank",
+          "from": 19,
+          "frames": 9
+        },
+        {
+          "what": "drawn",
+          "from": 160,
+          "frames": 17
+        }
+      ],
+      "loads": 1
+    },
+    {
+      "engine": "firefox",
+      "face": "pages",
+      "move": "first",
+      "place": "alpha",
+      "drawnAt": 212,
+      "frames": [
+        {
+          "what": "other",
+          "from": 1,
+          "frames": 2
+        },
+        {
+          "what": "blank",
+          "from": 37,
+          "frames": 11
+        },
+        {
+          "what": "drawn",
+          "from": 212,
+          "frames": 16
+        }
+      ]
+    },
+    {
+      "engine": "firefox",
+      "face": "pages",
+      "move": "first",
+      "place": "beta",
+      "drawnAt": 164,
+      "frames": [
+        {
+          "what": "blank",
+          "from": 16,
+          "frames": 9
+        },
+        {
+          "what": "drawn",
+          "from": 164,
+          "frames": 16
+        }
+      ]
+    },
+    {
+      "engine": "firefox",
+      "face": "pages",
+      "move": "return",
+      "place": "alpha",
+      "drawnAt": 16,
+      "frames": [
+        {
+          "what": "drawn",
+          "from": 16,
+          "frames": 17
+        }
+      ]
+    },
+    {
+      "engine": "firefox",
+      "face": "pages",
+      "move": "return",
+      "place": "beta",
+      "drawnAt": 15,
+      "frames": [
+        {
+          "what": "drawn",
+          "from": 15,
+          "frames": 17
+        }
+      ]
+    },
+    {
+      "engine": "firefox",
+      "face": "pages",
+      "move": "first",
+      "place": "record",
+      "drawnAt": 164,
+      "frames": [
+        {
+          "what": "blank",
+          "from": 15,
+          "frames": 9
+        },
+        {
+          "what": "drawn",
+          "from": 164,
+          "frames": 16
+        }
+      ]
+    },
+    {
+      "engine": "firefox",
+      "face": "pages",
+      "move": "first",
+      "place": "home",
+      "drawnAt": 163,
+      "frames": [
+        {
+          "what": "blank",
+          "from": 12,
+          "frames": 9
+        },
+        {
+          "what": "drawn",
+          "from": 163,
+          "frames": 17
+        }
+      ]
+    },
+    {
+      "engine": "firefox",
+      "face": "pages",
+      "move": "return",
+      "place": "record",
+      "drawnAt": 23,
+      "frames": [
+        {
+          "what": "drawn",
+          "from": 23,
+          "frames": 17
+        }
+      ]
+    },
+    {
+      "engine": "firefox",
+      "face": "pages",
+      "move": "return",
+      "place": "home",
+      "drawnAt": 15,
+      "frames": [
+        {
+          "what": "drawn",
+          "from": 15,
+          "frames": 16
+        }
+      ]
+    },
+    {
+      "engine": "firefox",
+      "face": "pages",
+      "move": "first",
+      "place": "frame",
+      "drawnAt": 164,
+      "frames": [
+        {
+          "what": "blank",
+          "from": 18,
+          "frames": 9
+        },
+        {
+          "what": "drawn",
+          "from": 164,
+          "frames": 16
+        }
+      ],
+      "loads": 1
+    },
+    {
+      "engine": "firefox",
+      "face": "pages",
+      "move": "via",
+      "place": "alpha",
+      "drawnAt": 15,
+      "frames": [
+        {
+          "what": "drawn",
+          "from": 15,
+          "frames": 17
+        }
+      ]
+    },
+    {
+      "engine": "firefox",
+      "face": "pages",
+      "move": "return",
+      "place": "frame",
+      "drawnAt": 149,
+      "frames": [
+        {
+          "what": "blank",
+          "from": 16,
+          "frames": 8
+        },
+        {
+          "what": "drawn",
+          "from": 149,
+          "frames": 16
+        }
+      ],
+      "loads": 1
+    },
+    {
+      "engine": "firefox",
+      "face": "one",
+      "move": "first",
+      "place": "alpha",
+      "drawnAt": 216,
+      "frames": [
+        {
+          "what": "blank",
+          "from": 25,
+          "frames": 12
+        },
+        {
+          "what": "drawn",
+          "from": 216,
+          "frames": 17
+        }
+      ]
+    },
+    {
+      "engine": "firefox",
+      "face": "one",
+      "move": "first",
+      "place": "beta",
+      "drawnAt": 180,
+      "frames": [
+        {
+          "what": "blank",
+          "from": 25,
+          "frames": 10
+        },
+        {
+          "what": "drawn",
+          "from": 180,
+          "frames": 16
+        }
+      ]
+    },
+    {
+      "engine": "firefox",
+      "face": "one",
+      "move": "return",
+      "place": "alpha",
+      "drawnAt": 24,
+      "frames": [
+        {
+          "what": "drawn",
+          "from": 24,
+          "frames": 17
+        }
+      ]
+    },
+    {
+      "engine": "firefox",
+      "face": "one",
+      "move": "return",
+      "place": "beta",
+      "drawnAt": 24,
+      "frames": [
+        {
+          "what": "drawn",
+          "from": 24,
+          "frames": 17
+        }
+      ]
+    },
+    {
+      "engine": "firefox",
+      "face": "one",
+      "move": "first",
+      "place": "record",
+      "drawnAt": 181,
+      "frames": [
+        {
+          "what": "blank",
+          "from": 30,
+          "frames": 10
+        },
+        {
+          "what": "drawn",
+          "from": 181,
+          "frames": 17
+        }
+      ]
+    },
+    {
+      "engine": "firefox",
+      "face": "one",
+      "move": "first",
+      "place": "home",
+      "drawnAt": 162,
+      "frames": [
+        {
+          "what": "blank",
+          "from": 14,
+          "frames": 9
+        },
+        {
+          "what": "drawn",
+          "from": 162,
+          "frames": 16
+        }
+      ]
+    },
+    {
+      "engine": "firefox",
+      "face": "one",
+      "move": "return",
+      "place": "record",
+      "drawnAt": 26,
+      "frames": [
+        {
+          "what": "drawn",
+          "from": 26,
+          "frames": 17
+        }
+      ]
+    },
+    {
+      "engine": "firefox",
+      "face": "one",
+      "move": "return",
+      "place": "home",
+      "drawnAt": 20,
+      "frames": [
+        {
+          "what": "drawn",
+          "from": 20,
+          "frames": 17
+        }
+      ]
+    },
+    {
+      "engine": "firefox",
+      "face": "one",
+      "move": "first",
+      "place": "frame",
+      "drawnAt": 165,
+      "frames": [
+        {
+          "what": "blank",
+          "from": 14,
+          "frames": 9
+        },
+        {
+          "what": "drawn",
+          "from": 165,
+          "frames": 17
+        }
+      ],
+      "loads": 1
+    },
+    {
+      "engine": "firefox",
+      "face": "one",
+      "move": "via",
+      "place": "alpha",
+      "drawnAt": 22,
+      "frames": [
+        {
+          "what": "drawn",
+          "from": 22,
+          "frames": 17
+        }
+      ]
+    },
+    {
+      "engine": "firefox",
+      "face": "one",
+      "move": "return",
+      "place": "frame",
+      "drawnAt": 166,
+      "frames": [
+        {
+          "what": "blank",
+          "from": 22,
+          "frames": 9
+        },
+        {
+          "what": "drawn",
+          "from": 166,
+          "frames": 17
+        }
+      ],
+      "loads": 1
+    }
+  ],
+  "checks": {
+    "goingBackToAVisitedCustomPageShowsNoBlankOrFallbackFrame": {
+      "held": [
+        {
+          "engine": "chromium",
+          "face": "pages",
+          "move": "return",
+          "place": "alpha",
+          "drawnAt": 14,
+          "frames": [
+            {
+              "what": "drawn",
+              "from": 14,
+              "frames": 16
+            }
+          ],
+          "ok": true
+        },
+        {
+          "engine": "chromium",
+          "face": "pages",
+          "move": "return",
+          "place": "beta",
+          "drawnAt": 15,
+          "frames": [
+            {
+              "what": "drawn",
+              "from": 15,
+              "frames": 17
+            }
+          ],
+          "ok": true
+        },
+        {
+          "engine": "chromium",
+          "face": "pages",
+          "move": "return",
+          "place": "record",
+          "drawnAt": 15,
+          "frames": [
+            {
+              "what": "drawn",
+              "from": 15,
+              "frames": 17
+            }
+          ],
+          "ok": true
+        },
+        {
+          "engine": "chromium",
+          "face": "pages",
+          "move": "return",
+          "place": "home",
+          "drawnAt": 16,
+          "frames": [
+            {
+              "what": "drawn",
+              "from": 16,
+              "frames": 17
+            }
+          ],
+          "ok": true
+        },
+        {
+          "engine": "chromium",
+          "face": "one",
+          "move": "return",
+          "place": "alpha",
+          "drawnAt": 16,
+          "frames": [
+            {
+              "what": "drawn",
+              "from": 16,
+              "frames": 17
+            }
+          ],
+          "ok": true
+        },
+        {
+          "engine": "chromium",
+          "face": "one",
+          "move": "return",
+          "place": "beta",
+          "drawnAt": 15,
+          "frames": [
+            {
+              "what": "drawn",
+              "from": 15,
+              "frames": 17
+            }
+          ],
+          "ok": true
+        },
+        {
+          "engine": "chromium",
+          "face": "one",
+          "move": "return",
+          "place": "record",
+          "drawnAt": 16,
+          "frames": [
+            {
+              "what": "drawn",
+              "from": 16,
+              "frames": 17
+            }
+          ],
+          "ok": true
+        },
+        {
+          "engine": "chromium",
+          "face": "one",
+          "move": "return",
+          "place": "home",
+          "drawnAt": 15,
+          "frames": [
+            {
+              "what": "drawn",
+              "from": 15,
+              "frames": 17
+            }
+          ],
+          "ok": true
+        },
+        {
+          "engine": "webkit",
+          "face": "pages",
+          "move": "return",
+          "place": "alpha",
+          "drawnAt": 18,
+          "frames": [
+            {
+              "what": "drawn",
+              "from": 18,
+              "frames": 17
+            }
+          ],
+          "ok": true
+        },
+        {
+          "engine": "webkit",
+          "face": "pages",
+          "move": "return",
+          "place": "beta",
+          "drawnAt": 19,
+          "frames": [
+            {
+              "what": "drawn",
+              "from": 19,
+              "frames": 17
+            }
+          ],
+          "ok": true
+        },
+        {
+          "engine": "webkit",
+          "face": "pages",
+          "move": "return",
+          "place": "record",
+          "drawnAt": 20,
+          "frames": [
+            {
+              "what": "drawn",
+              "from": 20,
+              "frames": 17
+            }
+          ],
+          "ok": true
+        },
+        {
+          "engine": "webkit",
+          "face": "pages",
+          "move": "return",
+          "place": "home",
+          "drawnAt": 14,
+          "frames": [
+            {
+              "what": "drawn",
+              "from": 14,
+              "frames": 17
+            }
+          ],
+          "ok": true
+        },
+        {
+          "engine": "webkit",
+          "face": "one",
+          "move": "return",
+          "place": "alpha",
+          "drawnAt": 34,
+          "frames": [
+            {
+              "what": "drawn",
+              "from": 34,
+              "frames": 17
+            }
+          ],
+          "ok": true
+        },
+        {
+          "engine": "webkit",
+          "face": "one",
+          "move": "return",
+          "place": "beta",
+          "drawnAt": 27,
+          "frames": [
+            {
+              "what": "drawn",
+              "from": 27,
+              "frames": 18
+            }
+          ],
+          "ok": true
+        },
+        {
+          "engine": "webkit",
+          "face": "one",
+          "move": "return",
+          "place": "record",
+          "drawnAt": 30,
+          "frames": [
+            {
+              "what": "drawn",
+              "from": 30,
+              "frames": 17
+            }
+          ],
+          "ok": true
+        },
+        {
+          "engine": "webkit",
+          "face": "one",
+          "move": "return",
+          "place": "home",
+          "drawnAt": 18,
+          "frames": [
+            {
+              "what": "drawn",
+              "from": 18,
+              "frames": 17
+            }
+          ],
+          "ok": true
+        },
+        {
+          "engine": "firefox",
+          "face": "pages",
+          "move": "return",
+          "place": "alpha",
+          "drawnAt": 16,
+          "frames": [
+            {
+              "what": "drawn",
+              "from": 16,
+              "frames": 17
+            }
+          ],
+          "ok": true
+        },
+        {
+          "engine": "firefox",
+          "face": "pages",
+          "move": "return",
+          "place": "beta",
+          "drawnAt": 15,
+          "frames": [
+            {
+              "what": "drawn",
+              "from": 15,
+              "frames": 17
+            }
+          ],
+          "ok": true
+        },
+        {
+          "engine": "firefox",
+          "face": "pages",
+          "move": "return",
+          "place": "record",
+          "drawnAt": 23,
+          "frames": [
+            {
+              "what": "drawn",
+              "from": 23,
+              "frames": 17
+            }
+          ],
+          "ok": true
+        },
+        {
+          "engine": "firefox",
+          "face": "pages",
+          "move": "return",
+          "place": "home",
+          "drawnAt": 15,
+          "frames": [
+            {
+              "what": "drawn",
+              "from": 15,
+              "frames": 16
+            }
+          ],
+          "ok": true
+        },
+        {
+          "engine": "firefox",
+          "face": "one",
+          "move": "return",
+          "place": "alpha",
+          "drawnAt": 24,
+          "frames": [
+            {
+              "what": "drawn",
+              "from": 24,
+              "frames": 17
+            }
+          ],
+          "ok": true
+        },
+        {
+          "engine": "firefox",
+          "face": "one",
+          "move": "return",
+          "place": "beta",
+          "drawnAt": 24,
+          "frames": [
+            {
+              "what": "drawn",
+              "from": 24,
+              "frames": 17
+            }
+          ],
+          "ok": true
+        },
+        {
+          "engine": "firefox",
+          "face": "one",
+          "move": "return",
+          "place": "record",
+          "drawnAt": 26,
+          "frames": [
+            {
+              "what": "drawn",
+              "from": 26,
+              "frames": 17
+            }
+          ],
+          "ok": true
+        },
+        {
+          "engine": "firefox",
+          "face": "one",
+          "move": "return",
+          "place": "home",
+          "drawnAt": 20,
+          "frames": [
+            {
+              "what": "drawn",
+              "from": 20,
+              "frames": 17
+            }
+          ],
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "goingBackToAFramesPageLoadsItNoMoreWhereTheEngineMovesFramesAndIsDrawnEverywhere": {
+      "held": [
+        {
+          "engine": "chromium",
+          "face": "pages",
+          "move": "return",
+          "place": "frame",
+          "drawnAt": 149,
+          "frames": [
+            {
+              "what": "blank",
+              "from": 16,
+              "frames": 8
+            },
+            {
+              "what": "drawn",
+              "from": 149,
+              "frames": 17
+            }
+          ],
+          "loads": 1,
+          "ok": true
+        },
+        {
+          "engine": "chromium",
+          "face": "one",
+          "move": "return",
+          "place": "frame",
+          "drawnAt": 149,
+          "frames": [
+            {
+              "what": "blank",
+              "from": 16,
+              "frames": 8
+            },
+            {
+              "what": "drawn",
+              "from": 149,
+              "frames": 17
+            }
+          ],
+          "loads": 1,
+          "ok": true
+        },
+        {
+          "engine": "webkit",
+          "face": "pages",
+          "move": "return",
+          "place": "frame",
+          "drawnAt": 159,
+          "frames": [
+            {
+              "what": "blank",
+              "from": 12,
+              "frames": 10
+            },
+            {
+              "what": "drawn",
+              "from": 159,
+              "frames": 17
+            }
+          ],
+          "loads": 1,
+          "ok": true
+        },
+        {
+          "engine": "webkit",
+          "face": "one",
+          "move": "return",
+          "place": "frame",
+          "drawnAt": 160,
+          "frames": [
+            {
+              "what": "blank",
+              "from": 19,
+              "frames": 9
+            },
+            {
+              "what": "drawn",
+              "from": 160,
+              "frames": 17
+            }
+          ],
+          "loads": 1,
+          "ok": true
+        },
+        {
+          "engine": "firefox",
+          "face": "pages",
+          "move": "return",
+          "place": "frame",
+          "drawnAt": 149,
+          "frames": [
+            {
+              "what": "blank",
+              "from": 16,
+              "frames": 8
+            },
+            {
+              "what": "drawn",
+              "from": 149,
+              "frames": 16
+            }
+          ],
+          "loads": 1,
+          "ok": true
+        },
+        {
+          "engine": "firefox",
+          "face": "one",
+          "move": "return",
+          "place": "frame",
+          "drawnAt": 166,
+          "frames": [
+            {
+              "what": "blank",
+              "from": 22,
+              "frames": 9
+            },
+            {
+              "what": "drawn",
+              "from": 166,
+              "frames": 17
+            }
+          ],
+          "loads": 1,
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "aReturnIsDrawnInTime": {
+      "budgetMs": 120,
+      "held": [
+        {
+          "engine": "chromium",
+          "face": "pages",
+          "place": "alpha",
+          "drawnAt": 14,
+          "ok": true
+        },
+        {
+          "engine": "chromium",
+          "face": "pages",
+          "place": "beta",
+          "drawnAt": 15,
+          "ok": true
+        },
+        {
+          "engine": "chromium",
+          "face": "pages",
+          "place": "record",
+          "drawnAt": 15,
+          "ok": true
+        },
+        {
+          "engine": "chromium",
+          "face": "pages",
+          "place": "home",
+          "drawnAt": 16,
+          "ok": true
+        },
+        {
+          "engine": "chromium",
+          "face": "one",
+          "place": "alpha",
+          "drawnAt": 16,
+          "ok": true
+        },
+        {
+          "engine": "chromium",
+          "face": "one",
+          "place": "beta",
+          "drawnAt": 15,
+          "ok": true
+        },
+        {
+          "engine": "chromium",
+          "face": "one",
+          "place": "record",
+          "drawnAt": 16,
+          "ok": true
+        },
+        {
+          "engine": "chromium",
+          "face": "one",
+          "place": "home",
+          "drawnAt": 15,
+          "ok": true
+        },
+        {
+          "engine": "webkit",
+          "face": "pages",
+          "place": "alpha",
+          "drawnAt": 18,
+          "ok": true
+        },
+        {
+          "engine": "webkit",
+          "face": "pages",
+          "place": "beta",
+          "drawnAt": 19,
+          "ok": true
+        },
+        {
+          "engine": "webkit",
+          "face": "pages",
+          "place": "record",
+          "drawnAt": 20,
+          "ok": true
+        },
+        {
+          "engine": "webkit",
+          "face": "pages",
+          "place": "home",
+          "drawnAt": 14,
+          "ok": true
+        },
+        {
+          "engine": "webkit",
+          "face": "one",
+          "place": "alpha",
+          "drawnAt": 34,
+          "ok": true
+        },
+        {
+          "engine": "webkit",
+          "face": "one",
+          "place": "beta",
+          "drawnAt": 27,
+          "ok": true
+        },
+        {
+          "engine": "webkit",
+          "face": "one",
+          "place": "record",
+          "drawnAt": 30,
+          "ok": true
+        },
+        {
+          "engine": "webkit",
+          "face": "one",
+          "place": "home",
+          "drawnAt": 18,
+          "ok": true
+        },
+        {
+          "engine": "firefox",
+          "face": "pages",
+          "place": "alpha",
+          "drawnAt": 16,
+          "ok": true
+        },
+        {
+          "engine": "firefox",
+          "face": "pages",
+          "place": "beta",
+          "drawnAt": 15,
+          "ok": true
+        },
+        {
+          "engine": "firefox",
+          "face": "pages",
+          "place": "record",
+          "drawnAt": 23,
+          "ok": true
+        },
+        {
+          "engine": "firefox",
+          "face": "pages",
+          "place": "home",
+          "drawnAt": 15,
+          "ok": true
+        },
+        {
+          "engine": "firefox",
+          "face": "one",
+          "place": "alpha",
+          "drawnAt": 24,
+          "ok": true
+        },
+        {
+          "engine": "firefox",
+          "face": "one",
+          "place": "beta",
+          "drawnAt": 24,
+          "ok": true
+        },
+        {
+          "engine": "firefox",
+          "face": "one",
+          "place": "record",
+          "drawnAt": 26,
+          "ok": true
+        },
+        {
+          "engine": "firefox",
+          "face": "one",
+          "place": "home",
+          "drawnAt": 20,
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "whatWasTypedAndScrolledAndTheKeyboardAreAsTheyWere": {
+      "held": [
+        {
+          "engine": "chromium",
+          "face": "pages",
+          "value": "half a thought",
+          "scrolled": 120,
+          "keyboard": "words",
+          "frames": [
+            "drawn"
+          ],
+          "ok": true
+        },
+        {
+          "engine": "chromium",
+          "face": "one",
+          "value": "half a thought",
+          "scrolled": 120,
+          "keyboard": "words",
+          "frames": [
+            "drawn"
+          ],
+          "ok": true
+        },
+        {
+          "engine": "webkit",
+          "face": "pages",
+          "value": "half a thought",
+          "scrolled": 120,
+          "keyboard": "words",
+          "frames": [
+            "drawn"
+          ],
+          "ok": true
+        },
+        {
+          "engine": "webkit",
+          "face": "one",
+          "value": "half a thought",
+          "scrolled": 120,
+          "keyboard": "words",
+          "frames": [
+            "drawn"
+          ],
+          "ok": true
+        },
+        {
+          "engine": "firefox",
+          "face": "pages",
+          "value": "half a thought",
+          "scrolled": 120,
+          "keyboard": "words",
+          "frames": [
+            "drawn"
+          ],
+          "ok": true
+        },
+        {
+          "engine": "firefox",
+          "face": "one",
+          "value": "half a thought",
+          "scrolled": 120,
+          "keyboard": "words",
+          "frames": [
+            "drawn"
+          ],
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "aRecordChangedWhileAwayIsDrawnAsItIsNowWithNoBlankFrame": {
+      "held": [
+        {
+          "engine": "chromium",
+          "face": "pages",
+          "frames": [
+            {
+              "what": "drawn",
+              "from": 7,
+              "frames": 17
+            }
+          ],
+          "ok": true
+        },
+        {
+          "engine": "chromium",
+          "face": "one",
+          "frames": [
+            {
+              "what": "drawn",
+              "from": 14,
+              "frames": 17
+            }
+          ],
+          "ok": true
+        },
+        {
+          "engine": "webkit",
+          "face": "pages",
+          "frames": [
+            {
+              "what": "other",
+              "from": 1,
+              "frames": 2
+            },
+            {
+              "what": "drawn",
+              "from": 32,
+              "frames": 15
+            }
+          ],
+          "ok": true
+        },
+        {
+          "engine": "webkit",
+          "face": "one",
+          "frames": [
+            {
+              "what": "other",
+              "from": 1,
+              "frames": 2
+            },
+            {
+              "what": "drawn",
+              "from": 40,
+              "frames": 18
+            }
+          ],
+          "ok": true
+        },
+        {
+          "engine": "firefox",
+          "face": "pages",
+          "frames": [
+            {
+              "what": "drawn",
+              "from": 11,
+              "frames": 17
+            }
+          ],
+          "ok": true
+        },
+        {
+          "engine": "firefox",
+          "face": "one",
+          "frames": [
+            {
+              "what": "other",
+              "from": 1,
+              "frames": 1
+            },
+            {
+              "what": "drawn",
+              "from": 27,
+              "frames": 17
+            }
+          ],
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "aPressMadeBeforeTheChangeIsDrawnIsAppliedOnceItIs": {
+      "held": [
+        {
+          "engine": "chromium",
+          "face": "pages",
+          "stood": true,
+          "atOnce": [
+            "What printable boards would do.",
+            "What shared drafts would do.",
+            "What weekly digest would do."
+          ],
+          "after": [
+            "Pressed",
+            "What shared drafts would do.",
+            "What weekly digest would do."
+          ],
+          "ok": true
+        },
+        {
+          "engine": "chromium",
+          "face": "one",
+          "stood": true,
+          "atOnce": [
+            "What printable boards would do.",
+            "What shared drafts would do.",
+            "What weekly digest would do."
+          ],
+          "after": [
+            "Pressed",
+            "What shared drafts would do.",
+            "What weekly digest would do."
+          ],
+          "ok": true
+        },
+        {
+          "engine": "webkit",
+          "face": "pages",
+          "stood": true,
+          "atOnce": [
+            "What printable boards would do.",
+            "What shared drafts would do.",
+            "What weekly digest would do."
+          ],
+          "after": [
+            "Pressed",
+            "What shared drafts would do.",
+            "What weekly digest would do."
+          ],
+          "ok": true
+        },
+        {
+          "engine": "webkit",
+          "face": "one",
+          "stood": true,
+          "atOnce": [
+            "What printable boards would do.",
+            "What shared drafts would do.",
+            "What weekly digest would do."
+          ],
+          "after": [
+            "Pressed",
+            "What shared drafts would do.",
+            "What weekly digest would do."
+          ],
+          "ok": true
+        },
+        {
+          "engine": "firefox",
+          "face": "pages",
+          "stood": true,
+          "atOnce": [
+            "What printable boards would do.",
+            "What shared drafts would do.",
+            "What weekly digest would do."
+          ],
+          "after": [
+            "Pressed",
+            "What shared drafts would do.",
+            "What weekly digest would do."
+          ],
+          "ok": true
+        },
+        {
+          "engine": "firefox",
+          "face": "one",
+          "stood": true,
+          "atOnce": [
+            "What printable boards would do.",
+            "What shared drafts would do.",
+            "What weekly digest would do."
+          ],
+          "after": [
+            "Pressed",
+            "What shared drafts would do.",
+            "What weekly digest would do."
+          ],
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "aPressOnARowThatIsAnotherRecordsByThenIsNotApplied": {
+      "held": [
+        {
+          "engine": "chromium",
+          "face": "pages",
+          "stood": true,
+          "atOnce": [
+            "Again",
+            "What shared drafts would do.",
+            "What weekly digest would do."
+          ],
+          "after": [
+            "Again",
+            "What shared drafts would do.",
+            "What weekly digest would do."
+          ],
+          "ok": true
+        },
+        {
+          "engine": "chromium",
+          "face": "one",
+          "stood": true,
+          "atOnce": [
+            "Again",
+            "What shared drafts would do.",
+            "What weekly digest would do."
+          ],
+          "after": [
+            "Again",
+            "What shared drafts would do.",
+            "What weekly digest would do."
+          ],
+          "ok": true
+        },
+        {
+          "engine": "webkit",
+          "face": "pages",
+          "stood": true,
+          "atOnce": [
+            "Again",
+            "What shared drafts would do.",
+            "What weekly digest would do."
+          ],
+          "after": [
+            "Again",
+            "What shared drafts would do.",
+            "What weekly digest would do."
+          ],
+          "ok": true
+        },
+        {
+          "engine": "webkit",
+          "face": "one",
+          "stood": true,
+          "atOnce": [
+            "Again",
+            "What shared drafts would do.",
+            "What weekly digest would do."
+          ],
+          "after": [
+            "Again",
+            "What shared drafts would do.",
+            "What weekly digest would do."
+          ],
+          "ok": true
+        },
+        {
+          "engine": "firefox",
+          "face": "pages",
+          "stood": true,
+          "atOnce": [
+            "Again",
+            "What shared drafts would do.",
+            "What weekly digest would do."
+          ],
+          "after": [
+            "Again",
+            "What shared drafts would do.",
+            "What weekly digest would do."
+          ],
+          "ok": true
+        },
+        {
+          "engine": "firefox",
+          "face": "one",
+          "stood": true,
+          "atOnce": [
+            "Again",
+            "What shared drafts would do.",
+            "What weekly digest would do."
+          ],
+          "after": [
+            "Again",
+            "What shared drafts would do.",
+            "What weekly digest would do."
+          ],
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "aRecordGoneWhileAwayIsNowhereOnThePageGoneBackTo": {
+      "held": [
+        {
+          "engine": "chromium",
+          "face": "pages",
+          "frames": [
+            {
+              "what": "blank",
+              "from": 8,
+              "frames": 1
+            },
+            {
+              "what": "drawn",
+              "from": 24,
+              "frames": 17
+            }
+          ],
+          "left": false,
+          "ok": true
+        },
+        {
+          "engine": "chromium",
+          "face": "one",
+          "frames": [
+            {
+              "what": "blank",
+              "from": 10,
+              "frames": 2
+            },
+            {
+              "what": "drawn",
+              "from": 37,
+              "frames": 17
+            }
+          ],
+          "left": false,
+          "ok": true
+        },
+        {
+          "engine": "webkit",
+          "face": "pages",
+          "frames": [
+            {
+              "what": "other",
+              "from": 6,
+              "frames": 1
+            },
+            {
+              "what": "blank",
+              "from": 20,
+              "frames": 3
+            },
+            {
+              "what": "drawn",
+              "from": 49,
+              "frames": 18
+            }
+          ],
+          "left": false,
+          "ok": true
+        },
+        {
+          "engine": "webkit",
+          "face": "one",
+          "frames": [
+            {
+              "what": "other",
+              "from": 1,
+              "frames": 1
+            },
+            {
+              "what": "blank",
+              "from": 30,
+              "frames": 3
+            },
+            {
+              "what": "drawn",
+              "from": 55,
+              "frames": 17
+            }
+          ],
+          "left": false,
+          "ok": true
+        },
+        {
+          "engine": "firefox",
+          "face": "pages",
+          "frames": [
+            {
+              "what": "other",
+              "from": 6,
+              "frames": 1
+            },
+            {
+              "what": "blank",
+              "from": 18,
+              "frames": 2
+            },
+            {
+              "what": "drawn",
+              "from": 49,
+              "frames": 16
+            }
+          ],
+          "left": false,
+          "ok": true
+        },
+        {
+          "engine": "firefox",
+          "face": "one",
+          "frames": [
+            {
+              "what": "blank",
+              "from": 20,
+              "frames": 2
+            },
+            {
+              "what": "drawn",
+              "from": 47,
+              "frames": 17
+            }
+          ],
+          "left": false,
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "anotherSeatAndAViewTakenAwayNeverStandWithTheDrawingKept": {
+      "held": [
+        {
+          "engine": "chromium",
+          "face": "pages",
+          "seatKept": null,
+          "viewKept": null,
+          "ok": true
+        },
+        {
+          "engine": "chromium",
+          "face": "one",
+          "seatKept": null,
+          "viewKept": null,
+          "ok": true
+        },
+        {
+          "engine": "webkit",
+          "face": "pages",
+          "seatKept": null,
+          "viewKept": null,
+          "ok": true
+        },
+        {
+          "engine": "webkit",
+          "face": "one",
+          "seatKept": null,
+          "viewKept": null,
+          "ok": true
+        },
+        {
+          "engine": "firefox",
+          "face": "pages",
+          "seatKept": null,
+          "viewKept": null,
+          "ok": true
+        },
+        {
+          "engine": "firefox",
+          "face": "one",
+          "seatKept": null,
+          "viewKept": null,
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "aViewThatSpinsFallsBackWithinItsBudgetEachVisit": {
+      "held": [
+        {
+          "engine": "chromium",
+          "face": "pages",
+          "visit": "first",
+          "ms": 648,
+          "ok": true
+        },
+        {
+          "engine": "chromium",
+          "face": "pages",
+          "visit": "again",
+          "ms": 532,
+          "ok": true
+        },
+        {
+          "engine": "chromium",
+          "face": "one",
+          "visit": "first",
+          "ms": 648,
+          "ok": true
+        },
+        {
+          "engine": "chromium",
+          "face": "one",
+          "visit": "again",
+          "ms": 533,
+          "ok": true
+        },
+        {
+          "engine": "webkit",
+          "face": "pages",
+          "visit": "first",
+          "ms": 561,
+          "ok": true
+        },
+        {
+          "engine": "webkit",
+          "face": "pages",
+          "visit": "again",
+          "ms": 450,
+          "ok": true
+        },
+        {
+          "engine": "webkit",
+          "face": "one",
+          "visit": "first",
+          "ms": 563,
+          "ok": true
+        },
+        {
+          "engine": "webkit",
+          "face": "one",
+          "visit": "again",
+          "ms": 466,
+          "ok": true
+        },
+        {
+          "engine": "firefox",
+          "face": "pages",
+          "visit": "first",
+          "ms": 664,
+          "ok": true
+        },
+        {
+          "engine": "firefox",
+          "face": "pages",
+          "visit": "again",
+          "ms": 449,
+          "ok": true
+        },
+        {
+          "engine": "firefox",
+          "face": "one",
+          "visit": "first",
+          "ms": 664,
+          "ok": true
+        },
+        {
+          "engine": "firefox",
+          "face": "one",
+          "visit": "again",
+          "ms": 447,
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "noPageThrew": {
+      "errors": [],
+      "ok": true
+    }
+  },
+  "passed": true,
+  "timing": {
+    "wall": 130,
+    "cpu": 31.9,
+    "serverStartup": 0,
+    "servers": [],
+    "beforeFirstBrowser": 612,
+    "browsers": 3,
+    "browserLaunch": 798,
+    "fixedWaits": 57600,
+    "fixedWaitCount": 66,
+    "fixedWaitSites": [
+      {
+        "at": "verify-view-return.mjs:309",
+        "ms": 21600,
+        "count": 12
+      },
+      {
+        "at": "verify-view-return.mjs:254",
+        "ms": 15000,
+        "count": 6
+      },
+      {
+        "at": "verify-view-return.mjs:299",
+        "ms": 8400,
+        "count": 12
+      },
+      {
+        "at": "verify-view-return.mjs:276",
+        "ms": 3600,
+        "count": 6
+      },
+      {
+        "at": "verify-view-return.mjs:283",
+        "ms": 3600,
+        "count": 6
+      },
+      {
+        "at": "verify-view-return.mjs:281",
+        "ms": 2400,
+        "count": 6
+      },
+      {
+        "at": "verify-view-return.mjs:292",
+        "ms": 1800,
+        "count": 6
+      },
+      {
+        "at": "verify-view-return.mjs:331",
+        "ms": 600,
+        "count": 6
+      },
+      {
+        "at": "verify-view-return.mjs:337",
+        "ms": 600,
+        "count": 6
+      }
+    ],
+    "settledWaits": 0,
+    "settledWaitCount": 0,
+    "settledWaitSites": [],
+    "worker": 0
+  }
+}
