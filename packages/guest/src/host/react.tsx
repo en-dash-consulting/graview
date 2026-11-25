@@ -68,6 +68,14 @@ export interface GuestViewOptions {
   readonly limits?: GuestLimits;
   /** Where a worker guest's links may go (`mountGuestWorker`'s `links`). Any `https:` address by default. */
   readonly links?: KitLinks;
+  /**
+   * Whether its place flows with the page (Graview HQ
+   * f-frame-view-autosize-short-on-desk): a guest is as tall as it asks to
+   * be, so its place draws it in the page's column as long as it is, as a
+   * worker view's does. `false` keeps the place's frame, most of the window
+   * tall and scrolling inside itself, for a fixed canvas. `true` by default.
+   */
+  readonly flows?: boolean;
 }
 
 const inputOf = (props: ViewProps<AnySchema>): GuestViewInput => ({
@@ -258,5 +266,13 @@ export function guestView(options: GuestViewOptions): ViewComponent<AnySchema> {
     return <div ref={holder} data-guest={options.name} aria-busy={options.url ? true : undefined} />;
   }
   GuestView.displayName = `GuestView(${options.name})`;
+  /*
+   * ITS PLACE FLOWS WITH THE PAGE (Graview HQ f-frame-view-autosize-short-on-desk).
+   * The frame takes the height its guest asks for; held in the place's frame
+   * (most of the window tall, at most 760px) a guest taller than that was cut
+   * at the frame's foot on a desk and scrolled inside it, though it had asked
+   * for all of its height and been given it.
+   */
+  (GuestView as { flows?: boolean }).flows = options.flows !== false;
   return GuestView;
 }

@@ -117,6 +117,34 @@ const LONG = (client) => `<!doctype html><html lang="en"><head><meta charset="ut
 <script>${client.replace(/<\/script/gi, "<\\/script")}</script>
 <script>window.__seen = []; const guest = GraviewGuest.connect(); guest.subscribe((props) => window.__seen.push(props)); guest.autoSize();
 let rows = 0; const more = setInterval(() => { const row = document.createElement("div"); row.className = "row"; document.getElementById("rows").appendChild(row); if (++rows === 25) clearInterval(more); }, 40);</script></body></html>`;
+/*
+ * A frame view shaped like Shed Lean-To's 3D model (Graview HQ
+ * f-frame-view-autosize-short-on-desk), sized by the client's autoSize at
+ * Cloud's 20,000px: a canvas whose height follows the frame's width (88% of
+ * it, held between 300 and 640px) and is drawn again on every push and on a
+ * resize, `html, body { overflow-x: hidden }`, and below the canvas its
+ * buttons, a hint and a list. Its place cut it at the place's frame (at most
+ * 760px) on a desk, though the frame had been given all of its height.
+ */
+const MODEL = (client) => `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Model</title>
+<style>*{box-sizing:border-box}html,body{margin:0;font:15px/1.45 system-ui,sans-serif;overflow-x:hidden}.wrap{padding:4px;display:grid;gap:14px}.row{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.cap{margin:0;max-width:68ch}.sheet{border:1px solid;border-radius:8px;overflow:hidden}.stage{position:relative}canvas{display:block;width:100%}.tb{margin:0;padding:9px 12px;border-top:1px solid;font-size:11px}
+button{font:inherit;font-size:14px;border:1px solid #999;border-radius:999px;padding:6px 13px;min-height:36px}.nudge{position:absolute;right:8px;bottom:8px;display:flex;gap:4px}.nudge button{width:36px;padding:0}.hint{margin:0;font-size:13px}</style></head>
+<body><div class="wrap"><div class="row" id="steps"></div><p class="cap" id="cap"></p>
+<div class="sheet"><div class="stage"><canvas id="cv"></canvas><div class="nudge"><button>&#8630;</button><button>&#8631;</button><button>&#9650;</button><button>&#9660;</button></div></div><p class="tb">From the front corner</p></div>
+<div class="row"><button>3D</button><button>Front</button><button>Far end</button><button>Top</button><button>See through the roof</button><button>Whole shed</button></div>
+<p class="hint">Drag sideways to turn it. Tap a part to see what it is, how it is cut and what holds it up.</p>
+<div class="row" id="parts"></div><p id="foot">The foot of the model.</p></div>
+<script>${client.replace(/<\/script/gi, "<\\/script")}</script>
+<script>window.__seen = []; const guest = GraviewGuest.connect(); guest.autoSize();
+const cv = document.getElementById("cv");
+function draw() { const W = cv.clientWidth || 600; const H = Math.round(Math.max(300, Math.min(640, W * 0.88))); cv.style.height = H + "px"; const dpr = window.devicePixelRatio || 1; cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); const ctx = cv.getContext("2d"); ctx.fillStyle = "#cdb"; ctx.fillRect(0, 0, cv.width, cv.height); }
+window.addEventListener("resize", draw);
+guest.subscribe((props) => { window.__seen.push(props);
+  document.getElementById("steps").replaceChildren(...["Today", "Frame", "Roof", "Lattice", "Bikes and storage"].map((step, i) => Object.assign(document.createElement("button"), { textContent: (i + 1) + ". " + step })));
+  document.getElementById("cap").textContent = "The two big bikes hang by a wheel on the end wall. The mud kitchen and its sink stand outside the far end.";
+  document.getElementById("parts").replaceChildren(...(props.nodes ?? []).concat(props.nodes ?? []).map((node) => Object.assign(document.createElement("button"), { textContent: node.label })));
+  draw(); });</script></body></html>`;
 const BRANDS = {
   first: { name: "En Dash", logo: SVG_A, typography: { display: "Georgia, 'Times New Roman', serif" }, shape: { radius: 4 } },
   second: { name: "En Dash Consulting", logo: PNG_PATH, typography: { display: "'Courier New', Courier, monospace" }, shape: { radius: 16 } },
@@ -157,9 +185,10 @@ window.__handle = mount(document.getElementById("app"), {
     registry.register("package", { cardinality: "many", fidelity: "full" }, guestView({ url: ${JSON.stringify(`${GUEST}/prices.html`)}, name: "prices", title: "The price sheet", reads: { kinds: ["offer"], edges: ["includes"] } }), { title: "The price sheet" });
     registry.register("signal", { cardinality: "many", fidelity: "full" }, guestView({ url: ${JSON.stringify(`${GUEST}/masthead.html`)}, name: "masthead", title: "The masthead" }), { title: "The masthead" });
     registry.register("signal", { cardinality: "many", fidelity: "full" }, guestView({ url: ${JSON.stringify(`${GUEST}/lettering.html`)}, name: "lettering", title: "The lettering", asset: (path) => path }), { title: "The lettering" });
-    const grown = (name) => ({ onSize: (height) => (window.__sizes[name] ??= []).push(height), onProblem: (said) => window.__held.push([name, said]), limits: { maxHeight: 20000 } });
+    const grown = (name) => ({ onSize: (height) => (window.__sizes[name] ??= []).push(height), onProblem: (said, problem) => window.__held.push([name, said, problem?.code]), limits: { maxHeight: 20000 } });
     registry.register("signal", { cardinality: "many", fidelity: "full" }, guestView({ url: ${JSON.stringify(`${GUEST}/tall.html`)}, name: "tall", title: "The tall page", ...grown("tall") }), { title: "The tall page" });
     registry.register("signal", { cardinality: "many", fidelity: "full" }, guestView({ url: ${JSON.stringify(`${GUEST}/long.html`)}, name: "long", title: "The long list", ...grown("long") }), { title: "The long list" });
+    registry.register("signal", { cardinality: "many", fidelity: "full" }, guestView({ url: ${JSON.stringify(`${GUEST}/model.html`)}, name: "model", title: "The model", ...grown("model") }), { title: "The model" });
     registry.home?.(guestView({ url: ${JSON.stringify(`${GUEST}/front.html`)}, name: "front", title: "The front page", reads: { kinds: ["package"] } }));
     return registry;
   },
@@ -201,7 +230,7 @@ window.__handle.drawn().then(() => { window.__ready = true; });
       }
     }).listen(HOST_PORT, "127.0.0.1"),
     createServer((request, response) => {
-      const body = { "/prices.html": priceSheet(repoRoot, client), "/front.html": FRONT(client), "/masthead.html": MASTHEAD(client), "/lettering.html": LETTERING(client), "/tall.html": TALL(client), "/long.html": LONG(client) }[request.url ?? ""];
+      const body = { "/prices.html": priceSheet(repoRoot, client), "/front.html": FRONT(client), "/masthead.html": MASTHEAD(client), "/lettering.html": LETTERING(client), "/tall.html": TALL(client), "/long.html": LONG(client), "/model.html": MODEL(client) }[request.url ?? ""];
       if (!body) {
         response.writeHead(404);
         return response.end();
@@ -341,6 +370,40 @@ window.__handle.drawn().then(() => { window.__ready = true; });
     await tab.waitForFunction(() => Number.parseInt(document.querySelector('iframe[data-guest-view="long"]')?.style.height ?? "0", 10) >= 20_000, null, { timeout: 15_000 }).catch(() => {});
     const long = await frameHeight("long");
     claim("a frame guest whose content really grows, 25,000px of rows, grows to the 20,000px cap and is not held, and guestView's onSize is told each height", long.height === 20_000 && long.held === null && long.said.length === 0 && long.sizes.at(-1) === 20_000, { ...long, sizes: long.sizes.length });
+    const past = await tab.evaluate(() => window.__held.filter(([one, , code]) => one === "long" && code === "taller-than-allowed").map(([, said, code]) => ({ said, code })));
+    claim("asked for more than the 20,000px it may be, it is not cut unsaid: the host is told once, as taller-than-allowed", past.length === 1 && past[0].code === "taller-than-allowed" && /more than the 20000px it may be/.test(past[0].said), past);
+    // ── a frame view as tall as it draws at every width (Graview HQ f-frame-view-autosize-short-on-desk) ──
+    await open("/places/the-model");
+    const modelFrame = await guestFrame("model");
+    const fits = [];
+    for (const width of [1280, 900, 390, 1280, 900]) {
+      await tab.setViewportSize({ width, height: 900 });
+      let seen;
+      for (let i = 0; i < 50; i += 1) {
+        await tab.waitForTimeout(100);
+        const inside = await modelFrame.evaluate(() => ({ document: Math.ceil(document.documentElement.getBoundingClientRect().height), foot: Math.ceil(document.getElementById("foot").getBoundingClientRect().bottom), canvas: document.getElementById("cv").getBoundingClientRect().height }));
+        const outside = await tab.evaluate(() => {
+          const frame = document.querySelector('iframe[data-guest-view="model"]');
+          const boxes = [];
+          for (let at = frame?.parentElement; at && !at.hasAttribute("data-graview-page-main"); at = at.parentElement) {
+            const style = getComputedStyle(at);
+            if (style.overflowY !== "visible" && at.scrollHeight > at.clientHeight + 1) boxes.push({ testid: at.getAttribute("data-testid"), height: at.clientHeight, scrolls: at.scrollHeight });
+          }
+          return { frame: frame ? Math.round(frame.getBoundingClientRect().height) : null, held: frame?.getAttribute("data-guest-view-held") ?? null, boxes };
+        });
+        seen = { width, ...inside, ...outside };
+        if (outside.frame !== null && Math.abs(outside.frame - inside.document) <= 1 && inside.foot <= outside.frame && outside.boxes.length === 0) break;
+      }
+      fits.push(seen);
+    }
+    const modelSaid = await tab.evaluate(() => window.__held.filter(([one, , code]) => one === "model" && (code === "taller-than-allowed" || code === "held-by-growth-guard")).map(([, said]) => said));
+    claim(
+      "a frame view shaped like Shed Lean-To's 3D model (a canvas sized by the frame's width, overflow-x hidden, drawn again on each push) is as tall as it draws at 1280, 900 and 390 wide and after each resize, its foot inside the frame",
+      fits.every((one) => one.frame !== null && Math.abs(one.frame - one.document) <= 1 && one.foot <= one.frame && one.held === null) && fits.some((one) => one.canvas === 640) && fits.some((one) => one.canvas < 640),
+      fits,
+    );
+    claim("and its place flows with the page: nothing between the frame and the page scrolls inside itself, and nothing is said of its height", fits.every((one) => one.boxes.length === 0) && modelSaid.length === 0, { boxes: fits.map((one) => one.boxes), said: modelSaid });
+    await tab.setViewportSize({ width: 1280, height: 900 });
     // ── the brand (FR-127) ──
     await open("/places/the-masthead");
     let masthead;

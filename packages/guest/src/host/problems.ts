@@ -16,6 +16,8 @@ export const VIEW_PROBLEM_CODES = [
   "part-failed",
   /** A frame guest asked for a height that only tracked its own frame's, and is held at it (the growth guard). */
   "held-by-growth-guard",
+  /** A frame guest asked to be taller than its host allows (`limits.maxHeight`), and is drawn at that height, its foot cut. */
+  "taller-than-allowed",
   /** A relation the view reads joins a kind its manifest never hands it. */
   "far-kind-not-handed",
   /** The app's stylesheet for its views draws nothing: the open kit leaves all of it out. */

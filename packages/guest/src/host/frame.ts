@@ -430,6 +430,8 @@ export function mountGuestView<S extends AnySchema>(element: HTMLElement, option
         options.onProblem?.(said, problem);
         drew();
       },
+      /* Taller than it may be (`limits.maxHeight`): given that height, and said. */
+      ...(options.onProblem ? { onProblem: options.onProblem } : {}),
       ...(options.limits ? { limits: options.limits } : {}),
       limiter,
     });
