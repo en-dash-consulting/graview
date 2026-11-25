@@ -93,6 +93,13 @@ export interface ResourceMapping {
    * is an echo, not news.
    */
   readonly version?: string;
+  /**
+   * WHAT A RECORD SET ASIDE HERE (archived) IS THERE. Absent: gone, as one
+   * removed is, so its delete is sent. `keep`: left as it is, with nothing
+   * sent for it while it is aside, still linked, and kept in step again
+   * when it is brought back; only a record removed is deleted there.
+   */
+  readonly aside?: "keep";
   /** Our field that holds the remote's id, for those links. Absent: the node's own id. */
   readonly remoteId?: string;
 }
@@ -129,6 +136,13 @@ export interface RemoteWrite {
   /** Our node id, so the ack can be matched back without guessing. */
   readonly localId: string;
   readonly fields?: Readonly<Record<string, unknown>>;
+  /**
+   * The remote's names of the fields that changed here since both sides last
+   * agreed, for a record the remote has: a transport that writes part by
+   * part sends these alone, and leaves what another person changed there
+   * meanwhile. Absent when the record is new there: all of `fields`.
+   */
+  readonly changed?: readonly string[];
   readonly deleted?: boolean;
 }
 
@@ -139,6 +153,10 @@ export interface RemoteAck {
   readonly version: string;
   /** Set when the remote refused. The engine keeps the local state and says so. */
   readonly error?: string;
+  /** What the remote holds, in its names, where it is not what was sent: a part held unsent is agreed as it is there, so it stays owed. */
+  readonly fields?: Readonly<Record<string, unknown>>;
+  /** Why part of the write was not sent, when the rest was: said in the report's `refused`. */
+  readonly held?: string;
 }
 
 /**
@@ -210,8 +228,21 @@ export interface SyncState {
    * a refusal is said once in the history, and read back by `guestsOf`.
    */
   readonly guests?: Readonly<Record<string, GuestsKept>>;
+  /**
+   * RECORDS HERE BEFORE THE CONNECTION'S FIRST PASS that are not sent
+   * (`SyncOptions.holdExisting`), by our id: what each held then, every
+   * field as a short hash and every link by its other end, so one that has
+   * changed since goes, whatever the connection maps by then.
+   */
+  readonly existing?: Readonly<Record<string, ExistingRecord>>;
   /** The last pass, as `connectionStatus` reads it: when, and what it did. */
   readonly lastPass?: PassKept;
+}
+
+/** What a record here before the first pass held: each field's hash, and the records each relation reached. */
+export interface ExistingRecord {
+  readonly fields: Readonly<Record<string, string>>;
+  readonly links?: Readonly<Record<string, readonly string[]>>;
 }
 
 /** What a connection last did with one record's guests. */

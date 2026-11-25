@@ -1,5 +1,6 @@
 import type { AnyGraphNode, GraphReader } from "../graph/types.js";
 import { computedValues } from "../document/computed-values.js";
+import { isArchived } from "../graph/archived.js";
 import { splicedRecord } from "../graph/primitives.js";
 import { PermissionDeniedError } from "../permissions/types.js";
 import type { AppendOp, ApplyOptions, PlannedChange, Store } from "../store.js";
@@ -25,6 +26,7 @@ import {
   type SyncConflict,
   type SyncMapping,
   type SyncState,
+  type ExistingRecord,
   type GuestsKept,
 } from "./types.js";
 
@@ -232,6 +234,18 @@ function remoteFields(
   return out;
 }
 
+/** A value as a short hash. */
+function shortHash(value: unknown): string {
+  const text = JSON.stringify(value);
+  let one = 0x811c9dc5;
+  let two = 0x1000193;
+  for (let at = 0; at < text.length; at++) {
+    one = Math.imul(one ^ text.charCodeAt(at), 0x01000193) >>> 0;
+    two = Math.imul(two ^ text.charCodeAt(text.length - 1 - at), 0x01000193) >>> 0;
+  }
+  return one.toString(36) + two.toString(36);
+}
+
 const same = (a: unknown, b: unknown) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
 /** Where a conflict is held: by node and field, and a record deleted here by node alone. */
 const heldKey = (localId: string, field = "") => `${localId}\u0000${field}`;
@@ -286,9 +300,17 @@ export interface SyncOptions<S extends AnySchema> {
   /** The act that links a record to another, for a relation the remote linked (`connect-<kind>-<edge>`). Required for a mapping with `edges`. */
   connectInbound?(call: { readonly localId: string; readonly kind: string; readonly edge: string; readonly to: string }): MutationCall | null;
   /** The act that unlinks them, for a link the remote took away (`disconnect-<kind>-<edge>`). Absent: the link stays here. */
-  disconnectInbound?(call: { readonly localId: string; readonly kind: string; readonly edge: string; readonly to: string }): MutationCall | null;
+  disconnectInbound?(call: { readonly localId: string; readonly kind: string; readonly edge: string; readonly to: string }): MutationCall | readonly MutationCall[] | null;
   /** The guests the connection keeps, when it keeps some (Roadmap f-sync-guest-changes-in-history). */
   readonly guests?: SyncGuests;
+  /**
+   * THE FIRST RUN SENDS NOTHING: the records that were here before this
+   * engine's first pass — with no state kept, every one no link is for —
+   * stay unsent, and the first pass says how many. One changed after it
+   * goes, as one made after it does. `say` is the sentence for a count of
+   * them; `send` sends them after all. A pass that only reads is not one.
+   */
+  readonly holdExisting?: { readonly send?: boolean; say(count: number): string };
   /** The clock a pass and a sent guest list are stamped with; the runtime's when absent. */
   now?(): Date;
 }
@@ -500,7 +522,7 @@ export class SyncEngine<S extends AnySchema> {
       for (const to of now) {
         if (reach.includes(to) || this.resolver.remoteId(to) === undefined) continue;
         const call = this.options.disconnectInbound?.({ ...about, to });
-        if (call) calls.push(call);
+        if (call) calls.push(...(Array.isArray(call) ? (call as readonly MutationCall[]) : [call as MutationCall]));
       }
       for (const to of reach) {
         if (now.includes(to)) continue;
@@ -592,6 +614,45 @@ export class SyncEngine<S extends AnySchema> {
       found.set(node["id"] as string, { node, mapping });
     }
     return found;
+  }
+
+  /** What a record holds of its own, whatever is mapped. */
+  private ownOf(node: Record<string, unknown>): ExistingRecord {
+    const fields: Record<string, string> = {};
+    for (const [field, value] of Object.entries(node)) if (value !== undefined && value !== null && /^[a-z]/.test(field)) fields[field] = shortHash(value);
+    const links: Record<string, string[]> = {};
+    for (const edge of this.options.store.graph.outEdges(node["id"] as string)) (links[edge.kind] ??= []).push(edge.to);
+    return { fields, ...(Object.keys(links).length > 0 ? { links } : {}) };
+  }
+
+  /** The records here before the first pass, kept once as they stand: read before the pull, so what it makes is not among them. Their count, when this pass is the first. */
+  private keepExisting(): number | undefined {
+    if (!this.options.holdExisting || this.options.holdExisting.send || this.state.existing || this.options.mapping.resources.every((resource) => resource.readonly)) return undefined;
+    const existing: Record<string, ExistingRecord> = {};
+    for (const node of this.options.store.graph.allNodes({ archived: "all" }) as unknown as Record<string, unknown>[]) {
+      const id = node["id"] as string;
+      const mapping = this.mappingFor(node["kind"] as string);
+      if (!mapping || mapping.kind !== node["kind"] || mapping.readonly || this.state.links[id] || (mapping.match && !mapping.match(node))) continue;
+      existing[id] = this.ownOf(node);
+    }
+    this.state = { ...this.state, existing };
+    return Object.keys(existing).length;
+  }
+
+  /** Whether a record not linked was here before the first pass and has not changed since: each mapped field as it was, and no link it did not have. */
+  private isExisting(node: Record<string, unknown>, mapping: ResourceMapping): boolean {
+    const was = this.options.holdExisting && !this.options.holdExisting.send ? this.state.existing?.[node["id"] as string] : undefined;
+    if (!was) return false;
+    const now = this.ownOf(node);
+    return (
+      Object.keys(mapping.fields).every((field) => now.fields[field] === was.fields[field]) &&
+      Object.keys(mapping.edges ?? {}).every((edge) => (now.links?.[edge] ?? []).every((to) => was.links?.[edge]?.includes(to)))
+    );
+  }
+
+  /** Whether a record is set aside here and its mapping keeps the remote's as it is. */
+  private isAside(localId: string, mapping: ResourceMapping | undefined): boolean {
+    return mapping?.aside === "keep" && isArchived(this.options.store.graph.getNode(localId));
   }
 
   /** A link for every participant whose mapping names its version field and that carries one. */
@@ -745,6 +806,7 @@ export class SyncEngine<S extends AnySchema> {
       const link = this.state.links[localId];
       const values = this.valuesOf(node, mapping);
       if (!link) {
+        if (this.isExisting(node, mapping)) continue;
         writes.push({
           resource: mapping.resource,
           localId,
@@ -760,6 +822,7 @@ export class SyncEngine<S extends AnySchema> {
         id: link.id,
         localId,
         fields: remoteFields(free, mapping, node),
+        changed: changed.map((field) => keptOf(mapping)[field]!),
       });
     }
     // Something we had linked and no longer have is a deletion, and saying so
@@ -767,7 +830,7 @@ export class SyncEngine<S extends AnySchema> {
     // remote owns is not deleted there from here: `run` refuses it, once. A
     // delete held against the remote's edit waits for `resolve`.
     for (const [localId, link] of Object.entries(this.state.links)) {
-      if (seen.has(localId) || this.mappingFor(link.resource)?.readonly || held.has(heldKey(localId))) continue;
+      if (seen.has(localId) || this.mappingFor(link.resource)?.readonly || held.has(heldKey(localId)) || this.isAside(localId, this.mappingFor(link.resource))) continue;
       writes.push({ resource: link.resource, id: link.id, localId, deleted: true });
     }
     return writes;
@@ -789,6 +852,7 @@ export class SyncEngine<S extends AnySchema> {
     this.release();
     const held = this.held();
     const policy = this.policy;
+    const unsent = this.keepExisting();
     let offline = false;
     let problem: string | undefined;
     let said: readonly string[] | undefined;
@@ -1012,6 +1076,11 @@ export class SyncEngine<S extends AnySchema> {
       problem = error instanceof Error ? error.message : String(error);
     }
 
+    if (unsent) {
+      const sentence = this.options.holdExisting!.say(unsent);
+      saidBy = [{ sentence }, ...(saidBy ?? said?.map((one) => ({ sentence: one })) ?? [])];
+      said = [sentence, ...(said ?? [])];
+    }
     // What the inbound pass decided is what the outbound pass sends from.
     const { conflicts: _before, gone: _gone, skipped: _skipped, ...kept } = this.state;
     const unsynced = [...new Set([...(this.state.gone ?? []), ...gone])].filter((id) => this.options.store.graph.getNode(id));
@@ -1027,7 +1096,7 @@ export class SyncEngine<S extends AnySchema> {
     const participants = this.participants();
     for (const [localId, link] of Object.entries(links)) {
       const mapping = this.mappingFor(link.resource);
-      if (participants.has(localId) || !mapping?.readonly) continue;
+      if (participants.has(localId) || !mapping?.readonly || this.isAside(localId, mapping)) continue;
       refused.push({ localId, error: this.because(mapping) });
       const { [localId]: _gone, ...rest } = links;
       links = rest;
@@ -1090,6 +1159,7 @@ export class SyncEngine<S extends AnySchema> {
             continue;
           }
           pushed.push(ack.localId);
+          if (ack.held) refused.push({ localId: ack.localId, error: ack.held });
           const out = guests ? outgoing.get(ack.localId) : undefined;
           if (guests && out) {
             guestsKept[ack.localId] = { sent: { addresses: out.addresses, notified: guests.notify === true, at } };
@@ -1109,6 +1179,8 @@ export class SyncEngine<S extends AnySchema> {
       }
     }
 
+    // A pass that sent what was here leaves nothing to hold, should the declaration stop saying so.
+    if (this.options.holdExisting?.send && !offline && !this.state.existing && this.options.mapping.resources.some((resource) => !resource.readonly)) this.state = { ...this.state, existing: {} };
     this.sayGuests(lines, changes);
     for (const id of Object.keys(guestsKept)) if (!links[id] && !this.options.store.graph.getNode(id)) delete guestsKept[id];
     const lastPass = {
@@ -1131,6 +1203,7 @@ export class SyncEngine<S extends AnySchema> {
       ...(this.state.gone ? { gone: this.state.gone } : {}),
       ...(this.state.unresolved ? { unresolved: this.state.unresolved } : {}),
       ...(this.state.skipped ? { skipped: this.state.skipped } : {}),
+      ...(this.state.existing ? { existing: Object.fromEntries(Object.entries(this.state.existing).filter(([id]) => !links[id])) } : {}),
       ...(Object.keys(guestsKept).length > 0 ? { guests: guestsKept } : {}),
       lastPass,
     };
@@ -1260,7 +1333,7 @@ export class SyncEngine<S extends AnySchema> {
         // compares against — comparing a decoded remote value with an encoded
         // local one reports a change on every single pass. A field the write
         // left out (held in conflict) keeps the base it had.
-        fields: { ...links[ack.localId]?.fields, ...ourFields(write.fields ?? {}, mapping, true) },
+        fields: { ...links[ack.localId]?.fields, ...ourFields({ ...write.fields, ...ack.fields }, mapping, true) },
       },
     };
   }

@@ -3,12 +3,13 @@ import type { AnySchema } from "../schema/schema.js";
 import type { Store } from "../store.js";
 import { fieldSpecOf } from "../document/field-spec.js";
 import type { FieldSpec } from "../document/schema.js";
-import { guestsInField, guestsViaRelation, notionSourcesOf, type ConnectionSpec, type GoogleCalendarConnectionSpec, type NotionConnectionSpec, type NotionSourceSpec } from "../document/connection-spec.js";
+import { guestsInField, guestsViaRelation, notionSourcesOf, type ConnectionSpec, type GoogleCalendarConnectionSpec, type NotionConnectionSpec, type NotionSourceSpec, type TodoistConnectionSpec } from "../document/connection-spec.js";
 import { humanizeField } from "../schema/humanize.js";
 import { GOOGLE_COLORS, MADE_BY_GRAVIEW, inConnectionFilter, tagPattern } from "./connection-filter.js";
+import { isArchived } from "../graph/archived.js";
 import type { EdgeDeclaration } from "../schema/types.js";
 import { relationActName } from "../mutations/derived-names.js";
-import type { AnyMutationDefinition } from "../mutations/types.js";
+import type { AnyMutationDefinition, MutationCall } from "../mutations/types.js";
 import { creatingActFor } from "./creating-act.js";
 import { SyncEngine, type GuestLeftOut, type SharedLinks, type SyncGuests, type SyncOptions } from "./engine.js";
 import { googleCalendar, type Fetcher, type GoogleTokenRequest } from "./google-calendar.js";
@@ -19,6 +20,9 @@ import { addDays } from "../wall-time.js";
 import { firstWeekday, hhmm, instantOfMoment, isoInstant, minutesOf, momentOfInstant, recurrenceOf, repeatOf, wallOfMoment, weekdayOf, weekdaysOf, weeklyRule } from "./recurrence.js";
 import { notion, notionKey, type NotionMade, type NotionSourceOptions } from "./notion.js";
 import { NOTION_EDGE, NOTION_INFERABLE, notionFieldType } from "./notion-types.js";
+import { isUnsayable, todoist, type TodoistRefs } from "./todoist.js";
+import { plainRepeat, readRepeat, sayRepeat } from "./todoist-due.js";
+import { todoistPriorities } from "./todoist-types.js";
 import type { LinkResolver, RemoteSystem, ResourceMapping, SyncMapping, SyncState } from "./types.js";
 
 /**
@@ -71,13 +75,21 @@ import type { LinkResolver, RemoteSystem, ResourceMapping, SyncMapping, SyncStat
  *   names it, or, matched by name, as the field reads ("Due date"). The
  *   name field is the title Notion always has. None is made for a
  *   connection that only reads, or that says `create: false`.
+ * - A TODOIST PROJECT's tasks (or one section's, or one label's) are the
+ *   kind's records, each part the field the declaration maps. What Todoist
+ *   always has is compared as it has it: a record that says no priority is
+ *   at p4, one that does not say it is completed is not. A due date that
+ *   repeats is the repeat beside its date, where `todoist-due.ts` can read
+ *   Todoist's words for it and say them back; a repeat it cannot is left
+ *   there, and one here that Todoist's words cannot say is held unsent. A
+ *   subtask's parent is a relation of one, found through `links`.
  * - READ means the other system owns the kind: an act here that would change
  *   a record of it is refused with a sentence saying so (`SyncEngine.guard`),
  *   rather than accepted and never sent.
  * - Inbound changes land through the app's own acts — one that creates the
  *   kind from the fields mapped alone (`creatingAct`), `edit-<kind>` and
  *   `remove-<kind>` — authored by the system
- *   (`google-calendar`, `notion`), so Activity credits it and undo works.
+ *   (`google-calendar`, `notion`, `todoist`), so Activity credits it and undo works.
  */
 
 export { CONNECTION_TAG, GOOGLE_COLORS, MADE_BY_GRAVIEW, inConnectionFilter } from "./connection-filter.js";
@@ -93,13 +105,15 @@ export interface ConnectionRun<S extends AnySchema> {
   readonly calendarId?: string;
   /** A Notion connection's database id, resolved likewise. */
   readonly databaseId?: string;
+  /** A Todoist connection's project, its id or its name, resolved likewise. */
+  readonly projectId?: string;
   /**
    * An access token for Google, asked again with `{ refresh: true }` when
    * Google refuses the last one; for Notion, the internal integration's
-   * secret.
+   * secret; for Todoist, the account's personal API token.
    */
   token(request?: GoogleTokenRequest): Promise<string> | string;
-  /** What the secret is called where the host keeps it (`NOTION_TOKEN`), for the sentence a refusal says. Never its value. */
+  /** What the secret is called where the host keeps it (`NOTION_TOKEN`, `TODOIST_TOKEN`), for the sentence a refusal says. Never its value. */
   readonly secretName?: string;
   readonly fetch?: Fetcher;
   /** What the engine kept from the last run: its cursor, its links. */
@@ -108,7 +122,7 @@ export interface ConnectionRun<S extends AnySchema> {
   say?(line: string): void;
   /**
    * THE APP'S LINKS, shared by every connection it runs (`sharedLinks()`):
-   * where a relation finds the record a Notion page is, whichever
+   * where a relation finds the record a Notion page or a Todoist task is, whichever
    * connection linked it. This connection's engine is added to it. Absent:
    * the connection's own links alone.
    */
@@ -172,6 +186,7 @@ export interface GoogleMappingOptions {
 
 /** The mapping a declaration says. */
 export function connectionMapping(app: GraviewApp, declaration: ConnectionDeclaration, options: GoogleMappingOptions = {}): SyncMapping {
+  if (declaration.system === "todoist") return todoistMapping(app, declaration, options.zone).mapping;
   return declaration.system === "notion" ? notionConnectionMapping(app, declaration).mapping : googleMapping(app, declaration, options).mapping;
 }
 
@@ -521,6 +536,105 @@ function notionSourceMapping(app: GraviewApp, declaration: NotionConnectionSpec,
   return { resource, refs, ...(titleRef ? { titleRef } : {}), quiet, make };
 }
 
+/** What a Todoist connection maps: the engine's mapping, and the parts of a task the transport reads. */
+export function todoistMapping(app: GraviewApp, declaration: TodoistConnectionSpec, zone?: string): { readonly mapping: SyncMapping; readonly refs: TodoistRefs; readonly zone?: string } {
+  const { kind } = declaration;
+  const { parent, ...parts } = declaration.fields;
+  const specs = fieldSpecs(app, kind);
+  const shape = ((app.schema.tryDefinition(kind) as { fields?: { shape?: Record<string, unknown> } } | undefined)?.fields?.shape ?? {}) as Record<string, unknown>;
+  const inZone = connectionZone(app, zone);
+  const fields: Record<string, string> = {};
+  const refs: Record<string, string | undefined> = {};
+  const encode: Record<string, (value: unknown) => unknown> = {};
+  const decode: Record<string, (value: unknown) => unknown> = {};
+  const normalize: Record<string, (value: unknown) => unknown> = {};
+  let repeatsAt: string | undefined;
+  for (const [part, field] of Object.entries(parts)) {
+    const spec = specs[field];
+    fields[field] = part;
+    refs[part] = spec?.type;
+    switch (part) {
+      case "due": {
+        const repeated = repeatKey(field);
+        const repeats = isRepeatField(shape[repeated]);
+        if (repeats) {
+          fields[repeated] = "repeat";
+          refs["repeat"] = "repeat";
+          normalize[repeated] = plainRepeat;
+          decode[repeated] = (value) => (typeof value === "string" ? (readRepeat(value) ?? null) : null);
+          encode[repeated] = (value) => (isRepeat(value) ? (sayRepeat(value) ?? { held: `it repeats ${value.until || value.count || value.except?.length ? "with an end or with days set apart" : "in a way"} Todoist's words for a repeat do not say here` }) : null);
+        }
+        if (spec?.type === "datetime") {
+          // A repeating moment is a wall time in the app's zone; any other is its instant.
+          if (repeats) {
+            repeatsAt = inZone;
+            // Through its instant, as it goes and comes back: a wall time the clocks skip is the one they skip to.
+            normalize[field] = (value) => momentOfInstant(momentSaid(value, inZone), inZone) ?? null;
+            decode[field] = (value) => momentOfInstant(value, inZone);
+          } else normalize[field] = (value) => momentSaid(value, inZone);
+          encode[field] = (value) => momentSaid(value, inZone);
+        }
+        break;
+      }
+      case "priority": {
+        // Todoist's tasks always have one; p4 is none said.
+        const named = spec?.type === "enum" ? todoistPriorities(spec.options ?? []) : undefined;
+        const numberOf = (value: unknown) => (named ? [...named].find(([, option]) => option === value)?.[0] : typeof value === "number" && Number.isInteger(value) && value >= 1 && value <= 4 ? value : undefined);
+        const unsaid = named ? named.get(4) : 4;
+        normalize[field] = (value) => value ?? unsaid;
+        encode[field] = (value) => numberOf(value ?? unsaid) ?? { held: `a priority in Todoist is 1 to 4, and ${field} is ${String(value)}` };
+        decode[field] = (value) => (isUnsayable(value) ? null : named ? (named.get(Number(value)) ?? unsaid) : value);
+        break;
+      }
+      case "labels": {
+        const own = (value: unknown) => {
+          const list = Array.isArray(value) ? [...new Set(value.filter((one): one is string => typeof one === "string" && one !== declaration.label))].sort() : [];
+          return list.length > 0 ? list : null;
+        };
+        normalize[field] = own;
+        decode[field] = own;
+        break;
+      }
+      case "section":
+        if (spec?.type === "enum") {
+          const options = spec.options ?? [];
+          decode[field] = (value) => (typeof value === "string" ? (options.find((one) => one === value) ?? options.find((one) => loose(one) === loose(value)) ?? null) : value);
+          // A section the choice does not name is no choice here, rather than a change the store refuses whole.
+        }
+        break;
+      case "completed":
+        normalize[field] = (value) => value === true;
+        break;
+      default:
+        // Words: none said and none there are one.
+        normalize[field] = (value) => (value === "" ? null : value);
+    }
+  }
+  const resource: ResourceMapping = {
+    kind,
+    resource: "tasks",
+    fields,
+    ...(parent !== undefined ? { edges: { [parent]: "parent" } } : {}),
+    encode,
+    decode,
+    normalize,
+    // A task set aside here is never deleted there: a delete takes every subtask and cannot be undone.
+    aside: "keep",
+    ...computedMapped(app, kind, Object.values(parts)),
+    ...(declaration.direction === "read" ? { readonly: true, because: `Each ${kind} comes from a Todoist project this app only reads: change it there.` } : {}),
+  };
+  return { mapping: { system: "todoist", name: "Todoist", resources: [resource] }, refs: parent !== undefined ? { ...refs, parent: "@relation" } : refs, ...(repeatsAt ? { zone: repeatsAt } : {}) };
+}
+
+/** A moment as its instant: one written without a zone is on the app's wall, and a bare day its midnight there. */
+function momentSaid(value: unknown, zone: string): unknown {
+  if (typeof value !== "string" || value === "") return value === "" ? null : value;
+  const wall = /[zZ]$|[+-]\d{2}:?\d{2}$/.test(value) ? undefined : wallOfMoment(value, zone);
+  if (wall) return isoInstant(instantIn(wall.day, wall.minutes ?? 0, zone));
+  const stamp = Date.parse(value);
+  return Number.isNaN(stamp) ? value : isoInstant(stamp);
+}
+
 /**
  * The act a record of the kind from another system is made through: one
  * that creates it, takes no subject and asks for nothing the connection
@@ -570,6 +684,7 @@ function decodedBy(resource: ResourceMapping) {
 /** The engine, the mapping and the transport for one declared connection. */
 export function connection<S extends AnySchema>(run: ConnectionRun<S>): Connection<S> {
   const { declaration } = run;
+  if (declaration.system === "todoist") return todoistConnection(run, declaration);
   return declaration.system === "notion" ? notionConnection(run, declaration) : googleConnection(run, declaration);
 }
 
@@ -720,6 +835,134 @@ function notionConnection<S extends AnySchema>(run: ConnectionRun<S>, declaratio
         // An empty property is no value for a record being made; the page's own id names it, so a full read makes it once.
         const values = Object.fromEntries(Object.entries(source.decoded(fields)).filter(([, value]) => value !== null && value !== undefined));
         return { name: source.creates, args: { id: `${source.kind}:${run.name}-${notionKey(id)}`, ...values } };
+      },
+    },
+    run.state,
+  );
+  run.links?.add(engine);
+  const unguard = declaration.direction === "read" ? engine.guard() : undefined;
+  return { engine, mapping, remote, ...(unguard ? { unguard } : {}) };
+}
+
+function todoistConnection<S extends AnySchema>(run: ConnectionRun<S>, declaration: TodoistConnectionSpec): Connection<S> {
+  const { app, store } = run;
+  if (!run.projectId) throw new Error(`connection ${run.name}: a Todoist connection needs its project`);
+  const { mapping, refs, zone } = todoistMapping(app as GraviewApp, declaration, store.timeZone);
+  const resource: ResourceMapping & { match?: (node: Record<string, unknown>) => boolean } = mapping.resources[0]!;
+  let engine: SyncEngine<S> | undefined;
+  const { kind } = declaration;
+  const completed = declaration.fields.completed;
+  const repeated = declaration.fields.due ? repeatKey(declaration.fields.due) : undefined;
+  const specs = fieldSpecs(app as GraviewApp, kind);
+  const prefix = `${kind}:${run.name}-`;
+  /*
+   * A RECORD MADE FROM A TASK IS NAMED BY IT, so one that is not linked to
+   * its task any more — a host that lost the engine's state, an app copied
+   * with its records — is never sent as a new one: it stays here as it is,
+   * and that is said. One linked while this runs, its task deleted and the
+   * record brought back, is sent as any new one is.
+   */
+  const linkedOnce = new Set<string>();
+  if (!resource.readonly) {
+    resource.match = (node) => {
+      const id = String(node["id"]);
+      if (!id.startsWith(prefix) || engine === undefined) return true;
+      if (engine.linkOf(id) !== undefined) linkedOnce.add(id);
+      return linkedOnce.has(id);
+    };
+    const unlinked = (store.graph.allNodes() as unknown as Record<string, unknown>[]).filter((node) => node["kind"] === kind && String(node["id"]).startsWith(prefix) && run.state?.links[String(node["id"])] === undefined).length;
+    if (unlinked > 0) run.say?.(`${unlinked} ${unlinked === 1 ? "record made from a Todoist task is" : "records made from Todoist tasks are"} not linked to ${unlinked === 1 ? "it" : "them"} any more (what the host kept of this connection does not say so): kept as ${unlinked === 1 ? "it is" : "they are"}, and neither sent nor made again`);
+  }
+  /** Every id a record was ever made with here, read off the log as it grows: one removed is not made again under the same id. */
+  const had = new Set<string>();
+  let readTo = 0;
+  const wasMade = (id: string): boolean => {
+    const ops = store.log.all();
+    for (; readTo < ops.length; readTo += 1) for (const primitive of ops[readTo]!.primitives) if (primitive.op === "add-node") had.add(primitive.node.id);
+    return had.has(id) && store.graph.getNode(id) === undefined;
+  };
+  const remote = todoist({
+    projectId: run.projectId,
+    ...(declaration.section ? { section: declaration.section } : {}),
+    ...(declaration.label ? { label: declaration.label } : {}),
+    refs,
+    ...(zone ? { zone } : {}),
+    token: () => run.token(),
+    ...(run.secretName ? { secretName: run.secretName } : {}),
+    ...(run.fetch ? { fetch: run.fetch } : {}),
+    // The tasks of the records set aside here: left as they are, and never deleted with what is above them.
+    aside: () =>
+      Object.entries(engine?.snapshot.links ?? {}).flatMap(([localId, link]) => {
+        const node = store.graph.getNode(localId) as unknown as Record<string, unknown> | undefined;
+        if (!isArchived(node)) return [];
+        const parent = declaration.fields.parent ? (link.fields[declaration.fields.parent] as string[] | null | undefined)?.[0] : undefined;
+        return [{ id: link.id, localId, label: String(node![declaration.fields.content] ?? link.id), ...(parent ? { parent } : {}), ...(completed !== undefined ? { completed: link.fields[completed] === true } : {}) }];
+      }),
+    /*
+     * And every other record's set aside, a subtask's parent being one
+     * another connection may keep: by what any connection here linked, and
+     * by its name where none running did (a connection that is paused).
+     */
+    asideElsewhere: () =>
+      (store.graph.allNodes({ archived: true }) as unknown as Record<string, unknown>[]).flatMap((node) => {
+        const id = run.links?.remoteId(String(node["id"])) ?? /-([A-Za-z0-9]{6,})(?:-\d+)?$/.exec(String(node["id"]))?.[1];
+        return id === undefined ? [] : [id];
+      }),
+    keptElsewhere: (id) => run.links?.localId(id) !== undefined,
+    isAside: (localId) => isArchived(store.graph.getNode(localId)),
+    // A subtask another connection keeps, whose own pass moves it out from under a task removed here.
+    movedElsewhere: (id) => {
+      const other = run.links?.localId(id);
+      const node = other === undefined ? undefined : (store.graph.getNode(other) as unknown as Record<string, unknown> | undefined);
+      if (!node || isArchived(node) || node["kind"] === kind) return false;
+      return Object.values(app.connections ?? {}).some((one) => one.system === "todoist" && one.kind === node["kind"] && one.direction === "both" && !one.paused && one.fields.parent !== undefined);
+    },
+    // The tasks linked when the pass began, and which are completed: a whole read lists only the others.
+    known: () => Object.entries(engine?.snapshot.links ?? {}).map(([localId, link]) => ({ id: link.id, completed: completed !== undefined && link.fields[completed] === true, removed: store.graph.getNode(localId) === undefined })),
+    ...(run.say ? { say: run.say } : {}),
+  });
+  const creates = creatingAct(app as GraviewApp, kind, Object.keys(resource.fields).filter((field) => !resource.computed?.includes(field)));
+  const decoded = decodedBy(resource);
+  const relations = relationActs(store, kind);
+  // What the kind fills in where the act that makes a record is told nothing.
+  const filledIn = new Set(Object.keys((app.schema.tryDefinition(kind) as { defaults?: Readonly<Record<string, unknown>> } | undefined)?.defaults ?? {}));
+  engine = new SyncEngine<S>(
+    {
+      store,
+      mapping,
+      remote,
+      ...(run.links ? { links: run.links } : {}),
+      ...relations,
+      // A link to a record set aside is taken away with it brought back for the moment, in the one batch: an act does not reach one that is aside.
+      disconnectInbound: (call) => {
+        const act = relations.disconnectInbound?.(call) ?? null;
+        const target = store.graph.getNode(call.to) as unknown as Record<string, unknown> | undefined;
+        if (!act || Array.isArray(act) || !isArchived(target)) return act;
+        const of = String(target!["kind"]);
+        return [{ name: `unarchive-${of}`, args: { id: call.to } }, act as MutationCall, { name: `archive-${of}`, args: { id: call.to } }];
+      },
+      holdExisting: {
+        send: declaration.sendExisting === true,
+        say: (count: number) => `${count} ${count === 1 ? "record was" : "records were"} here before this connection and ${count === 1 ? "is" : "are"} not sent to Todoist: each goes when it is changed, or all of them with "sendExisting": true`,
+      },
+      ...(run.now ? { now: run.now } : {}),
+      conflicts: declaration.conflicts ?? "report",
+      applyInbound: ({ localId, fields }) => ({ name: `edit-${kind}`, args: { id: localId, ...fields } }),
+      removeInbound: ({ localId }) => ({ name: `remove-${kind}`, args: { id: localId } }),
+      createInbound: ({ id, fields }) => {
+        if (!creates) return null;
+        let madeAs = `${prefix}${id}`;
+        // There already, and not linked: said as the connection started, and left.
+        if (store.graph.getNode(madeAs) !== undefined) return null;
+        for (let n = 2; wasMade(madeAs); n += 1) madeAs = `${prefix}${id}-${n}`;
+        const read = decoded(fields);
+        const values = Object.fromEntries(Object.entries(read).filter(([, value]) => value !== null && value !== undefined));
+        // A date's repeat is given to the record once it is there, through its edit: the act that makes one does not take it; and what the task leaves empty is emptied where the kind would fill it in.
+        const repeat = repeated ? values[repeated] : undefined;
+        if (repeated) delete values[repeated];
+        const emptied = Object.fromEntries(Object.entries(read).flatMap(([field, value]) => ((value === null || value === undefined) && field !== repeated && filledIn.has(field) && !specs[field]?.required ? [[field, null]] : [])));
+        const after = { ...emptied, ...(repeat ? { [repeated!]: repeat } : {}) };
+        return { name: creates, args: { id: madeAs, ...values }, ...(Object.keys(after).length > 0 ? { then: [{ name: `edit-${kind}`, args: { id: madeAs, ...after } }] } : {}) };
       },
     },
     run.state,

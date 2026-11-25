@@ -7,7 +7,7 @@ import { NOTION_INFERABLE } from "../sync/notion-types.js";
  * judges it — `connection-findings.ts` does that). The compile writes them
  * on the kind's plan, and the compiled kind carries them as `keptInStep`, so
  * its derived edit writes them even where another act does: a change in
- * Notion or a calendar lands through `edit-<kind>`.
+ * Notion, a calendar or Todoist lands through `edit-<kind>`.
  */
 
 type Loose = { readonly system?: unknown; readonly kind?: unknown; readonly fields?: unknown; readonly properties?: unknown };
@@ -25,7 +25,7 @@ export function fieldsKeptInStep(connections: unknown, kinds: Readonly<Record<st
     const fields = kinds[raw.kind]?.fields;
     if (!fields) continue;
     let mapped: string[] = [];
-    if (raw.system === "google-calendar" && raw.fields && typeof raw.fields === "object") {
+    if ((raw.system === "google-calendar" || raw.system === "todoist") && raw.fields && typeof raw.fields === "object") {
       mapped = Object.values(raw.fields as Record<string, unknown>).filter((field): field is string => typeof field === "string");
     } else if (raw.system === "notion") {
       mapped = raw.properties && typeof raw.properties === "object" ? Object.keys(raw.properties) : Object.keys(fields).filter((field) => NOTION_INFERABLE.has(fields[field]!.type));

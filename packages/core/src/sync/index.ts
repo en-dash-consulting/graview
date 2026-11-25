@@ -1,17 +1,17 @@
 /*
  * `@graview/core/sync` — two-way sync on the op log: the engine, its
  * mappings, the conflict invariant, and the transports (Google Calendar, a
- * Notion database and a scripted one to test against, a
+ * Notion database and a Todoist project, each with a scripted one, a
  * tool server over MCP).
  *
  * An entry of its own, not part of `@graview/core`: a hosted page imports the
  * main entry up front and draws without ever syncing, so the engine and its
  * transports are reached only by a host that runs one.
  */
-export { CONNECTION_TAG, GOOGLE_COLORS, MADE_BY_GRAVIEW, connection, connectionMapping, creatingAct, inConnectionFilter, isDayField, notionConnectionMapping } from "./connection.js";
+export { CONNECTION_TAG, GOOGLE_COLORS, MADE_BY_GRAVIEW, connection, connectionMapping, creatingAct, inConnectionFilter, isDayField, notionConnectionMapping, todoistMapping } from "./connection.js";
 export type { Connection, ConnectionDeclaration, ConnectionRun, NotionSourceMapping } from "./connection.js";
 export { connectionKinds, guestsInField, guestsViaRelation, notionSourcesOf, type GuestsInField, type GuestsSpec, type GuestsViaRelation } from "../document/connection-spec.js";
-export type { GoogleCalendarConnectionSpec, NotionConnectionSpec, NotionSourceSpec } from "../document/connection-spec.js";
+export type { GoogleCalendarConnectionSpec, NotionConnectionSpec, NotionSourceSpec, TodoistConnectionSpec } from "../document/connection-spec.js";
 export { googleCalendar, googleCalendarMapping } from "./google-calendar.js";
 export type { Fetcher, GoogleCalendarOptions, GoogleTokenRequest } from "./google-calendar.js";
 export { NOTION_API, NOTION_VERSION, NotionError, notion, notionKey, notionProperty, notionText, notionValue, notionVersion } from "./notion.js";
@@ -19,6 +19,13 @@ export type { NotionMade, NotionOptions, NotionSourceOptions } from "./notion.js
 export { NOTION_AUTH_ENV, NOTION_EDGE, NOTION_FITS, NOTION_READ_ONLY, notionFits } from "./notion-types.js";
 export { scriptedNotion } from "./notion-stub.js";
 export type { ScriptedNotion, ScriptedNotionOptions, ScriptedRequest } from "./notion-stub.js";
+export { TODOIST_API, TodoistError, isUnsayable, todoist, todoistVersion } from "./todoist.js";
+export type { TodoistOptions, TodoistRefs, Unsayable } from "./todoist.js";
+export { readRepeat, sayRepeat } from "./todoist-due.js";
+export { TODOIST_AUTH_ENV, TODOIST_FITS } from "./todoist-types.js";
+export type { TodoistPart } from "./todoist-types.js";
+export { scriptedTodoist } from "./todoist-stub.js";
+export type { ScriptedTodoist, ScriptedTodoistOptions, ScriptedTodoistRequest } from "./todoist-stub.js";
 export { syncConflictInvariant, SYNC_CONFLICTS } from "./conflict.js";
 export type { SyncConflictOptions } from "./conflict.js";
 export { SyncEngine, edgeValue, sharedLinks } from "./engine.js";
@@ -31,6 +38,7 @@ export { EMPTY_SYNC_STATE, SYNC_STATE_FORMAT, systemAuthor } from "./types.js";
 export type {
   ConflictPolicy,
   DeletedConflict,
+  ExistingRecord,
   FieldConflict,
   GuestsKept,
   LinkResolver,

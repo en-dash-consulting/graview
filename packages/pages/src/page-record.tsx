@@ -194,7 +194,7 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
    * address and a link, and listed nowhere; a record's page had listed the
    * hidden ones first, ahead of the pictures the app meant to show.
    */
-  // THE OTHER SYSTEM IT IS KEPT IN STEP WITH: a Notion data source or a calendar, and where it is there.
+  // THE OTHER SYSTEM IT IS KEPT IN STEP WITH: a Notion data source, a calendar or a Todoist project, and where it is there.
   const kept = node ? keptInStepWith(context.app?.connections, facts.kind, id) : undefined;
   const seenIn = placesOf(context).filter((place) => !place.hidden && (place.kind === facts.kind || place.across === facts.kind));
   // Across the whole page at every width, under the record's own heading, where the view says `bleed: "full"`.
@@ -241,7 +241,7 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
                   <>
                     {" · "}
                     <a href={kept.href} target="_blank" rel="noopener noreferrer" style={link}>
-                      Open in {kept.system === "notion" ? "Notion" : "Google Calendar"}
+                      Open in {{ notion: "Notion", "google-calendar": "Google Calendar", todoist: "Todoist" }[kept.system]}
                     </a>
                   </>
                 ) : null}

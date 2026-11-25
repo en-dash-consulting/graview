@@ -196,7 +196,7 @@ export function copyInto(root, files, into) {
  * they would overwrite each other and the checkout's own `--failed`.
  */
 /** The harnesses whose verdict is named otherwise than the script (verify-pages.mjs writes docs/pages-face.json). */
-export const VERDICT_NAMES = { pages: ["pages-face"], lines: ["lines-check"], shrunk: ["shrunk-interface"], watch: ["watch-check"], site: ["site-check"], notion: ["notion-stub"] };
+export const VERDICT_NAMES = { pages: ["pages-face"], lines: ["lines-check"], shrunk: ["shrunk-interface"], watch: ["watch-check"], site: ["site-check"], notion: ["notion-stub"], todoist: ["todoist-stub"] };
 
 /** The harness a watch report is of, whichever engine and part wrote it (docs/watch/verify-<name>[.<engine>][.part-<part>].json), or null. */
 const watchedBy = (path) => /^docs\/watch\/verify-([^./]+)(\.(webkit|firefox))?(\.part-[^./]+)?\.json$/.exec(path)?.[1] ?? null;
