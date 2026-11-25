@@ -1,7 +1,6 @@
 import type { AnySchema, Store } from "@graview/core";
 import { BarInbox, useInboxWanted } from "@graview/primitives/pages";
 import { useGraviewIfAny, usePlayback } from "@graview/react/provider";
-import { Suspense } from "react";
 import { createPortal } from "react-dom";
 import type { PageContext } from "./page-context.js";
 import { useStoreTick } from "./page-context.js";
@@ -29,11 +28,8 @@ function Wanted<S extends AnySchema>({ context, own }: { readonly context: PageC
   useStoreTick(live as Store<AnySchema>);
   const wanted = useInboxWanted(live.batches().length);
   if (!wanted) return null;
-  const drawn = (
-    <Suspense fallback={null}>
-      <BarInbox remembers={false} />
-    </Suspense>
-  );
+  // Never suspends: its room stands until the panes are here (`BarInbox`).
+  const drawn = <BarInbox remembers={false} />;
   // Drawn in the derived shell's own row, in the bar's class for the face's own tool.
   return own ? createPortal(drawn, own) : <div className="graview-bar-own">{drawn}</div>;
 }

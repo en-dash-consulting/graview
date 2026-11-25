@@ -24,7 +24,8 @@ import { createContext, createElement, lazy, useContext, useEffect, useLayoutEff
  *   const Menu = panes.part((module, props: MenuProps) => <module.Menu {...props} />, { what: "Your menu" });
  *
  * Drawn before its first attempt has settled, a part suspends, so the
- * nearest `<Suspense>` says what stands in for it meanwhile; drawn once the
+ * nearest `<Suspense>` says what stands in for it meanwhile — unless it
+ * says itself (`meanwhile`), and then it never suspends; drawn once the
  * module is here, it draws in that same commit, and stays the element it
  * was (a change of element would draw it again from nothing).
  */
@@ -52,6 +53,15 @@ export interface LazyPartOptions {
   readonly quiet?: boolean;
   /** The line's element, where the part's place wants one: `li` inside a list. A paragraph by default. */
   readonly as?: "p" | "li" | "div";
+  /**
+   * What stands in its place until it first arrives (`null`: nothing). A
+   * part that says so never suspends: it is drawn the moment its module is
+   * here. One that suspends is revealed by React in a commit it holds back
+   * for up to 300 ms after the last fallback it showed, and the pages'
+   * bell, whose module had long arrived, came to a bar a person was already
+   * reading, and moved what stood beside it.
+   */
+  readonly meanwhile?: ReactNode;
 }
 
 /** Every module whose last attempt failed: asked for again together. */
@@ -284,6 +294,9 @@ export function lazyModule<M>(load: () => Promise<M>): LazyModule<M> {
       const what = options.what ?? "This part";
       // This part, as the watch of the place it is drawn on waits for it.
       const part = {};
+      const stands = options.meanwhile !== undefined;
+      // Asked for as it is first drawn and counted on its way (`partsArriving`), once, as React.lazy asks.
+      let asked: Promise<M> | undefined;
       function Settled(props: P) {
         useSyncExternalStore(subscribe, snapshot, snapshot);
         // Drawn, or its line drawn in its place: the place waits for it no longer.
@@ -321,6 +334,8 @@ export function lazyModule<M>(load: () => Promise<M>): LazyModule<M> {
             </>
           );
         }
+        // On its way for the first time: what stands in meanwhile (a part that suspends is never drawn here before its first attempt settled).
+        if (stands && !failed) return options.meanwhile;
         return options.quiet ? null : <PartMissing what={what} button={button} {...(options.as ? { as: options.as } : {})} />;
       }
       // The first attempt suspends; it never rejects into React, so nothing is thrown at the page.
@@ -331,9 +346,12 @@ export function lazyModule<M>(load: () => Promise<M>): LazyModule<M> {
       function Part(props: P) {
         const watch = useContext(PartsWatchContext);
         const [settled] = useState(() => arrived || failed);
-        // Suspending: waited for until it draws here, in a commit React may hold back.
-        if (!arrived && !failed) waitingFor(watch, part);
-        return createElement(settled ? Settled : (First as unknown as ComponentType<P>), props);
+        if (!arrived && !failed) {
+          // One that stands meanwhile draws as its module arrives, so its fetch is all there is to wait for; suspending, it is waited for until it draws here, in a commit React may hold back.
+          if (stands) asked ??= partArriving(attempt)();
+          else waitingFor(watch, part);
+        }
+        return createElement(settled || stands ? Settled : (First as unknown as ComponentType<P>), props);
       }
       return Part;
     },

@@ -1,6 +1,7 @@
 import { suggestionsMayWait, type AnySchema } from "@graview/core";
 import { useAiDeskState, useGraph, useGraview, useViolations } from "@graview/react/provider";
 import { useMemo } from "react";
+import { TOOL } from "./app-bar.js";
 import { barPanes } from "./bar-panes-door.js";
 import type { InboxProps } from "./inbox.js";
 import { useNotifiedCount } from "./notify-door.js";
@@ -13,8 +14,12 @@ import { useNotifiedCount } from "./notify-door.js";
  * suggestion, a rule broken, the host's notifications, what was done while
  * the reader was away, an ask — so a face that draws it before anything has happened
  * carries none of it.
+ *
+ * ITS ROOM IS KEPT FROM THE FIRST DRAW, and the bell drawn into it as the
+ * panes arrive: the bar says its count at once and holds still, where it
+ * once came a third of a second later and pushed Find along the row.
  */
-const InboxPart = barPanes.part((panes, props: InboxProps) => <panes.Inbox {...props} />, { quiet: true });
+const InboxPart = barPanes.part((panes, props: InboxProps) => <panes.Inbox {...props} />, { quiet: true, meanwhile: <span style={{ width: TOOL }} /> });
 
 /** Whether the inbox has anything to hold yet, read without fetching it. */
 export function useInboxWanted(batches: number): boolean {
@@ -27,7 +32,7 @@ export function useInboxWanted(batches: number): boolean {
   return batches > 0 || broken || notified > 0 || suggests || (whileAway?.tidied ?? 0) > 0 || (notifications?.length ?? 0) > 0 || entries.length > 0;
 }
 
-/** The inbox, fetched with the bar's panes. */
+/** The inbox in its room (a flex row's item, so as wide as it says), fetched with the bar's panes. */
 export function BarInbox(props: InboxProps) {
   return <InboxPart {...props} />;
 }

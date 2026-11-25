@@ -12,8 +12,8 @@ import { lazyModule } from "@graview/react/provider";
  */
 const tray = lazyModule(retryingImport(() => import("./suggested.js")));
 
-/** How many wait for this person, told to the bell; draws nothing. */
-export const SuggestedCount = tray.part<{ readonly onCount: (count: number) => void }>((module, props) => <module.SuggestedCount {...props} />, { quiet: true });
+/** How many wait for this person, told to the bell as the tray arrives; draws nothing. */
+export const SuggestedCount = tray.part<{ readonly onCount: (count: number) => void }>((module, props) => <module.SuggestedCount {...props} />, { quiet: true, meanwhile: null });
 
 /** What waits, in the inbox's "For you". */
 export const SuggestedList = tray.part<{ readonly close: () => void; readonly done: () => void }>((module, props) => <module.SuggestedList {...props} />, { quiet: true, as: "div" });
