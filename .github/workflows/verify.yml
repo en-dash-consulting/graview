@@ -161,7 +161,7 @@ jobs:
   # A harness in parts on several runners, judged whole: a claim no part made.
   whole:
     needs: harnesses
-    if: ${{ !cancelled() }}
+    if: always()
     name: The harnesses made of their parts
     runs-on: ubuntu-24.04
     timeout-minutes: 5
