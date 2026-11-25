@@ -59,8 +59,6 @@ const LATE_MS = 120;
 const SLOW = Math.max(1, Number(process.env["GRAVIEW_SLOW"] ?? 1));
 /* The most a return may take to be drawn, from the move. */
 const RETURN_MS = 120 * SLOW;
-/* The most a first visit whose view was fetched ahead may take: a worker started and drawn, nothing fetched. */
-const FIRST_MS = 100 * SLOW;
 
 const SEED = {
   nodes: [
@@ -292,7 +290,7 @@ try {
         report.moves.push({ engine, face, move, place, drawnAt: seen.drawnAt, frames: seen.frames, ...(place === "frame" ? { loads: host.counts.frame - before } : {}) });
         if (MEASURE) process.stdout.write(`${label} ${move} ${place}: ${seen.frames.map((one) => `${one.what}@${one.from}(${one.frames})`).join(" ")}${place === "frame" ? ` loads ${host.counts.frame - before}` : ""}\n`);
       }
-      report.movesFrames[engine] = await page.evaluate(() => typeof Element.prototype.moveBefore === "function");
+      report.movesFrames[engine] = (await page.evaluate(() => typeof Element.prototype.moveBefore === "function")) ? "moves frames" : "loads frames again";
       const held = (name, what) => seen[name].push({ engine, face, ...what });
 
       /* What was typed, how far it was scrolled, the keyboard: left and gone back to as the browser's own Back goes. */
@@ -387,6 +385,7 @@ try {
       before = { ...host.counts.code };
 
       /* FIRST VISITS: each in a page of its own, from a page that draws none of the views, by the bar. */
+      let cold = Infinity;
       for (const how of ["cold", "idle", "pointer", "press", "keyboard"]) {
         const context = await browser.newContext({ viewport: { width: 1280, height: 800 } });
         const page = await context.newPage();
@@ -441,8 +440,10 @@ try {
         const blank = first.frames.filter((one) => one.what === "blank").reduce((sum, one) => sum + one.frames, 0);
         report.moves.push({ engine, face, move: `first, ${how}`, place: "alpha", drawnAt: first.drawnAt, blank, frames: first.frames });
         if (MEASURE) process.stdout.write(`${label} first ${how}: ${first.frames.map((one) => `${one.what}@${one.from}(${one.frames})`).join(" ")}\n`);
-        if (how === "pointer" || how === "keyboard") held("aFirstVisitComeToByAPointerOrTheKeyboardWaitsForNothingFetched", { how, drawnAt: first.drawnAt, blank, ok: first.drawnAt !== null && first.drawnAt <= FIRST_MS });
-        if (how === "press") held("aPressHasTheHeadStartOfItsPointerGoingDown", { drawnAt: first.drawnAt, blank, ok: first.drawnAt !== null && first.drawnAt <= LATE_MS + FIRST_MS - 60 });
+        if (how === "cold") cold = first.drawnAt ?? Infinity;
+        /* Against the same page's first visit with nothing fetched ahead: what was fetched is not waited for, on any runner. */
+        if (how === "pointer" || how === "keyboard") held("aFirstVisitComeToByAPointerOrTheKeyboardWaitsForNothingFetched", { how, drawnAt: first.drawnAt, cold, blank, ok: first.drawnAt !== null && first.drawnAt <= cold - LATE_MS * 0.6 });
+        if (how === "press") held("aPressHasTheHeadStartOfItsPointerGoingDown", { drawnAt: first.drawnAt, cold, blank, ok: first.drawnAt !== null && first.drawnAt <= cold - 40 });
         if (how !== "cold" && how !== "idle") held("aViewsCodeAndWhatItKeepsAreAskedOnceForAVisit", { how, code: since().filter(([name]) => name === "alpha"), reads: await page.evaluate(() => window.__reads), ok: since().some(([name, n]) => name === "alpha" && n === 1) && (await page.evaluate(() => window.__reads.filter((one) => one === "alpha").length)) === 1 });
         before = { ...host.counts.code };
         await context.close();
@@ -463,7 +464,7 @@ const say = (label, list) => ({ held: list, ok: list.length > 0 && list.every((o
 const returns = report.moves.filter((one) => one.move === "return");
 const c = report.checks;
 c.goingBackToAVisitedCustomPageShowsNoBlankOrFallbackFrame = say("return", returns.filter((one) => one.place !== "frame").map((one) => ({ ...one, ok: blankless(one.frames) })));
-c.goingBackToAFramesPageLoadsItNoMoreWhereTheEngineMovesFramesAndIsDrawnEverywhere = say("frame", returns.filter((one) => one.place === "frame").map((one) => ({ ...one, ok: report.movesFrames[one.engine] ? one.loads === 0 && blankless(one.frames) : one.drawnAt !== null })));
+c.goingBackToAFramesPageLoadsItNoMoreWhereTheEngineMovesFramesAndIsDrawnEverywhere = say("frame", returns.filter((one) => one.place === "frame").map((one) => ({ ...one, ok: report.movesFrames[one.engine] === "moves frames" ? one.loads === 0 && blankless(one.frames) : one.drawnAt !== null })));
 c.aReturnIsDrawnInTime = { budgetMs: RETURN_MS, ...say("time", returns.filter((one) => one.place !== "frame").map((one) => ({ engine: one.engine, face: one.face, place: one.place, drawnAt: one.drawnAt, ok: one.drawnAt !== null && one.drawnAt <= RETURN_MS }))) };
 for (const [name, list] of Object.entries(seen)) c[name] = say(name, list);
 c.noPageThrew = { errors, ok: errors.length === 0 };
