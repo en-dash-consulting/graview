@@ -294,6 +294,7 @@ function googleMapping(app: GraviewApp, declaration: GoogleCalendarConnectionSpe
   const guestsField: Record<string, string> = {};
   const normalize: Record<string, (value: unknown) => unknown> = {};
   let edges: Record<string, string> | undefined;
+  let compare: ResourceMapping["compare"];
   let guests: LinkResolver | undefined;
   const inField = guestsInField(fields.guests);
   const viaRelation = guestsViaRelation(fields.guests);
@@ -330,6 +331,8 @@ function googleMapping(app: GraviewApp, declaration: GoogleCalendarConnectionSpe
     const book = guestBook({ ...(options.graph ? { graph: options.graph } : {}), kinds: reaches === undefined || reaches === "*" ? [] : reaches, emails, invite });
     guests = book;
     edges = { [via]: "attendees" };
+    // Two people may share an address: what the event invites is the addresses, whoever holds them.
+    compare = { [via]: (value) => attendeesOf(value).map((one) => one.email) };
     decode[via] = (value) => book.keysOf(addressesOfAttendees(value));
     encode[via] = (value) => attendeesOf(value);
   }
@@ -349,6 +352,7 @@ function googleMapping(app: GraviewApp, declaration: GoogleCalendarConnectionSpe
     encode,
     decode,
     ...(Object.keys(normalize).length > 0 ? { normalize } : {}),
+    ...(compare ? { compare } : {}),
     // An event whose record is set aside is left as it is: its guests are sent no cancellation.
     aside: "keep",
     ...computedMapped(app, kind, Object.values(fields).filter((field): field is string => typeof field === "string")),

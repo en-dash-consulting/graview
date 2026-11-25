@@ -658,6 +658,12 @@ export class SyncEngine<S extends AnySchema> {
     );
   }
 
+  /** Whether two values of ours say the same there. */
+  private alike(mapping: ResourceMapping, field: string, one: unknown, other: unknown): boolean {
+    const by = mapping.compare?.[field];
+    return same(one, other) || (by !== undefined && same(by(one), by(other)));
+  }
+
   /** Whether a record is set aside here and its mapping keeps the remote's as it is. */
   private isAside(localId: string, mapping: ResourceMapping | undefined): boolean {
     return mapping?.aside === "keep" && isArchived(this.options.store.graph.getNode(localId));
@@ -830,7 +836,7 @@ export class SyncEngine<S extends AnySchema> {
         continue;
       }
       const free = Object.fromEntries(Object.entries(values).filter(([field]) => !held.has(heldKey(localId, field))));
-      const changed = Object.keys(free).filter((field) => !same(free[field], link.fields[field]));
+      const changed = Object.keys(free).filter((field) => !this.alike(mapping, field, free[field], link.fields[field]));
       if (changed.length === 0) continue;
       writes.push({
         resource: mapping.resource,
@@ -945,6 +951,7 @@ export class SyncEngine<S extends AnySchema> {
           else if (!mapping.readonly && this.isAside(localId, mapping)) {
             if (change.left) continue;
             alone.add(localId);
+            returned.add(localId);
             // Its conflicts are nobody's to choose between any more.
             for (const key of [...held.keys()]) if (held.get(key)!.localId === localId) held.delete(key);
             goneAside.push({ kind: mapping.kind, sentence: this.options.setAside.gone(this.labelOf(localId)) });
@@ -1079,17 +1086,17 @@ export class SyncEngine<S extends AnySchema> {
         for (const [field, value] of Object.entries(theirs)) {
           const key = heldKey(localId, field);
           const base = link.fields[field];
-          if (same(value, ours[field])) {
+          if (this.alike(mapping, field, value, ours[field])) {
             agreed[field] = value;
             held.delete(key);
             continue;
           }
-          if (same(value, base)) {
+          if (this.alike(mapping, field, value, base)) {
             // Only we changed it: ours goes out in this pass.
             held.delete(key);
             continue;
           }
-          if (same(ours[field], base) || mapping.readonly) {
+          if (this.alike(mapping, field, ours[field], base) || mapping.readonly) {
             lands[field] = agreed[field] = value;
             held.delete(key);
             continue;

@@ -617,23 +617,49 @@ describe("a record set aside, in a Google calendar", () => {
     expect([remote.writes, store.graph.out("event:party", "who", { archived: "all" }).map((one) => one.id)]).toEqual([[], expect.arrayContaining(["person:kay"])]);
   });
 
-  it("settles in one write when a person set aside shares an address with a live guest", async () => {
+  it.each([
+    ["some of", ["a@example.com", "ana@example.com"], ["k@example.com", "ana@example.com"], ["ana"], 3],
+    ["all of", ["ana@example.com"], ["k@example.com", "ana@example.com"], ["ana"], 2],
+    ["all of, both aside,", ["a@example.com", "ana@example.com"], ["ana@example.com"], ["ana", "kay"], 2],
+  ] as const)("settles in one write when a person set aside shares %s their addresses with another guest", async (_how, ana, kay, aside, count) => {
     const { act, remote, start } = calendar(true);
-    act("add-person", ANA);
-    act("add-person", { id: "person:kay", name: "Kay", emails: ["k@example.com", "ana@example.com"], inviteMe: true });
+    act("add-person", { ...ANA, emails: ana });
+    act("add-person", { id: "person:kay", name: "Kay", emails: kay, inviteMe: true });
     act("add-event", { id: "event:party", name: "Party", ...WHEN });
     for (const to of ["person:ana", "person:kay"]) act("connect-event-who", { id: "event:party", to });
     const engine = start();
     await engine.run();
     await engine.run();
-    act("archive-person", { id: "person:ana" });
+    for (const id of aside) act("archive-person", { id: `person:${id}` });
     remote.writes.length = 0;
     await engine.run();
     expect(remote.writes).toEqual([]);
     act("edit-event", { id: "event:party", name: "Party!" });
     for (let pass = 0; pass < 4; pass += 1) await engine.run();
     expect(remote.writes).toEqual(["PATCH evt1 all"]);
-    expect((remote.events.get("evt1")!["attendees"] as unknown[]).length).toBe(3);
+    expect((remote.events.get("evt1")!["attendees"] as unknown[]).length).toBe(count);
+  });
+
+  it("out of the filter, set aside again and deleted there, is made anew when it is brought back", async () => {
+    const { act, remote, start } = calendar(false, { filter: { tag: "#home" } });
+    act("add-event", { id: "event:party", name: "Party", ...WHEN });
+    const engine = start();
+    await engine.run();
+    act("archive-event", { id: "event:party" });
+    await engine.run();
+    remote.change("evt1", { summary: "Party" });
+    await engine.run();
+    act("unarchive-event", { id: "event:party" });
+    await engine.run();
+    act("archive-event", { id: "event:party" });
+    await engine.run();
+    remote.change("evt1", { status: CANCELED });
+    await engine.run();
+    remote.writes.length = 0;
+    act("unarchive-event", { id: "event:party" });
+    await engine.run();
+    expect(remote.writes).toEqual(["POST none"]);
+    expect((await engine.run()).pushed).toEqual([]);
   });
 
   it("whose event was already deleted before this is sent nothing, then made there again when it is brought back, and said", async () => {

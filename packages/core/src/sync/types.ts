@@ -101,6 +101,8 @@ export interface ResourceMapping {
    * changes there meanwhile lands here as any change does.
    */
   readonly aside?: "keep";
+  /** What two values of a field or relation of ours are compared by, where several say the same there (guest keys, by their addresses). */
+  readonly compare?: Readonly<Record<string, (value: unknown) => unknown>>;
   /** Our field that holds the remote's id, for those links. Absent: the node's own id. */
   readonly remoteId?: string;
 }
