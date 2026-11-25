@@ -27,6 +27,10 @@
  *     kept;
  *   · a view that spins falls back within its budget, the first visit and
  *     the next;
+ *   · a first visit come to by a pointer or the keyboard waits for nothing
+ *     fetched, its view's code and what it keeps asked once, as a press's are
+ *     from its pointer going down; idleness fetches the code of a few places
+ *     and nobody's values, and a page asked to save data nothing at all;
  *   · a return is drawn within RETURN_MS, and what a first visit took is said.
  *
  *   node scripts/verify-view-return.mjs [--engine=chromium|webkit|firefox] [--quick] [--measure]
@@ -55,6 +59,8 @@ const LATE_MS = 120;
 const SLOW = Math.max(1, Number(process.env["GRAVIEW_SLOW"] ?? 1));
 /* The most a return may take to be drawn, from the move. */
 const RETURN_MS = 120 * SLOW;
+/* The most a first visit whose view was fetched ahead may take: a worker started and drawn, nothing fetched. */
+const FIRST_MS = 100 * SLOW;
 
 const SEED = {
   nodes: [
@@ -123,7 +129,7 @@ async function buildHost() {
         window.__store = store;
         window.__owner = seat;
         const kept = {};
-        const viewerState = { read: (view) => new Promise((done) => setTimeout(() => done({ ...kept[view] }), ${LATE_MS})), write: async (view, key, value) => (((kept[view] ??= {})[key] = value), { ok: true }) };
+        const viewerState = { read: (view) => ((window.__reads ??= []).push(view), new Promise((done) => setTimeout(() => done({ ...kept[view] }), ${LATE_MS}))), write: async (view, key, value) => (((kept[view] ??= {})[key] = value), { ok: true }) };
         window.__failures = [];
         const given = ${JSON.stringify(Object.fromEntries(Object.entries(VIEWS).map(([key, one]) => [key, one.manifest])))};
         const make = (without = []) => {
@@ -156,11 +162,12 @@ async function buildHost() {
   });
   writeFileSync(join(out, "index.html"), HOST_PAGE);
   const frame = guestPage(readFileSync(resolve(repoRoot, "packages/guest/client.js"), "utf8").replace(/<\/script/gi, "<\\/script"));
-  const counts = { frame: 0 };
+  const counts = { frame: 0, code: {} };
   const host = createServer((request, response) => {
     const path = decodeURIComponent((request.url ?? "/").split("?")[0]);
     const late = (type, body) => setTimeout(() => (response.writeHead(200, { "content-type": type, "cache-control": "no-store" }), response.end(body)), LATE_MS);
     if (path === "/frame.html") return (counts.frame += 1), late("text/html", frame);
+    if (path.startsWith("/code/")) counts.code[path.slice("/code/".length)] = (counts.code[path.slice("/code/".length)] ?? 0) + 1;
     if (path.startsWith("/code/")) return late("text/javascript", VIEWS[path.slice("/code/".length)]?.source ?? "");
     const name = path.replace(/^\/+/, "") || "index.html";
     const file = join(out, name);
@@ -193,6 +200,25 @@ function instrument() {
     if (region.shadowRoot?.querySelector("[data-graview-fallback]")) return "instead";
     return wordsOf(region).includes(want.words) ? "drawn" : "blank";
   };
+  /* The same, from a person's own press on a link: from its click. */
+  window.__pressed = (want, ms = 2500) =>
+    new Promise((done) => {
+      addEventListener("click", () => {
+        const frames = [];
+        const began = performance.now();
+        let until = ms;
+        const see = () => {
+          const now = performance.now() - began;
+          const what = window.__look(want);
+          if (frames.at(-1)?.what !== what) frames.push({ what, from: Math.round(now), frames: 1 });
+          else frames.at(-1).frames += 1;
+          if (what === "drawn" && until === ms) until = now + 200;
+          if (now < until) requestAnimationFrame(see);
+          else done({ frames, drawnAt: frames.find((one) => one.what === "drawn")?.from ?? null, reads: [...(window.__reads ?? [])] });
+        };
+        requestAnimationFrame(see);
+      }, { once: true, capture: true });
+    });
   window.__go = (path, want, ms = 2500) =>
     new Promise((done) => {
       const frames = [];
@@ -235,11 +261,19 @@ const seen = {
   aRecordGoneWhileAwayIsNowhereOnThePageGoneBackTo: [],
   anotherSeatAndAViewTakenAwayNeverStandWithTheDrawingKept: [],
   aViewThatSpinsFallsBackWithinItsBudgetEachVisit: [],
+  aFirstVisitComeToByAPointerOrTheKeyboardWaitsForNothingFetched: [],
+  aPressHasTheHeadStartOfItsPointerGoingDown: [],
+  aPageAskedToSaveDataFetchesNothingAhead: [],
+  idlenessFetchesTheCodeOfAFewPlacesAndNobodysValues: [],
+  aViewsCodeAndWhatItKeepsAreAskedOnceForAVisit: [],
 };
 const region = (name) => `document.querySelector('[data-worker-view-place="${name}"] [data-worker-view]')`;
 const inView = (page, name, body) => page.evaluate(`(() => { const region = ${region(name)}; const root = region?.shadowRoot; return (${body}); })()`);
 const host = await buildHost();
 let browser;
+let before = {};
+/* The views whose code was asked for since. */
+const idled = (now, then) => Object.keys(now).filter((name) => now[name] > (then[name] ?? 0));
 try {
   for (const engine of engines) {
     browser = await launchEngine(engine, { headless: true });
@@ -350,6 +384,69 @@ try {
         await go(page, "beta");
       }
       await context.close();
+      before = { ...host.counts.code };
+
+      /* FIRST VISITS: each in a page of its own, from a page that draws none of the views, by the bar. */
+      for (const how of ["cold", "idle", "pointer", "press", "keyboard"]) {
+        const context = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+        const page = await context.newPage();
+        page.on("pageerror", (error) => errors.push(`${label} ${how}: ${error.message}`));
+        await page.addInitScript(instrument);
+        /* Cold: the person asked to save data, so nothing is fetched ahead. Idleness is let run only where it is measured. */
+        await page.addInitScript((how) => {
+          if (how === "cold") Object.defineProperty(navigator, "connection", { configurable: true, value: { saveData: true } });
+          if (how !== "idle") window.requestIdleCallback = () => 0;
+        }, how);
+        await page.goto(`${at("view-return-host")}/problems?${face}`, { waitUntil: "load" });
+        const link = page.locator('[data-place-path="/places/alpha-board"]').first();
+        await page.waitForSelector('[data-testid="app-places-open"], [data-place-path="/places/alpha-board"]');
+        await page.waitForTimeout(1200);
+        if (how !== "idle" && !(await link.isVisible())) await page.locator('[data-testid="app-places-open"]').first().click();
+        if (how !== "idle") await link.waitFor();
+        /* Still, and away from every link: what the place drawn under the pointer would begin is begun by nothing but this. */
+        await page.mouse.move(2, 790);
+        await page.waitForTimeout(how === "idle" ? 3500 : 1500);
+        const code = before;
+        const since = () => Object.entries(host.counts.code).flatMap(([name, n]) => (n - (code[name] ?? 0) > 0 ? [[name, n - (code[name] ?? 0)]] : []));
+        if (how === "idle") {
+          const values = await page.evaluate(() => window.__reads ?? []);
+          const codes = idled(host.counts.code, before);
+          held("idlenessFetchesTheCodeOfAFewPlacesAndNobodysValues", { values, codes, ok: values.length === 0 && codes.length <= 4 && codes.length > 0 });
+          if (!(await link.isVisible())) await page.locator('[data-testid="app-places-open"]').first().click();
+          await link.waitFor();
+        }
+        const box = await link.boundingBox();
+        const [x, y] = [box.x + Math.min(30, box.width / 2), box.y + Math.min(12, box.height / 2)];
+        const watched = page.evaluate((want) => window.__pressed(want), PLACES.alpha);
+        if (how === "pointer" || how === "cold") {
+          await page.mouse.move(x, y);
+          await page.waitForTimeout(350);
+          if (how === "cold") held("aPageAskedToSaveDataFetchesNothingAhead", { fetched: since(), reads: await page.evaluate(() => window.__reads ?? []), ok: since().length === 0 && (await page.evaluate(() => (window.__reads ?? []).length)) === 0 });
+          await page.mouse.down();
+          await page.mouse.up();
+        } else if (how === "press") {
+          await page.mouse.move(x, y);
+          await page.mouse.down();
+          await page.waitForTimeout(90);
+          await page.mouse.up();
+        } else if (how === "keyboard") {
+          await link.focus();
+          await page.waitForTimeout(350);
+          await page.keyboard.press("Enter");
+        } else {
+          await page.evaluate(([x, y]) => document.elementFromPoint(x, y).closest("a").click(), [x, y]);
+        }
+        const first = await watched;
+        await page.waitForTimeout(200);
+        const blank = first.frames.filter((one) => one.what === "blank").reduce((sum, one) => sum + one.frames, 0);
+        report.moves.push({ engine, face, move: `first, ${how}`, place: "alpha", drawnAt: first.drawnAt, blank, frames: first.frames });
+        if (MEASURE) process.stdout.write(`${label} first ${how}: ${first.frames.map((one) => `${one.what}@${one.from}(${one.frames})`).join(" ")}\n`);
+        if (how === "pointer" || how === "keyboard") held("aFirstVisitComeToByAPointerOrTheKeyboardWaitsForNothingFetched", { how, drawnAt: first.drawnAt, blank, ok: first.drawnAt !== null && first.drawnAt <= FIRST_MS });
+        if (how === "press") held("aPressHasTheHeadStartOfItsPointerGoingDown", { drawnAt: first.drawnAt, blank, ok: first.drawnAt !== null && first.drawnAt <= LATE_MS + FIRST_MS - 60 });
+        if (how !== "cold" && how !== "idle") held("aViewsCodeAndWhatItKeepsAreAskedOnceForAVisit", { how, code: since().filter(([name]) => name === "alpha"), reads: await page.evaluate(() => window.__reads), ok: since().some(([name, n]) => name === "alpha" && n === 1) && (await page.evaluate(() => window.__reads.filter((one) => one === "alpha").length)) === 1 });
+        before = { ...host.counts.code };
+        await context.close();
+      }
     }
     await browser.close();
     browser = undefined;

@@ -1,6 +1,6 @@
 import type { ViewProblemSaid } from "./problems.js";
 import type { AnySchema } from "@graview/core";
-import { PageOfItsOwn, useGoTo, useGraview, useHostAssets, useHostFiles, useHostReel, useKeptDrawings, type KeptDrawing, type ViewComponent, type ViewProps } from "@graview/react/provider";
+import { markAhead, PageOfItsOwn, useGoTo, useGraview, useHostAssets, useHostFiles, useHostReel, useKeptDrawings, type KeptDrawing, type ViewComponent, type ViewProps } from "@graview/react/provider";
 import { useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { frameChunk, untilItArrives, workerChunk } from "./arrive.js";
 import type { GuestFrame } from "./frame.js";
@@ -258,5 +258,7 @@ export function guestView(options: GuestViewOptions): ViewComponent<AnySchema> {
     return <div ref={holder} data-guest={options.name} aria-busy={options.url ? true : undefined} />;
   }
   GuestView.displayName = `GuestView(${options.name})`;
+  /* The host's half of a frame, fetched ahead; its document is loaded only where it is drawn. */
+  if (options.url) markAhead(GuestView, () => void frameChunk().catch(() => undefined));
   return GuestView;
 }

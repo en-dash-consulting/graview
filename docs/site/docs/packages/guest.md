@@ -354,7 +354,7 @@ The provider keeps at most six, for five minutes after each page was left, in me
 
 A face says which view is its page's own (`PageOfItsOwn`, the routed face and the one face do); a row, a card or a panel is never kept. A frame is kept only where its host says it may be (`guestView({ keeps: true })`), since its document runs on out of sight and a sound it plays goes on, and where the browser can move one without loading it again (`Element.moveBefore`: Chrome 133, Firefox 144); elsewhere it is loaded again.
 
-A host that mounts views by hand has the same in `rest` and `wake` on what `mountWorkerView` and `mountGuestView` answer. A first visit still waits for the view's code and for what its host keeps for the viewer (`graview.mine`): a host shortens it by fetching either before the page is opened.
+A host that mounts views by hand has the same in `rest` and `wake` on what `mountWorkerView` and `mountGuestView` answer. A first visit waits for the view's code and for what its host keeps for the viewer (`graview.mine`). Both are fetched ahead where a person comes to a link or a bar place by a pointer, a finger or the keyboard, and the code of the first four places once the page is idle: each view once, at most 24 a page, only what the seat may go to, and nothing where the browser says to save data. Nothing of the view runs ahead of its page.
 
 #### What a view's host says went wrong, by a code
 

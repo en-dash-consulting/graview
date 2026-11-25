@@ -22,6 +22,28 @@ export function isDefaultView(view: unknown): boolean {
   return typeof view === "function" && (view as { [DEFAULT_VIEW]?: boolean })[DEFAULT_VIEW] === true;
 }
 
+/** What a face says as a view is about to be gone to: who would see it, where what it keeps is kept, and whether a person is on their way (or the page is only idle). */
+export interface ViewAhead {
+  readonly store: unknown;
+  readonly principal: unknown;
+  readonly viewerState?: unknown;
+  readonly intent: boolean;
+  /** Where what is read for this seat is said to be forgotten with it (`KeptDrawings.onClear`). */
+  readonly kept?: { onClear(key: object, run: () => void): void } | null;
+}
+const AHEAD: unique symbol = Symbol.for("graview.view-ahead");
+
+/** Marks a view with what fetches it ahead of its page (Graview HQ f-custom-pages-first-visit). Returns the same component. */
+export function markAhead<V extends object>(view: V, ahead: (asked: ViewAhead) => void): V {
+  Object.defineProperty(view, AHEAD, { value: ahead, enumerable: false });
+  return view;
+}
+
+/** What fetches a view ahead of its page; undefined for one that waits for nothing. */
+export function aheadOf(view: unknown): ((asked: ViewAhead) => void) | undefined {
+  return typeof view === "function" ? (view as { [AHEAD]?: (asked: ViewAhead) => void })[AHEAD] : undefined;
+}
+
 /**
  * The mark a record's own view carries when it replaces the whole record
  * page (FR-149): a worker view whose manifest says `replaces: "page"`. The

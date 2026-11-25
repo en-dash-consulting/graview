@@ -1,4 +1,5 @@
 export { GraviewProvider, hasLanded, markLanded, matchWith, openingView, PLACE_MENU_EVENT, ROBOT_REST_MS, useFound, useGraph, useGraview, useGraviewIfAny, useNode, useRobots, useScenePointer, useTheWatchKnowsWhatIsUnseen, useViewMode, useWhereIs, ViewModeProvider } from "./context.js";
+export { aheadOf, markAhead, type ViewAhead } from "./view-marks.js";
 export { PageOfItsOwn, useKeptDrawings } from "./kept-drawings.js";
 export type { KeptDrawing, KeptDrawings } from "./kept-drawings.js";
 export { GoToContext, useGoTo } from "./go.js";
