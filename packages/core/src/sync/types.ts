@@ -97,9 +97,12 @@ export interface ResourceMapping {
    * WHAT A RECORD SET ASIDE HERE (archived) IS THERE. Absent: gone, as one
    * removed is, so its delete is sent. `keep`: left as it is, with nothing
    * sent for it while it is aside, still linked, and kept in step again
-   * when it is brought back; only a record removed is deleted there.
+   * when it is brought back; only a record removed is deleted there. What
+   * changes there meanwhile lands here as any change does.
    */
   readonly aside?: "keep";
+  /** What two values of a field or relation of ours are compared by, where several say the same there (guest keys, by their addresses). */
+  readonly compare?: Readonly<Record<string, (value: unknown) => unknown>>;
   /** Our field that holds the remote's id, for those links. Absent: the node's own id. */
   readonly remoteId?: string;
 }
@@ -126,6 +129,11 @@ export interface RemoteChange {
   /** Absent when the record was deleted remotely. */
   readonly fields?: Readonly<Record<string, unknown>>;
   readonly deleted?: boolean;
+  /**
+   * Beside `deleted`: it is there still, out of what the sync keeps (its
+   * filter, its source). A record set aside here stays linked to it.
+   */
+  readonly left?: boolean;
 }
 
 /** One thing we want the remote to do. */
@@ -170,7 +178,11 @@ export interface RemoteSystem {
    * no incremental API returns everything and a constant cursor; the engine
    * still behaves, it just does more work.
    */
-  pull(cursor?: string): Promise<{
+  pull(
+    cursor?: string,
+    /** Records brought back here since the last pull, by resource and id: read as they stand, for what became of them while they were aside. */
+    back?: readonly { readonly resource: string; readonly id: string }[],
+  ): Promise<{
     readonly changes: readonly RemoteChange[];
     readonly cursor: string;
     /** What the transport did to the remote to keep these records, or found there, as sentences: properties it made in Notion, one of another type it left. */
@@ -204,7 +216,7 @@ export interface SyncState {
    * held here is not sent until `resolve` says which side stands.
    */
   readonly conflicts?: readonly SyncConflict[];
-  /** Records the remote deleted that were kept here: no longer linked, and not sent again as new. */
+  /** Records the remote deleted that were kept here: no longer linked, and not sent again as new. One brought back with its counterpart out of what the sync keeps is here, still linked, until that one is in it again. */
   readonly gone?: readonly string[];
   /**
    * LINKS NOT MADE YET: by our id and edge, the remote ids a relation there
@@ -235,6 +247,14 @@ export interface SyncState {
    * changed since goes, whatever the connection maps by then.
    */
   readonly existing?: Readonly<Record<string, ExistingRecord>>;
+  /**
+   * RECORDS SET ASIDE HERE WITH NOTHING THERE, by our id
+   * (`SyncOptions.setAside`): never sent, or deleted there since. Nothing is
+   * sent for one until it is brought back; it is then made there, and said.
+   */
+  readonly alone?: readonly string[];
+  /** Records set aside here and linked, by our id, as the last pass left them: one brought back since is read again there (`RemoteSystem.pull`'s `back`). */
+  readonly aside?: readonly string[];
   /** The last pass, as `connectionStatus` reads it: when, and what it did. */
   readonly lastPass?: PassKept;
 }

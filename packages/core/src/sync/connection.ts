@@ -9,7 +9,7 @@ import { GOOGLE_COLORS, MADE_BY_GRAVIEW, inConnectionFilter, tagPattern } from "
 import { isArchived } from "../graph/archived.js";
 import type { EdgeDeclaration } from "../schema/types.js";
 import { relationActName } from "../mutations/derived-names.js";
-import type { AnyMutationDefinition, MutationCall } from "../mutations/types.js";
+import type { AnyMutationDefinition } from "../mutations/types.js";
 import { creatingActFor } from "./creating-act.js";
 import { SyncEngine, type GuestLeftOut, type SharedLinks, type SyncGuests, type SyncOptions } from "./engine.js";
 import { googleCalendar, type Fetcher, type GoogleTokenRequest } from "./google-calendar.js";
@@ -294,6 +294,7 @@ function googleMapping(app: GraviewApp, declaration: GoogleCalendarConnectionSpe
   const guestsField: Record<string, string> = {};
   const normalize: Record<string, (value: unknown) => unknown> = {};
   let edges: Record<string, string> | undefined;
+  let compare: ResourceMapping["compare"];
   let guests: LinkResolver | undefined;
   const inField = guestsInField(fields.guests);
   const viaRelation = guestsViaRelation(fields.guests);
@@ -330,11 +331,9 @@ function googleMapping(app: GraviewApp, declaration: GoogleCalendarConnectionSpe
     const book = guestBook({ ...(options.graph ? { graph: options.graph } : {}), kinds: reaches === undefined || reaches === "*" ? [] : reaches, emails, invite });
     guests = book;
     edges = { [via]: "attendees" };
-    decode[via] = (value) =>
-      addressesOfAttendees(value).map((one) => {
-        const person = book.localId(one);
-        return (person === undefined ? undefined : book.remoteId(person)) ?? one;
-      });
+    // Two people may share an address: what the event invites is the addresses, whoever holds them.
+    compare = { [via]: (value) => attendeesOf(value).map((one) => one.email) };
+    decode[via] = (value) => book.keysOf(addressesOfAttendees(value));
     encode[via] = (value) => attendeesOf(value);
   }
   const resource: ResourceMapping = {
@@ -353,6 +352,9 @@ function googleMapping(app: GraviewApp, declaration: GoogleCalendarConnectionSpe
     encode,
     decode,
     ...(Object.keys(normalize).length > 0 ? { normalize } : {}),
+    ...(compare ? { compare } : {}),
+    // An event whose record is set aside is left as it is: its guests are sent no cancellation.
+    aside: "keep",
     ...computedMapped(app, kind, Object.values(fields).filter((field): field is string => typeof field === "string")),
     ...(declaration.direction === "read"
       ? { readonly: true, because: `Each ${kind} comes from a Google calendar this app only reads: change it there.` }
@@ -530,6 +532,8 @@ function notionSourceMapping(app: GraviewApp, declaration: NotionConnectionSpec,
     ...(Object.keys(edges).length > 0 ? { edges } : {}),
     encode,
     decode,
+    // A page whose record is set aside is left as it is, with what it holds that is not kept in step.
+    aside: "keep",
     ...computedMapped(app, kind, Object.keys(fields)),
     ...(declaration.direction === "read" ? { readonly: true, because: `Each ${kind} comes from a Notion database this app only reads: change it there.` } : {}),
   };
@@ -665,8 +669,25 @@ function relationActs<S extends AnySchema>(store: Store<S>, kind: string): Pick<
     const name = relationActName(which, kind, edge);
     return has(name) ? { name, args: { id: localId, to } } : null;
   };
-  return { connectInbound: act("connect"), disconnectInbound: act("disconnect") };
+  return {
+    connectInbound: act("connect"),
+    // A link to a record set aside is taken away with it brought back for the moment, in the one batch: an act does not reach one that is aside.
+    disconnectInbound: (call) => {
+      const off = act("disconnect")(call);
+      const target = store.graph.getNode(call.to) as unknown as Record<string, unknown> | undefined;
+      if (!off || !isArchived(target)) return off;
+      const of = String(target!["kind"]);
+      return [{ name: `unarchive-${of}`, args: { id: call.to } }, off, { name: `archive-${of}`, args: { id: call.to } }];
+    },
+  };
 }
+
+/** What a connection says of a record set aside here whose counterpart is gone there, and of one made there again. */
+const setAsideWords = (thing: string, system: string) => ({
+  gone: (label: string) => `${label} is set aside here and its ${thing} was deleted in ${system}: it is kept here, and a new ${thing} is made if it is brought back`,
+  left: (label: string) => `${label} was brought back here, and its ${thing} in ${system} is no longer one this connection keeps: it is kept here, and not in step until that one is again`,
+  again: (label: string) => `${label} was brought back here with no ${thing} in ${system}, so a new one was made`,
+});
 
 /** Our fields from a remote record's, decoded: what a record made from it holds. */
 function decodedBy(resource: ResourceMapping) {
@@ -726,6 +747,7 @@ function googleConnection<S extends AnySchema>(run: ConnectionRun<S>, declaratio
       // What each pass invites and takes off is said in the history and the report, and a record over `max` is held (Roadmap f-sync-guest-changes-in-history).
       ...(kept ? { guests: kept } : {}),
       ...(run.now ? { now: run.now } : {}),
+      setAside: setAsideWords("event", "Google Calendar"),
       conflicts: declaration.conflicts ?? "report",
       applyInbound: ({ localId, fields }) => ({ name: `edit-${declaration.kind}`, args: { id: localId, ...fields } }),
       removeInbound: ({ localId }) => ({ name: `remove-${declaration.kind}`, args: { id: localId } }),
@@ -826,6 +848,7 @@ function notionConnection<S extends AnySchema>(run: ConnectionRun<S>, declaratio
       ...(run.links ? { links: run.links } : {}),
       connectInbound: (call) => relationsOf.get(call.kind)?.connectInbound?.(call) ?? null,
       disconnectInbound: (call) => relationsOf.get(call.kind)?.disconnectInbound?.(call) ?? null,
+      setAside: setAsideWords("page", "Notion"),
       conflicts: declaration.conflicts ?? "report",
       applyInbound: ({ localId, kind, fields }) => ({ name: `edit-${kind}`, args: { id: localId, ...fields } }),
       removeInbound: ({ localId, kind }) => ({ name: `remove-${kind}`, args: { id: localId } }),
@@ -933,14 +956,6 @@ function todoistConnection<S extends AnySchema>(run: ConnectionRun<S>, declarati
       remote,
       ...(run.links ? { links: run.links } : {}),
       ...relations,
-      // A link to a record set aside is taken away with it brought back for the moment, in the one batch: an act does not reach one that is aside.
-      disconnectInbound: (call) => {
-        const act = relations.disconnectInbound?.(call) ?? null;
-        const target = store.graph.getNode(call.to) as unknown as Record<string, unknown> | undefined;
-        if (!act || Array.isArray(act) || !isArchived(target)) return act;
-        const of = String(target!["kind"]);
-        return [{ name: `unarchive-${of}`, args: { id: call.to } }, act as MutationCall, { name: `archive-${of}`, args: { id: call.to } }];
-      },
       holdExisting: {
         send: declaration.sendExisting === true,
         say: (count: number) => `${count} ${count === 1 ? "record was" : "records were"} here before this connection and ${count === 1 ? "is" : "are"} not sent to Todoist: each goes when it is changed, or all of them with "sendExisting": true`,

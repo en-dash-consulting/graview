@@ -22,13 +22,21 @@ A Todoist project is a connection of the document: each of its tasks is a record
 
 | Part | Field | |------|-------| | `content`, `description` | `string` or `text` | | `due` | `date` (its day) or `datetime` (its moment; a full day is midnight in the account's time zone) | | `deadline` | `date` | | `priority` | `integer`, 1 the most urgent as p1 to 4; or an enum of `p1`…`p4`, or of `urgent`, `high`, `medium`, `low` | | `labels` | `list` of strings | | `section` | `string`, or an enum whose options are its sections | | `assignee` | `string` (the name) or `email` | | `parent` | a relation of one, to a kind a Todoist connection keeps | | `completed` | `boolean` |
 
-1. **Map `completed`.** A task completed in Todoist sets that field and never removes a record; unmapped, it looks open here for good. Completing a task that repeats, on either side, moves it to its next date: the field clears and the date follows. A task deleted there, or moved out of the project, section or label, is removed here. Removing a record here deletes its task, and Todoist deletes every subtask with it, kept here or not; a record linked by a mapped `parent` is moved out from under it first. Setting one aside, or merging it into another, deletes nothing: its task stays as it is, nothing is sent for it, what changes there is still taken, and it is the same task's when brought back. A task above one set aside is not deleted, nor completed over it, until that one is removed, or brought back and out from under it.
+1. **Map `completed`.** A task completed in Todoist sets that field and never removes a record; unmapped, it looks open here for good. Completing a task that repeats, on either side, moves it to its next date: the field clears and the date follows. A task deleted there, or moved out of the project, section or label, is removed here. Removing a record here deletes its task, and Todoist deletes every subtask with it, kept here or not; a record linked by a mapped `parent` is moved out from under it first. Setting one aside, or merging it into another, deletes nothing, as in any connection: its task stays as it is, nothing is sent for it, what changes there is still taken, and it is the same task's when brought back. A task above one set aside is not deleted, nor completed over it, until that one is removed, or brought back and out from under it.
 
 1. **Say a repeat with `repeats: true` on the due field.** "every day", "every 2 weeks", "every mon, wed" and "every 2, 15" are the repeat beside the date. What cannot be said back with the same meaning — "every! 3 months", "every last workday", hours, start and end dates, a repeating time in an account of another time zone than the app's — stays in Todoist, its date kept here; a change to that date here is held unsent and said in `report.refused`, while the rest of the record is sent; a repeat made here with an until, a count or a skipped day is held too, and a new record that says one waits whole.
 
 1. **Give the host the token, never the document.** `serve` and `preview` read the account's personal API token (Todoist's Settings → Integrations → Developer) from `TODOIST_TOKEN`, or `<auth.env>_TOKEN`; a host that keeps it hands `runConnections({ token, project })`. OAuth is the host's own.
 
 The transport is `packages/core/src/sync/todoist.ts`; its first comment says what it relies on in Todoist's documentation.
+
+### Set aside, in any connection
+
+A record set aside or merged away here keeps its Notion page, its Google event (its guests are mailed nothing) or its task, and what changes there still lands. Only one removed is deleted there, and a merge leaves two. In Notion and Google Calendar, kept both ways:
+
+- A page or event deleted there meanwhile leaves the record here, said once. Brought back, it is made there anew, said in `report.said`, and a connection with `notify` invites its guests again. So is one an earlier version deleted, with nothing sent until it is brought back.
+- One out of the connection's filter or data source when it is brought back leaves the record here, said, and not in step until that one is in again.
+- A page or event made anew is a new one: the old one, restored after that, arrives as another record, or is refused where its id is taken.
 
 ### Then find out whether it worked
 
