@@ -59,7 +59,9 @@
  *   (`?one=1`), its part held back as a slow network holds it, that link
  *   carries the Scene's address from the moment it is drawn and, pressed
  *   at once, rises to the Map once the face has come — where it carried
- *   none and the press went nowhere (Graview Cloud's e2e-views, 0.2.14).
+ *   none and the press went nowhere (Graview Cloud's e2e-views, 0.2.14);
+ *   with that part held back until then, the app's bar and the view are
+ *   drawn and painted, in every engine.
  *
  *   node scripts/verify-growing.mjs [--engine=chromium|webkit|firefox] [--quick] [--shots=<dir>] [--probe]
  */
@@ -671,8 +673,10 @@ try {
           }
         }
         /*
-         * THE ONE FACE ON ITS WAY: its part held back, as a slow network holds it, so the page and its home view are drawn
-         * before it; the view's `<a data-place="overview">` is pressed the moment it is drawn, with nothing waited for.
+         * THE ONE FACE ON ITS WAY: its part held back, as a slow network holds it, until the page and its home view have been
+         * drawn and the view's `<a data-place="overview">` pressed, with nothing waited for. The page's `load` event is not
+         * waited for either: Firefox holds it for a script asked for before it, the held part among them, so a harness that
+         * waited on it looked only once the part had come, at a page that had been drawn all along.
          */
         {
           const context = await browser.newContext({ viewport });
@@ -680,27 +684,46 @@ try {
           page.on("pageerror", (error) => errors.push(`${label} one face on its way: ${error.message}`));
           const begun = Date.now();
           const held = [];
+          let letGo;
+          const heldUntil = new Promise((done) => (letGo = done));
           await page.route("**/*.js", async (route) => {
             const response = await route.fetch();
             const body = await response.text();
             if (body.includes("one-place-bar")) {
-              const asked = Date.now() - begun;
-              await new Promise((done) => setTimeout(done, 5000));
-              held.push({ asked, let: Date.now() - begun, url: route.request().url().split("/").pop() });
+              held.push(route.request().url().split("/").pop());
+              await heldUntil;
             }
             await route.fulfill({ response, body });
           });
-          await page.goto(`${at("growing-host")}/?lists=3&one=1`, { waitUntil: "load" });
+          await page.goto(`${at("growing-host")}/?lists=3&one=1`, { waitUntil: "commit" });
           const link = page.locator("#to-scene");
           const drawn = await link.waitFor({ timeout: 30_000 }).then(() => true, () => false);
           const drawnAt = Date.now() - begun;
+          // Seen, not only there: the app's bar with a size, the view's link what a press at its middle meets, two frames on from a first paint.
+          const painted = await page
+            .waitForFunction(
+              () => {
+                if (performance.getEntriesByName("first-contentful-paint").length === 0) return false;
+                const bar = document.querySelector("[data-graview-app-bar]")?.getBoundingClientRect();
+                const root = document.querySelector("[data-worker-view]")?.shadowRoot;
+                const box = root?.querySelector("#to-scene")?.getBoundingClientRect();
+                if (!bar || bar.width < 1 || bar.height < 1 || !box || root.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2)?.id !== "to-scene") return false;
+                return new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(() => done(true))));
+              },
+              null,
+              { timeout: 20_000 },
+            )
+            .then(() => true, () => false);
           const arriving = await page.evaluate(() => document.documentElement.hasAttribute("data-graview-one-face-arriving"));
           const href = drawn ? await link.getAttribute("href") : null;
-          if (drawn) await link.click();
-          // Still on its way once the press has landed: the press was made before the face came, not after.
+          // A link drawn and not to be pressed is the claim's to say, not the run's end.
+          const pressed = drawn && (await link.click({ noWaitAfter: true, timeout: 20_000 }).then(() => true, () => false));
           const arrivingAtPress = await page.evaluate(() => document.documentElement.hasAttribute("data-graview-one-face-arriving"));
+          const heldBack = held.length > 0;
+          letGo();
           const rose = await page.waitForFunction(() => document.querySelector('[data-testid="altitude"]')?.getAttribute("data-graview-one-face-level") === "2", null, { timeout: 20_000 }).then(() => true, () => false);
-          seen.early.push({ engine, screen: screen.name, drawn, drawnAt, held, arriving, arrivingAtPress, href, rose, problems: await page.evaluate(() => window.__problems ?? []) });
+          seen.early.push({ engine, screen: screen.name, drawn, drawnAt, painted, held, heldBack, arriving, pressed, arrivingAtPress, href, rose, problems: await page.evaluate(() => window.__problems ?? []) });
+          await page.unrouteAll({ behavior: "ignoreErrors" });
           await context.close();
         }
         {
@@ -852,14 +875,11 @@ report.checks.aViewsLinkToTheOverviewLandsOnTheScenesOverviewOnBothFacesByALinkA
 };
 report.checks.aViewsLinkToTheOverviewPressedBeforeTheOneFaceHasComeCarriesItsAddressAndRisesToTheMap = {
   seen: seen.early,
-  /*
-   * Every run: the link carries the Scene's address and its press lands on the Map. And somewhere the link was drawn, and
-   * pressed, while the face was still on its way: Chromium and WebKit show the view before it; Firefox may show the
-   * page only once the face has come, and there is then no press to make before it.
-   */
-  ok:
-    every(seen.early, (one) => one.drawn && /\/places\/overview$/.test(one.href ?? "") && one.rose && one.problems.length === 0) &&
-    (seen.early.some((one) => one.arriving && one.arrivingAtPress) || seen.early.every((one) => one.engine === "firefox")),
+  ok: every(seen.early, (one) => one.drawn && one.pressed && one.arriving && one.arrivingAtPress && /\/places\/overview$/.test(one.href ?? "") && one.rose && one.problems.length === 0),
+};
+report.checks.thePageAndItsViewAreDrawnAndPaintedWhileTheOneFacesPartIsHeldBack = {
+  seen: seen.early,
+  ok: every(seen.early, (one) => one.heldBack && one.arriving && one.drawn && one.painted),
 };
 report.checks.noPageScrollsSideways ={ seen: seen.page, ok: seen.page.length > 0 && seen.page.every((one) => !one.sideways) };
 report.checks.noPageErrors = { errors, ok: errors.length === 0 };
