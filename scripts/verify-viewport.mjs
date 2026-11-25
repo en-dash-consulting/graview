@@ -40,6 +40,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { arriveWithoutWebfonts, launchEngine } from "./lib/engine.mjs";
 import { graviewSources } from "./lib/graview-sources.mjs";
+import { deadline } from "./lib/deadline.mjs";
 import { at, portFor } from "./lib/ports.mjs";
 import { serving, vacant } from "./lib/serve.mjs";
 
@@ -203,8 +204,8 @@ async function onAnIpad(browser, engine) {
   };
   const todoReady = () => "__todoReady" in window;
   const embedReady = () => window.__ready === true;
-  measuring = "theBarFitsAnIpadInBothOrientations";
   for (const device of IPADS) {
+    reach("theBarFitsAnIpadInBothOrientations");
     for (const [app, url, ready] of [
       ["todo, the scene", `${at("todo")}/?today=2026-09-01`, todoReady],
       ["todo, the pages", `${at("todo")}/?today=2026-09-01&face=pages`, todoReady],
@@ -224,7 +225,7 @@ async function onAnIpad(browser, engine) {
    * as a glide takes and twice that.
    */
   for (const device of ["iPad Pro 11", "iPad Pro 11 landscape"]) {
-    measuring = "aTapOnTheSceneMovesTheCameraOnce";
+    reach("aTapOnTheSceneMovesTheCameraOnce");
     const { context, page } = await open(device, `${at("viewport-host")}/?doc=recon&face=scene&height=viewport`, embedReady);
     const tapped = new Set();
     for (let tap = 0; tap < 6; tap++) {
@@ -244,9 +245,8 @@ async function onAnIpad(browser, engine) {
       const still = tap > 0 && !atTheEdge;
       seen.taps.push({ device, tapped: next.id, ...move, inSight: still, ok: move.districts > 0 && move.turns === 0 && (!still || move.moved <= 1) });
     }
-    measuring = "theSceneHoldsStillWhenSafarisToolbarCollapses";
     // Safari's toolbar folds away: the window grows by it, the width the same.
-    measuring = "theSceneHoldsStillWhenSafarisToolbarCollapses";
+    reach("theSceneHoldsStillWhenSafarisToolbarCollapses");
     await toolbarFolds(page, device, "ten kinds, the scene", true);
     await context.close();
   }
@@ -265,6 +265,7 @@ async function onAnIpad(browser, engine) {
     ["iPad Pro 11 landscape", "ten kinds, the scene", `${at("viewport-host")}/?doc=recon&face=scene&height=viewport`, embedReady],
     ["iPad Pro 11", "todo, the scene", `${at("todo")}/?today=2026-09-01`, todoReady],
   ]) {
+    reach("theSceneHoldsStillWhenSafarisToolbarCollapses");
     const { context, page } = await open(device, url, ready, { isMobile: false });
     if (app.startsWith("ten kinds")) {
       const { sight } = await inSight(page);
@@ -393,16 +394,23 @@ function inSight(page) {
 const report = { at: new Date().toISOString(), engines, portrait: PORTRAIT, landscape: LANDSCAPE, checks: {} };
 const errors = [];
 const seen = { embed: [], shell: [], zero: [], bar: [], taps: [], toolbar: [] };
-/** The claim being measured: what a run that stops is said to have failed. */
-let measuring = "theEmbedFillsThePhoneAfterEachTurnOnBothFaces";
 let browser;
 let host;
 let todo;
+/** Puts the browser and the servers away; a browser that crashed may say so, or never close. */
+const cleanup = async () => {
+  await Promise.race([browser?.close().catch(() => {}), new Promise((done) => setTimeout(done, 10_000))]);
+  host?.stop();
+  todo?.stop();
+};
+/** The claim being measured: what a run that stops, or hangs, is said to have failed. */
+const reach = deadline({ verdict: resolve(repoRoot, "docs/viewport.json"), report, cleanup });
+reach("theEmbedFillsThePhoneAfterEachTurnOnBothFaces");
 try {
   host = await buildHost();
   todo = await serving("todo", portFor("todo"), repoRoot);
   for (const engine of engines) {
-    measuring = "theEmbedFillsThePhoneAfterEachTurnOnBothFaces";
+    reach("theEmbedFillsThePhoneAfterEachTurnOnBothFaces");
     browser = await launchEngine(engine);
     for (const face of FACES) {
       for (const height of HEIGHTS) {
@@ -420,7 +428,7 @@ try {
          * itself out for the box it has now, not the one before.
          */
         if (face === "scene" && height === "viewport") {
-          measuring = "aSceneWhoseBoxWentToNothingFollowsItBack";
+          reach("aSceneWhoseBoxWentToNothingFollowsItBack");
           await page.evaluate(() => (document.getElementById("app").style.display = "none"));
           await page.setViewportSize(LANDSCAPE);
           await page.waitForTimeout(SETTLE);
@@ -428,12 +436,12 @@ try {
           await page.waitForTimeout(SETTLE);
           const back = await measure(page, "embed");
           seen.zero.push({ engine, back, ok: fills(back) });
-          measuring = "theEmbedFillsThePhoneAfterEachTurnOnBothFaces";
+          reach("theEmbedFillsThePhoneAfterEachTurnOnBothFaces");
         }
         await context.close();
       }
     }
-    measuring = "theShellFillsThePhoneAfterEachTurn";
+    reach("theShellFillsThePhoneAfterEachTurn");
     // The whole-page Shell: the todo example, as its own window.
     const context = await browser.newContext({ viewport: PORTRAIT, hasTouch: true });
     const page = await context.newPage();
@@ -451,10 +459,8 @@ try {
 } catch (error) {
   report.error = String(error?.stack ?? error);
 } finally {
-  // A browser that crashed closes with an error of its own: what stopped the run is already said.
-  await browser?.close().catch(() => {});
-  host?.stop();
-  todo?.stop();
+  reach.done();
+  await cleanup();
 }
 
 const every = (list) => list.length > 0 && list.every((one) => one.ok);
@@ -467,9 +473,12 @@ if (engines.includes("webkit")) {
   report.checks.aTapOnTheSceneMovesTheCameraOnce = { held: seen.taps, ok: every(seen.taps) && seen.taps.some((tap) => tap.inSight) };
   report.checks.theSceneHoldsStillWhenSafarisToolbarCollapses = { held: seen.toolbar, ok: every(seen.toolbar) };
 }
-// A run that stopped part way failed the claim it was measuring, by name, and says what stopped it; every other was not measured to its end, so none is said to hold or to have failed.
+// A run that stopped part way failed the claim it was measuring, by name, and says what stopped it. Of the others, one measured false is false; the rest were not measured to their end, so they are not said to hold.
 if (report.error) {
-  for (const [name, check] of Object.entries(report.checks)) report.checks[name] = name === measuring ? { ...check, stopped: report.error, ok: false } : { held: check.held, unfinished: true };
+  for (const [name, check] of Object.entries(report.checks)) {
+    if (name === reach.at()) report.checks[name] = { ...check, stopped: report.error, ok: false };
+    else if (check.held.every((one) => one.ok)) report.checks[name] = { held: check.held, unfinished: true };
+  }
 }
 report.checks.noPageThrew = { errors, ok: errors.length === 0 };
 report.passed = !report.error && Object.values(report.checks).every((check) => check.ok);
