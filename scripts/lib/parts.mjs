@@ -78,7 +78,7 @@ export const PARTS = {
   site: bySteps("docs/site-check.json", { page: ["sweep/index.html"], tour: ["sweep/tour.html"], "progression-light": ["sweep/progression.html/light"], "progression-dark": ["sweep/progression.html/dark"] }),
   "one-face": bySteps("docs/one-face.json", {
     desk: ["desk/switch", "desk/button", "desk/node", "desk/views", "desk/chosen", "desk/free", "desk/overshoot", "desk/bar", "desk/viewLines"],
-    phone: ["phone"],
+    phone: ["phone", "homeReads"],
     rich: ["rich", "richPhoneLines"],
   }),
   /*
