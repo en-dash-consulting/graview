@@ -61,7 +61,11 @@ guest.autoSize();
 ```
 
 The frame takes each height it asks for, up to `limits.maxHeight` (4,000px
-by default). A page sized by its own frame (`height: 100vh`) asks for a
+by default); a height past it is given that most, and the host's
+`{ onProblem }` is told once (`taller-than-allowed`). Its place flows with
+the page, as tall as the frame, as a worker view's does;
+`guestView({ flows: false })` keeps the place's frame, most of the window
+tall and scrolling inside itself, for a fixed canvas. A page sized by its own frame (`height: 100vh`) asks for a
 little more each time the frame grows. A height that tracks the frame's
 own a few times running is refused for a moment: content that grows asks
 another meanwhile and is taken; otherwise the height is given after all,
@@ -895,6 +899,7 @@ view, the relation and the kind — so a host files a standing fault once. The l
 |------|-----------------|
 | `part-failed` | A part (`graview.part`) threw or took too long; its note is drawn in its place. |
 | `held-by-growth-guard` | A frame guest grew only with its own frame, and is held at a height. |
+| `taller-than-allowed` | A frame guest asked to be taller than its host allows (`limits.maxHeight`), and is drawn at that height. |
 | `far-kind-not-handed` | A relation the view reads joins a kind its manifest never hands it. |
 | `views-stylesheet-draws-nothing` | The app's stylesheet for its views draws nothing in the open kit. |
 | `face-not-lent` | A face the app lends its views is not lent: past the most, a name it may not take, or from nowhere this host serves faces. |

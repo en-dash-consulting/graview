@@ -121,6 +121,13 @@ export interface GuestHostOptions<S extends AnySchema> {
    * change).
    */
   readonly onHeld?: (said: string, height: number, problem: ViewProblem) => void;
+  /**
+   * The guest asked to be taller than `limits.maxHeight` (Graview HQ
+   * f-frame-view-autosize-short-on-desk): it is given that height, its foot
+   * cut, and that is said once, in a sentence, with what it is
+   * (`{ code: "taller-than-allowed" }`).
+   */
+  readonly onProblem?: (said: string, problem: ViewProblem) => void;
   /** The guest asked to go to a named place of the app, one `places` lists (FR-93). */
   readonly onNavigatePlace?: (as: string) => void;
   /**
@@ -541,6 +548,8 @@ export function createGuestHost<S extends AnySchema>(options: GuestHostOptions<S
 
   const growth = growthGuard(options.view, { say: (said, height) => options.onHeld?.(said, height, { code: "held-by-growth-guard" }), apply: (height) => !disposed && options.onSize?.(height) });
   let disposed = false;
+  /* Said once: the guest asked to be taller than it may be. */
+  let saidTaller = false;
   let pushes = 0;
   /*
    * THE PUSHES NOT YET ANSWERED (FR-207). A view's `pushed` for a push the
@@ -645,6 +654,11 @@ export function createGuestHost<S extends AnySchema>(options: GuestHostOptions<S
       if (!isRecord(data) || data.nonce !== options.nonce) {
         stats.dropped += 1;
         return;
+      }
+      /* A height past the most it may be is not refused unsaid: it is given the most, and told to the host (Graview HQ f-frame-view-autosize-short-on-desk). */
+      if (data.type === "size" && typeof data.height === "number" && Number.isFinite(data.height) && Math.round(data.height) > maxHeight && !saidTaller) {
+        saidTaller = true;
+        options.onProblem?.(`The view "${options.view}" asked to be ${Math.round(data.height)}px tall, more than the ${maxHeight}px it may be here, so it is ${maxHeight}px tall and what it drew below that is cut off.`, { code: "taller-than-allowed" });
       }
       if (data.type === "act" && (typeof data.id === "string" || typeof data.id === "number")) return act(data.id, data.name, data.args);
       if (data.type === "navigate" && options.onArrive && (typeof data.place === "string" || typeof data.to === "string")) {

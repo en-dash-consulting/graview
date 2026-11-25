@@ -25,6 +25,7 @@ describe("the codes a view's problems are said with", () => {
     expect(VIEW_PROBLEM_CODES).toEqual([
       "part-failed",
       "held-by-growth-guard",
+      "taller-than-allowed",
       "far-kind-not-handed",
       "views-stylesheet-draws-nothing",
       "face-not-lent",
