@@ -1278,7 +1278,7 @@ class Editor {
     }
     const was = this.doc.connections?.[name] !== undefined;
     (this.doc.connections ??= {})[name] = parsed.data;
-    const system = parsed.data.system === "notion" ? "a Notion database" : "a Google calendar";
+    const system = { notion: "a Notion database", "google-calendar": "a Google calendar", todoist: "a Todoist project" }[parsed.data.system];
     const kinds = connectionKinds(parsed.data).map((kind) => pluralOf(this.doc.kinds, kind));
     const said = kinds.length <= 1 ? kinds.join("") : `${kinds.slice(0, -1).join(", ")} and ${kinds.at(-1)}`;
     this.said.push(`The connection ${name} ${was ? "now keeps" : "keeps"} ${said} in step with ${system}${parsed.data.direction === "read" ? ", which owns them" : ", both ways"}.`);

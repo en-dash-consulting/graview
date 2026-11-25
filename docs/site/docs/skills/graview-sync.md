@@ -1,6 +1,6 @@
 # graview-sync
 
-`graview-sync` is one of Graview's 31 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Keep a Graview app in step with another system — a graph projected from it as a snapshot, a SyncEngine that sends this app's acts back and holds a field both sides changed, a remote that speaks MCP behind a door on the dev server, and a Google calendar or a Notion database declared as a connection — and verify the first run sends nothing and a conflict is held rather than assuming the two agree.
+`graview-sync` is one of Graview's 32 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Keep a Graview app in step with another system — a graph projected from it as a snapshot, a SyncEngine that sends this app's acts back and holds a field both sides changed, a remote that speaks MCP behind a door on the dev server, and a Google calendar or a Notion database declared as a connection — and verify the first run sends nothing and a conflict is held rather than assuming the two agree.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -8,7 +8,7 @@ Installed into a project by `graview skills install .`, and read by whichever as
 
 ## Keep an app in step with another system
 
-Often the records already live somewhere: a tracker, an analysis, a calendar. The app is then a projection of them that people act on, and every act has to reach the system that owns the record — or be refused, in a sentence, where that system owns it. Storing, migrating, serving and exporting the app itself is `graview-ship`.
+Often the records already live somewhere: a tracker, an analysis, a calendar. The app is then a projection of them that people act on, and every act has to reach the system that owns the record — or be refused, in a sentence, where that system owns it. Storing and serving the app is `graview-ship`; Todoist, `graview-todoist`.
 
 ### Do this
 

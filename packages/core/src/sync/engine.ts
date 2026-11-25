@@ -760,6 +760,7 @@ export class SyncEngine<S extends AnySchema> {
         id: link.id,
         localId,
         fields: remoteFields(free, mapping, node),
+        changed: changed.map((field) => keptOf(mapping)[field]!),
       });
     }
     // Something we had linked and no longer have is a deletion, and saying so
@@ -1090,6 +1091,7 @@ export class SyncEngine<S extends AnySchema> {
             continue;
           }
           pushed.push(ack.localId);
+          if (ack.held) refused.push({ localId: ack.localId, error: ack.held });
           const out = guests ? outgoing.get(ack.localId) : undefined;
           if (guests && out) {
             guestsKept[ack.localId] = { sent: { addresses: out.addresses, notified: guests.notify === true, at } };
@@ -1260,7 +1262,7 @@ export class SyncEngine<S extends AnySchema> {
         // compares against — comparing a decoded remote value with an encoded
         // local one reports a change on every single pass. A field the write
         // left out (held in conflict) keeps the base it had.
-        fields: { ...links[ack.localId]?.fields, ...ourFields(write.fields ?? {}, mapping, true) },
+        fields: { ...links[ack.localId]?.fields, ...ourFields({ ...write.fields, ...ack.fields }, mapping, true) },
       },
     };
   }

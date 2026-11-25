@@ -246,7 +246,7 @@ graview describe <entry> [--as <role>] [--views <module>] [--place <slug|id>]
 graview docs <entry> [--out <dir>] [--views <module>]
 ```
 
-## What a model reads before it writes (31 skills)
+## What a model reads before it writes (32 skills)
 
 Skills that teach an assistant the authoring moves, each ending in a real graview check verdict. Installed into a product by `graview skills install .` — which `graview create` runs for you — into `.claude/skills` and `.agents/skills`, so Claude Code and Codex find the same instructions.
 
@@ -274,6 +274,7 @@ Skills that teach an assistant the authoring moves, each ending in a real gravie
 - [graview-studio](https://graview.dev/docs/skills/graview-studio.html): Open an app's declaration as a graph in Graview's own interface, change it with ordinary acts, let graview check judge the result before it is applied, migrate a stored graph, and write the declaration back as the files graview create writes.
 - [graview-sync](https://graview.dev/docs/skills/graview-sync.html): Keep a Graview app in step with another system — a graph projected from it as a snapshot, a SyncEngine that sends this app's acts back and holds a field both sides changed, a remote that speaks MCP behind a door on the dev server, and a Google calendar or a Notion database declared as a connection — and verify the first run sends nothing and a conflict is held rather than assuming the two agree.
 - [graview-tidying](https://graview.dev/docs/skills/graview-tidying.html): Tidy a Graview app without losing anything — set records aside (archive, bring back) instead of deleting them, merge a duplicate into the one that stays, and let the app's own actor link and prune by suggestion a person accepts or declines, held to what people said, and suggest changes to the app itself learned from how several people use it — verified with graview check and by undoing it rather than assuming nothing was lost.
+- [graview-todoist](https://graview.dev/docs/skills/graview-todoist.html): Keep a kind of a Graview app in step with a Todoist project, or one section or label of it, declared as a connection — a task's content, due date, deadline, priority, labels, section, assignee, parent and completion each in a field, both ways through a personal API token the host holds — and verify with graview check and a scripted Todoist that the first run sends nothing and a task completed there removes no record.
 - [graview-view-drawing](https://graview.dev/docs/skills/graview-view-drawing.html): Draw in a Graview worker view — the HTML, SVG and CSS the host keeps of it, the app's tokens and brand, the images a view may show (the app's logo, the app's own images, the pictures on records), a record's video or the app's reel the host plays and its full-screen viewer, files a person drops on it — and find out what the host refused rather than assuming it drew.
 - [graview-view-forms](https://graview.dev/docs/skills/graview-view-forms.html): Let a Graview worker view change records — a bound press (data-act), the fields a person types into, a record's own text filled to edit (data-prefill), a field that saves as it is typed (data-save) and the view hearing what became of each act (acted) — and prove a press applies and a field the view filled is refused, rather than assuming the form works.
 - [graview-view-links](https://graview.dev/docs/skills/graview-view-links.html): Send a person from a Graview worker view to a record, a place or a list — an <a data-record>, or a whole card or row bound to a record that opens on a click, a phone's tap and Enter — narrowed and to a section, and prove each lands by pressing it on a phone as well as a desk rather than assuming a card the describer lists opens.
@@ -424,8 +425,8 @@ graview serve <entry> [--data <dir>] [--port <n>] [--seed <file>] [--sqlite <fil
     loopback too. Health answers without it. On any other --host it will not
     start unless --trust-seat-headers says the network in front of it can
     be trusted, and then it believes every seat header, the system's too.
-    The app's declared connections (a Google calendar, a Notion database) run beside it, with
-    credentials from the environment and their cursors beside the data;
+    The app's declared connections (a Google calendar, a Notion database,
+    a Todoist project) run beside it, with credentials from the environment and their cursors beside the data;
     --no-sync leaves them off. What people looked for and could not do
     (a search that found nothing, an act refused) is kept for 90 days in
     friction.json beside the data, each person reading only their own and
@@ -777,6 +778,7 @@ A declaration that compiled and checked clean on one version compiles on the nex
 
 - A Google calendar connection's guests may be capped (Roadmap f-sync-guest-changes-in-history): `fields.guests` in its `{ via }` form takes `max`, the most guests one event invites. An event a write would invite somebody to past it is held unsent and said in the report's `refused` ("Dinner has 34 guests; this connection invites at most 20") and once in the history. One new error, `connection-guests-max`, for a `max` that is not a whole number above 0; a build that predates it refuses `max` by path (`connections.<name>.fields.guests`). No declaration that passed is refused. Google's own error message now follows the status in a refusal (`google-calendar: HTTP 400: Too many attendees`), where it was the status alone.
 - The guests typed in a field take the cap too (request:guests-field-form-takes-max): `fields.guests` may be `{ "field": "<field>", "notify"?, "max"? }`, which `"guests": "<field>"` is said short. It is held as the `{ via }` form is — an event over `max` held unsent, in the same words — and judged by the same findings: `connection-guests-max` at `connections.<name>.fields.guests.max`, and `connection-guests-field` at `connections.<name>.fields.guests.field`. `guestsInField` and `guestsViaRelation` on `@graview/core/sync` read either form. A build that predates it refuses the object by path (`connections.<name>.fields.guests`), so a host writes it only on a build whose `@graview/core/document.schema.json` has it; the string form means what it meant.
+- A connection's `system` may be `"todoist"` (Roadmap f-todoist-connection), additive in `graview-document@1` and refused by a build that predates it as a system it does not know: `{ "system": "todoist", "project", "section"?, "label"?, "auth"?, "kind", "fields": { "content", "description"?, "due"?, "deadline"?, "priority"?, "labels"?, "section"?, "assignee"?, "parent"?, "completed"? }, "direction", "conflicts"?, "every"?, "paused"? }`. Its findings are the connection codes there are, and one new warning, `connection-completed`. A write an engine hands a transport says the remote's names of what changed (`RemoteWrite.changed`), and a transport may answer what the remote holds where it is not what was sent and why (`RemoteAck.fields`, `held`): each optional, and used by the Todoist transport alone.
 - What a Notion connection of several `sources` says names the kind each sentence is of (request:notion-said-names-its-source): "left alone in Notion for <kind>: …", "<kind>'s <name>: the property … is left out", "could not make … in Notion for <kind>: …", as "Made N properties in Notion for <kind>" and "no property in the data source for <kind> …" did; and a note two sources both say is said for each. A connection of one source says what it said. `SyncReport.saidBy` is new beside `said`: the same sentences in the same order, each `{ kind?, sentence }` — `kind` the kind of the source it is of, absent for a sentence of the whole connection — present exactly when `said` is, so a host shows each beside its kind without reading the words. `said` and its words are display only. `@graview/ship`'s `runConnections` takes `onReport(connection, report)`, called with each connection's report as each pass ends (the first included; a throw is said, and the pass goes on), and answers `firstPass`, the first pass's reports by connection name (empty when nothing runs), so a host reads a pass as data rather than splitting `sayReport`'s line, whose words stay display only.
 
 - What LifeLogics Estimates found (0.1.63, Roadmap f-lifelogics-findings) changed the declaration in five ways, each additive or a refusal of what never drew. A money field (or a computed field said as money) may say `"places": 0`, optional in `graview-document@1`, and a template `{x | money: 0}`: the sum in whole units, rounded; `set-format` takes `places` (`0`, or `null` to clear it), the document refuses it on a field that is not money, and a build that predates it refuses the key by path, so a host writes it only on a build whose `@graview/core/document.schema.json` has it. Money is otherwise rounded to the cent before it is judged whole, so it never reads ".00"; the words a sum is said in are the page's, as they were. A kind may work out 60 computed fields where it could 20 — a document with more than 20 is refused by a build before it — and `set-glance` takes a computed field, as the document always did, but not one kept `hidden`. A timeline whose `start` or `end` is not a number field is `lens-cannot-draw` at the binding's path, as one with no columns already was — a warning, so a stored document still opens — and `add-lens` refuses either (`lens-cannot-draw`, an error at `edits.<i>.bindings.<kind>.<role>` or `edits.<i>.options.columns`), its fix naming the bindings a timeline takes and the calendar for spans of dates; nothing that drew is refused. A choice named bare in a template — a describe line, a label, a badge, a rule's sentence — is said by its option's label, else its id spoken, where it said the id; an option written with capitals keeps them where none labels it (`humanizeValue`). A gesture of several acts that its caller named nothing for is said, in `Batch.intent` and history, by each act's sentence (the first two and how many more past three), where it was said by its first; an op's `intent` is display only, and no op changes.
@@ -2363,7 +2365,7 @@ New here? [Getting started](https://graview.dev/docs/getting-started.html) is th
 - [Working with a model](https://graview.dev/docs/agents.html): The seat, the typed tools, what a model reads, and the studio.
 - [Live demos](https://graview.dev/docs/demos.html): Every surface of the garden, running on the page, and the example apps.
 - [Packages (14)](https://graview.dev/docs/packages.html): What each ships and what each exports.
-- [Skills (31)](https://graview.dev/docs/skills.html): What your assistant reads before it writes.
+- [Skills (32)](https://graview.dev/docs/skills.html): What your assistant reads before it writes.
 - [The CLI](https://graview.dev/docs/cli.html): create, check, types, docs, describe, lens, figure, serve, skills.
 - [What check says (132)](https://graview.dev/docs/checks.html): Every finding, and how loudly.
 - [Stability](https://graview.dev/docs/stability.html): What a version may change, and what a host can hold it to.
@@ -2439,7 +2441,7 @@ Everything a Graview app declares, and the checker that verifies it.
 - **A document's shape, for an editor and a compiler** — every version ships `@graview/core/document.schema.json`, the document format as JSON Schema, written by the build from the shape the compiler reads. A document that says `"$schema": "./node_modules/@graview/core/dist/document.schema.json"` (or the version's own address, its `$id`) is checked as it is typed: an unknown key is underlined in the editor, not refused at run time. `@graview/core/typed` is the same document in TypeScript: `defineDocument` returns the JSON document unchanged, and a key the format does not have, an edge to a kind nobody declares, a glance or lifecycle field the kind lacks, a relation an act connects or a kind a rule is over that is not declared is a type error. `graview types <document> --out document.d.ts` writes a document's kinds, fields (an enum's options as a union) and relations as types, `TypesOf<typeof document>` derives the same from a `defineDocument`, and `typedReader<Types>(store)` reads a store through them (`reader.fieldOf(node, "status")`, `reader.edgesOf(node, "under")` and the rest), so a renamed field or relation fails `tsc` in the product that reads it.
 - **A part that tries again** — `@graview/core/retry`, for a page only: `retryingImport(() => import("./part.js"))` is a loader that asks again after the import failed, with a URL of its own (`?retry=<n>`) where the engine keeps a failed module for the page's life, as Chromium and Firefox do. Never from a server's code: workerd refuses a script with a computed `import()` in it.
 - **A snapshot file** — `@graview/core/snapshot`: `writeSnapshot(graph)` writes a header line (when it was made, records and links per kind, where each kind's lines are) and then a record per line; `readSnapshot(text, { kinds })` parses only the kinds asked for, `fetchSnapshot(url, { kinds })` fetches only their bytes, and an old `{ nodes, edges }` file still reads.
-- **Two-way sync** — `@graview/core/sync`: `SyncEngine` over the op log, with a conflict policy (`report`, `theirs`, `ours`), resources the remote owns (`readonly`, refused here with their `because`), links seeded from a version field, and transports for Google Calendar and for a tool server over MCP (`mcpClient`, `mcpDoor`, `doorClient`, `mcpRemote`). The Google transport follows every page, starts a full resync when Google rejects the sync token, and asks `token({ refresh: true })` once when Google refuses an access token; `scripts/verify-google-calendar.mjs` proves it against a real test calendar (credentials from `~/.graview-google-test.env`, made once by `scripts/google-calendar-once.mjs`; `scripts/calendar-sync-demo.mjs` is the same by hand). A Notion database is a transport too (`notion`): one database, one kind, property to field by name or as declared, pulled by `last_edited_time` across every page of a query, pages made, set and archived, Notion's rate limit waited out, and a refused secret or an unshared database said as a sentence; `scriptedNotion()` is a Notion in memory to test against, and `scripts/verify-notion.mjs` proves the transport against a real workspace (`~/.graview-notion-test.env`; `--stub` against the scripted one). A document declares either as `connections.<name>` — a calendar, its fields and a color or tag filter, or a database and its properties; `read` or `both`, the conflict policy — judged by `graview check` and run by `graview serve` and `graview preview`; `connection(…)` builds its engine for any host.
+- **Two-way sync** — `@graview/core/sync`: `SyncEngine` over the op log, with a conflict policy (`report`, `theirs`, `ours`), resources the remote owns (`readonly`, refused here with their `because`), links seeded from a version field, and transports for Google Calendar and for a tool server over MCP (`mcpClient`, `mcpDoor`, `doorClient`, `mcpRemote`). The Google transport follows every page, starts a full resync when Google rejects the sync token, and asks `token({ refresh: true })` once when Google refuses an access token; `scripts/verify-google-calendar.mjs` proves it against a real test calendar (credentials from `~/.graview-google-test.env`, made once by `scripts/google-calendar-once.mjs`; `scripts/calendar-sync-demo.mjs` is the same by hand). A Notion database is a transport too (`notion`): one database, one kind, property to field by name or as declared, pulled by `last_edited_time` across every page of a query, pages made, set and archived, Notion's rate limit waited out, and a refused secret or an unshared database said as a sentence; `scriptedNotion()` is a Notion in memory to test against, and `scripts/verify-notion.mjs` proves the transport against a real workspace (`~/.graview-notion-test.env`; `--stub` against the scripted one). A Todoist project is one as well (`todoist`): its tasks, or one section's or label's, pulled by sync token through Todoist's API v1, written part by part, a task completed there a field set and never a record removed, a repeat Todoist's words say kept and any other left there; `scriptedTodoist()` is a Todoist in memory, and `scripts/verify-todoist.mjs` is for a real account (`~/.graview-todoist-test.env`; `--stub`). A document declares any as `connections.<name>` — a calendar, its fields and a color or tag filter, a database and its properties, or a project and its parts; `read` or `both`, the conflict policy — judged by `graview check` and run by `graview serve` and `graview preview`; `connection(…)` builds its engine for any host.
 - **A spreadsheet brought in** — `@graview/core/import`: `importRows(store, kind, rows, mapping, { by })` reads each cell by its field's type, links a cell to a record by its name, keeps every row that fits as one undoable batch `via: "import"`, and says each refused row in words; `previewImport` keeps nothing, `proposeMapping` offers a mapping from the header row, and `parseCsv` reads a CSV or a paste (`docs/import.md`).
 - **The city** — `@graview/core/scene`: `sceneThumbnail` draws a document (or an app) as the Scene draws it from altitude — the same districts on the same map, in their hues — as one SVG string, with no DOM, for a host listing apps; `sceneDistricts` is the same answer as data. At a card's size, `fit: "content"` fits it to what stands: each district on its whole block from the same corner, cropped to the plots, with a few blocks no narrower than `minBuilding` pixels (16 by default) rather than a speck per record. Without counts — a live app with no snapshot — each district stands three blocks placed and raised by its kind's name, so every app still looks like itself. `size: "icon"` draws it as a tab's icon: 32 by 32, each district on its block in its hue with one block on it, readable at 16 pixels and about a kilobyte — a standalone SVG to serve as a favicon. A kind's figures are `@graview/core/figures`.
 - **What is said, matched and listed after a page draws** (FR-179) — `@graview/core/search`: the one matcher (`search`, `actsOn`, `touchWeights`, `parseQuery`, `matchNode`), fetched when somebody first searches. `@graview/core/words`: a record read as a person reads it (`readableFields`, `pageSections`, `isLongText`, `describeNode`, `tellApart`), what an argument asks for (`argShape`, `describeArg`), an argument and a refusal in the record's words (`argumentWords`, `failureWords`) and `viaSaid`. `@graview/core/seat`: an act's answer as its seat may see it (`answerSeenBy`), the archive behind the undo horizon as a seat may see it (`archivedSeenBy`, a host's `HistoryHost.archived` answer), every place an app has (`placesOf`, `placesFrom`) and the order things are made in (`beginning`). Judging the arrangement (`arrangementFindings`) is `@graview/core/check`'s.
@@ -3879,7 +3881,7 @@ A third party stands up their own host — a file store or SQLite, `graview serv
 | Default content moving | `seedSteps`, `applySteps`, `graview sync-seed` | when to run it, and for whom |
 | An agent attaching | `graview mcp`, `graview apply`, `--remote-url`, `--header` | issuing the keys those headers carry |
 | Schema moving | `version`, `migrations[]`, `graview check` | fleet upgrades |
-| Another system kept in step (a Google calendar, a Notion database) | `connections` in the declaration, `runConnections` (`graview serve`, `graview preview`; `--no-sync`), credentials from the environment (`GOOGLE_*`, and NOTION_TOKEN for Notion), one set of links shared by every connection so a Notion relation finds the record another connection keeps | each workspace's tokens and Notion secrets, through `token({ connection, declaration, refresh })`, the calendar or database it keeps (`calendar`, `database`), and where the engines' state is kept |
+| Another system kept in step (a Google calendar, a Notion database, a Todoist project) | `connections` in the declaration, `runConnections` (`graview serve`, `graview preview`; `--no-sync`), credentials from the environment (`GOOGLE_*`, and NOTION_TOKEN for Notion, TODOIST_TOKEN for Todoist), one set of links shared by every connection so a Notion relation finds the record another connection keeps | each workspace's tokens, Notion secrets and Todoist tokens, through `token({ connection, declaration, refresh })`, the calendar, database or project it keeps (`calendar`, `database`, `project`), and where the engines' state is kept |
 
 ### The boundary
 
@@ -4155,7 +4157,7 @@ Source: https://graview.dev/docs/skills.html
 
 # The skills
 
-Graview's 31 skills are instructions an AI coding assistant reads before it writes a Graview app. Each teaches a model one shape of the declaration, and each ends in `graview check` — reporting what it actually said, rather than claiming the work is done.
+Graview's 32 skills are instructions an AI coding assistant reads before it writes a Graview app. Each teaches a model one shape of the declaration, and each ends in `graview check` — reporting what it actually said, rather than claiming the work is done.
 
 ```sh
 graview skills install .
@@ -4187,6 +4189,7 @@ graview skills install .
 - [graview-studio](https://graview.dev/docs/skills/graview-studio.html): Open an app's declaration as a graph in Graview's own interface, change it with ordinary acts, let graview check judge the result before it is applied, migrate a stored graph, and write the declaration back as the files graview create writes.
 - [graview-sync](https://graview.dev/docs/skills/graview-sync.html): Keep a Graview app in step with another system — a graph projected from it as a snapshot, a SyncEngine that sends this app's acts back and holds a field both sides changed, a remote that speaks MCP behind a door on the dev server, and a Google calendar or a Notion database declared as a connection — and verify the first run sends nothing and a conflict is held rather than assuming the two agree.
 - [graview-tidying](https://graview.dev/docs/skills/graview-tidying.html): Tidy a Graview app without losing anything — set records aside (archive, bring back) instead of deleting them, merge a duplicate into the one that stays, and let the app's own actor link and prune by suggestion a person accepts or declines, held to what people said, and suggest changes to the app itself learned from how several people use it — verified with graview check and by undoing it rather than assuming nothing was lost.
+- [graview-todoist](https://graview.dev/docs/skills/graview-todoist.html): Keep a kind of a Graview app in step with a Todoist project, or one section or label of it, declared as a connection — a task's content, due date, deadline, priority, labels, section, assignee, parent and completion each in a field, both ways through a personal API token the host holds — and verify with graview check and a scripted Todoist that the first run sends nothing and a task completed there removes no record.
 - [graview-view-drawing](https://graview.dev/docs/skills/graview-view-drawing.html): Draw in a Graview worker view — the HTML, SVG and CSS the host keeps of it, the app's tokens and brand, the images a view may show (the app's logo, the app's own images, the pictures on records), a record's video or the app's reel the host plays and its full-screen viewer, files a person drops on it — and find out what the host refused rather than assuming it drew.
 - [graview-view-forms](https://graview.dev/docs/skills/graview-view-forms.html): Let a Graview worker view change records — a bound press (data-act), the fields a person types into, a record's own text filled to edit (data-prefill), a field that saves as it is typed (data-save) and the view hearing what became of each act (acted) — and prove a press applies and a field the view filled is refused, rather than assuming the form works.
 - [graview-view-links](https://graview.dev/docs/skills/graview-view-links.html): Send a person from a Graview worker view to a record, a place or a list — an <a data-record>, or a whole card or row bound to a record that opens on a click, a phone's tap and Enter — narrowed and to a section, and prove each lands by pressing it on a phone as well as a desk rather than assuming a card the describer lists opens.
@@ -4197,7 +4200,7 @@ graview skills install .
 
 ---
 
-The 31 skills that teach an assistant the authoring moves, each ending in a real check.
+The 32 skills that teach an assistant the authoring moves, each ending in a real check.
 
 The page: https://graview.dev/docs/skills.html · Every Graview docs page, for a model: https://graview.dev/llms.txt
 
@@ -4207,7 +4210,7 @@ Source: https://graview.dev/docs/skills/graview-agent-seat.html
 
 # graview-agent-seat
 
-`graview-agent-seat` is one of Graview's 31 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Wire an agent seat into a Graview app that shares the interface's own actions rather than shadowing them, and verify the diffs are identical rather than assuming they are.
+`graview-agent-seat` is one of Graview's 32 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Wire an agent seat into a Graview app that shares the interface's own actions rather than shadowing them, and verify the diffs are identical rather than assuming they are.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -4306,7 +4309,7 @@ Source: https://graview.dev/docs/skills/graview-brand.html
 
 # graview-brand
 
-`graview-brand` is one of Graview's 31 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Put an installation's own name, mark, typeface and palette on a Graview app without forking a package, and let graview check measure the contrast rather than trusting it.
+`graview-brand` is one of Graview's 32 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Put an installation's own name, mark, typeface and palette on a Graview app without forking a package, and let graview check measure the contrast rather than trusting it.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -4420,7 +4423,7 @@ Source: https://graview.dev/docs/skills/graview-desk.html
 
 # graview-desk
 
-`graview-desk` is one of Graview's 31 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Put a model INSIDE a Graview product — a surface that takes photographs or words, reaches the model through a declared door, and turns the answer into a plan somebody reviews before it touches the graph.
+`graview-desk` is one of Graview's 32 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Put a model INSIDE a Graview product — a surface that takes photographs or words, reaches the model through a declared door, and turns the answer into a plan somebody reviews before it touches the graph.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -4501,7 +4504,7 @@ Source: https://graview.dev/docs/skills/graview-embed.html
 
 # graview-embed
 
-`graview-embed` is one of Graview's 31 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Put a Graview app on somebody else's page — a picture in an article, a chapter in the docs, a live demo in a landing page — with its own theme scoped to one element, and nothing on the host touched.
+`graview-embed` is one of Graview's 32 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Put a Graview app on somebody else's page — a picture in an article, a chapter in the docs, a live demo in a landing page — with its own theme scoped to one element, and nothing on the host touched.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -4597,7 +4600,7 @@ Source: https://graview.dev/docs/skills/graview-host-page.html
 
 # graview-host-page
 
-`graview-host-page` is one of Graview's 31 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Host a Graview app as the page itself — a service that serves it, a chat's widget, the address bar handed over, the host's own menu and news inside it — and picture its places honestly: wait for data-graview-drawn or onDrawn rather than a timer, open a page on a view proposed and not kept (draftView), and photograph places with graview preview and graview shots (--view, --manifest).
+`graview-host-page` is one of Graview's 32 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Host a Graview app as the page itself — a service that serves it, a chat's widget, the address bar handed over, the host's own menu and news inside it — and picture its places honestly: wait for data-graview-drawn or onDrawn rather than a timer, open a page on a view proposed and not kept (draftView), and photograph places with graview preview and graview shots (--view, --manifest).
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -4677,7 +4680,7 @@ Source: https://graview.dev/docs/skills/graview-invariant.html
 
 # graview-invariant
 
-`graview-invariant` is one of Graview's 31 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Write a Graview invariant that judges the graph and NAMES the mutations that would repair it, then verify it with graview check and by making it actually fire.
+`graview-invariant` is one of Graview's 32 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Write a Graview invariant that judges the graph and NAMES the mutations that would repair it, then verify it with graview check and by making it actually fire.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -4788,7 +4791,7 @@ Source: https://graview.dev/docs/skills/graview-lens.html
 
 # graview-lens
 
-`graview-lens` is one of Graview's 31 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Build a Graview lens that binds ROLES rather than field names, so a second domain can reuse it unchanged — and prove the reuse rather than asserting it.
+`graview-lens` is one of Graview's 32 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Build a Graview lens that binds ROLES rather than field names, so a second domain can reuse it unchanged — and prove the reuse rather than asserting it.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -4886,7 +4889,7 @@ Source: https://graview.dev/docs/skills/graview-linked-records.html
 
 # graview-linked-records
 
-`graview-linked-records` is one of Graview's 31 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Link a record in one Graview app to a record in another app — a relation whose target is another app's kind, read there as whoever is looking, walked by computed fields and rules, its far changes kept in this app's history — and verify it with graview check and by opening it as a viewer who may not see the other app.
+`graview-linked-records` is one of Graview's 32 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Link a record in one Graview app to a record in another app — a relation whose target is another app's kind, read there as whoever is looking, walked by computed fields and rules, its far changes kept in this app's history — and verify it with graview check and by opening it as a viewer who may not see the other app.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -4943,7 +4946,7 @@ Source: https://graview.dev/docs/skills/graview-lists.html
 
 # graview-lists
 
-`graview-lists` is one of Graview's 31 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Keep a Graview app's lists usable as it grows — what a list offers to filter by, the order and groups it opens in, cards read at a glance, several records acted on at once, a list printed as a static page or exported as CSV, and a date that repeats rather than a record each time — and verify each with graview check and the page itself rather than assuming it.
+`graview-lists` is one of Graview's 32 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Keep a Graview app's lists usable as it grows — what a list offers to filter by, the order and groups it opens in, cards read at a glance, several records acted on at once, a list printed as a static page or exported as CSV, and a date that repeats rather than a record each time — and verify each with graview check and the page itself rather than assuming it.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -5011,7 +5014,7 @@ Source: https://graview.dev/docs/skills/graview-locale.html
 
 # graview-locale
 
-`graview-locale` is one of Graview's 31 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Say a Graview app's money, days, times and numbers the way its people say them — a currency, a locale and a time zone declared once on the brand, a field kept as money, {net | money} and {at | time} in a template — and let graview check refuse a code, a locale or a zone it cannot write rather than trusting the page.
+`graview-locale` is one of Graview's 32 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Say a Graview app's money, days, times and numbers the way its people say them — a currency, a locale and a time zone declared once on the brand, a field kept as money, {net | money} and {at | time} in a template — and let graview check refuse a code, a locale or a zone it cannot write rather than trusting the page.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -5063,7 +5066,7 @@ Source: https://graview.dev/docs/skills/graview-logo.html
 
 # graview-logo
 
-`graview-logo` is one of Graview's 31 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Put a client's own logo and page icon on a Graview app — inline SVG or a path, one for each scheme so a picture on white is not a white slab in the dark, an emoji as the icon — drawn in the default shell and handed to a design's own, and let graview check refuse a mark that could act rather than trusting it.
+`graview-logo` is one of Graview's 32 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Put a client's own logo and page icon on a Graview app — inline SVG or a path, one for each scheme so a picture on white is not a white slab in the dark, an emoji as the icon — drawn in the default shell and handed to a design's own, and let graview check refuse a mark that could act rather than trusting it.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -5131,7 +5134,7 @@ Source: https://graview.dev/docs/skills/graview-new-app.html
 
 # graview-new-app
 
-`graview-new-app` is one of Graview's 31 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Start a product on Graview in its own repository — the shape of the declaration, the shell that comes for free, and the CI that keeps it honest afterwards.
+`graview-new-app` is one of Graview's 32 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Start a product on Graview in its own repository — the shape of the declaration, the shell that comes for free, and the CI that keeps it honest afterwards.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -5253,7 +5256,7 @@ Source: https://graview.dev/docs/skills/graview-node-kind.html
 
 # graview-node-kind
 
-`graview-node-kind` is one of Graview's 31 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Add a node kind to a Graview app — fields, edges, label, plural and field roles — and verify it with graview check rather than claiming it worked.
+`graview-node-kind` is one of Graview's 32 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Add a node kind to a Graview app — fields, edges, label, plural and field roles — and verify it with graview check rather than claiming it worked.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -5335,7 +5338,7 @@ Source: https://graview.dev/docs/skills/graview-pages-design.html
 
 # graview-pages-design
 
-`graview-pages-design` is one of Graview's 31 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Give a Graview app a product design over its routed face — its own shell under the one bar, every surface replaced, its tabs lit from the section a kind's pages are in, and a trail that says where a person is — and verify it by rendering each page and opening it, rather than assuming the derived pages are gone.
+`graview-pages-design` is one of Graview's 32 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Give a Graview app a product design over its routed face — its own shell under the one bar, every surface replaced, its tabs lit from the section a kind's pages are in, and a trail that says where a person is — and verify it by rendering each page and opening it, rather than assuming the derived pages are gone.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -5419,7 +5422,7 @@ Source: https://graview.dev/docs/skills/graview-pages.html
 
 # graview-pages
 
-`graview-pages` is one of Graview's 31 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Give a Graview app the routed face it wants — from the derived pages, to one page in the app's own words, to the door of a product design that replaces every surface (graview-pages-design).
+`graview-pages` is one of Graview's 32 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Give a Graview app the routed face it wants — from the derived pages, to one page in the app's own words, to the door of a product design that replaces every surface (graview-pages-design).
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -5542,7 +5545,7 @@ Source: https://graview.dev/docs/skills/graview-permissions.html
 
 # graview-permissions
 
-`graview-permissions` is one of Graview's 31 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Declare who may do what in a Graview app once, so the store enforces it, the actions strip narrows and an agent seat narrows with it — verified by graview check and by trying it.
+`graview-permissions` is one of Graview's 32 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Declare who may do what in a Graview app once, so the store enforces it, the actions strip narrows and an agent seat narrows with it — verified by graview check and by trying it.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -5644,7 +5647,7 @@ Source: https://graview.dev/docs/skills/graview-port-app.html
 
 # graview-port-app
 
-`graview-port-app` is one of Graview's 31 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Port an existing application onto Graview — deciding what is a node, what is a field and what is an edge — and proving the port with a parity test rather than an assertion.
+`graview-port-app` is one of Graview's 32 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Port an existing application onto Graview — deciding what is a node, what is a field and what is an edge — and proving the port with a parity test rather than an assertion.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -5728,7 +5731,7 @@ Source: https://graview.dev/docs/skills/graview-seed.html
 
 # graview-seed
 
-`graview-seed` is one of Graview's 31 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Get a Graview app from a blank graph to a useful one — the order the declaration already states, a plan a model proposes, and one turn that can be taken back.
+`graview-seed` is one of Graview's 32 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Get a Graview app from a blank graph to a useful one — the order the declaration already states, a plan a model proposes, and one turn that can be taken back.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -5816,7 +5819,7 @@ Source: https://graview.dev/docs/skills/graview-ship.html
 
 # graview-ship
 
-`graview-ship` is one of Graview's 31 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Deploy a Graview app — persistence, op-log-native migrations, export and health — with one declaration and one adapter, self-hosted or behind a service.
+`graview-ship` is one of Graview's 32 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Deploy a Graview app — persistence, op-log-native migrations, export and health — with one declaration and one adapter, self-hosted or behind a service.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -5896,7 +5899,7 @@ Source: https://graview.dev/docs/skills/graview-shipped-lens.html
 
 # graview-shipped-lens
 
-`graview-shipped-lens` is one of Graview's 31 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Declare one of the lenses Graview ships — a calendar, a status board, a coverage, a timeline, a board, a plan, a map, a blocks place — as a titled place with its bindings and options, and read what graview check and add-lens refuse (an option the lens does not take, a lens that cannot draw, a title taken) rather than drawing a lens that quietly ignores a key.
+`graview-shipped-lens` is one of Graview's 32 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Declare one of the lenses Graview ships — a calendar, a status board, a coverage, a timeline, a board, a plan, a map, a blocks place — as a titled place with its bindings and options, and read what graview check and add-lens refuse (an option the lens does not take, a lens that cannot draw, a title taken) rather than drawing a lens that quietly ignores a key.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -5992,7 +5995,7 @@ Source: https://graview.dev/docs/skills/graview-sight.html
 
 # graview-sight
 
-`graview-sight` is one of Graview's 31 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Say who sees which records of a Graview app, and which of their fields — so a seat is served only what it may see, on every surface at once — verified by graview check and by comparing what a seat is told with a hidden value and without one.
+`graview-sight` is one of Graview's 32 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Say who sees which records of a Graview app, and which of their fields — so a seat is served only what it may see, on every surface at once — verified by graview check and by comparing what a seat is told with a hidden value and without one.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -6100,7 +6103,7 @@ Source: https://graview.dev/docs/skills/graview-studio.html
 
 # graview-studio
 
-`graview-studio` is one of Graview's 31 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Open an app's declaration as a graph in Graview's own interface, change it with ordinary acts, let graview check judge the result before it is applied, migrate a stored graph, and write the declaration back as the files graview create writes.
+`graview-studio` is one of Graview's 32 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Open an app's declaration as a graph in Graview's own interface, change it with ordinary acts, let graview check judge the result before it is applied, migrate a stored graph, and write the declaration back as the files graview create writes.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -6159,7 +6162,7 @@ Source: https://graview.dev/docs/skills/graview-sync.html
 
 # graview-sync
 
-`graview-sync` is one of Graview's 31 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Keep a Graview app in step with another system — a graph projected from it as a snapshot, a SyncEngine that sends this app's acts back and holds a field both sides changed, a remote that speaks MCP behind a door on the dev server, and a Google calendar or a Notion database declared as a connection — and verify the first run sends nothing and a conflict is held rather than assuming the two agree.
+`graview-sync` is one of Graview's 32 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Keep a Graview app in step with another system — a graph projected from it as a snapshot, a SyncEngine that sends this app's acts back and holds a field both sides changed, a remote that speaks MCP behind a door on the dev server, and a Google calendar or a Notion database declared as a connection — and verify the first run sends nothing and a conflict is held rather than assuming the two agree.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -6167,7 +6170,7 @@ Installed into a project by `graview skills install .`, and read by whichever as
 
 ## Keep an app in step with another system
 
-Often the records already live somewhere: a tracker, an analysis, a calendar. The app is then a projection of them that people act on, and every act has to reach the system that owns the record — or be refused, in a sentence, where that system owns it. Storing, migrating, serving and exporting the app itself is `graview-ship`.
+Often the records already live somewhere: a tracker, an analysis, a calendar. The app is then a projection of them that people act on, and every act has to reach the system that owns the record — or be refused, in a sentence, where that system owns it. Storing and serving the app is `graview-ship`; Todoist, `graview-todoist`.
 
 ### Do this
 
@@ -6221,7 +6224,7 @@ Source: https://graview.dev/docs/skills/graview-tidying.html
 
 # graview-tidying
 
-`graview-tidying` is one of Graview's 31 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Tidy a Graview app without losing anything — set records aside (archive, bring back) instead of deleting them, merge a duplicate into the one that stays, and let the app's own actor link and prune by suggestion a person accepts or declines, held to what people said, and suggest changes to the app itself learned from how several people use it — verified with graview check and by undoing it rather than assuming nothing was lost.
+`graview-tidying` is one of Graview's 32 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Tidy a Graview app without losing anything — set records aside (archive, bring back) instead of deleting them, merge a duplicate into the one that stays, and let the app's own actor link and prune by suggestion a person accepts or declines, held to what people said, and suggest changes to the app itself learned from how several people use it — verified with graview check and by undoing it rather than assuming nothing was lost.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -6275,11 +6278,70 @@ The page: https://graview.dev/docs/skills/graview-tidying.html · Every Graview 
 
 ---
 
+Source: https://graview.dev/docs/skills/graview-todoist.html
+
+# graview-todoist
+
+`graview-todoist` is one of Graview's 32 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Keep a kind of a Graview app in step with a Todoist project, or one section or label of it, declared as a connection — a task's content, due date, deadline, priority, labels, section, assignee, parent and completion each in a field, both ways through a personal API token the host holds — and verify with graview check and a scripted Todoist that the first run sends nothing and a task completed there removes no record.
+
+Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
+
+## The skill
+
+## Keep a kind in step with Todoist
+
+A Todoist project is a connection of the document: each of its tasks is a record of one kind, and a change on either side reaches the other. What a sync engine does in general — conflicts, refusals, reports, the acts an inbound change lands through — is `graview-sync`.
+
+### Do this
+
+1. **Declare it** under `connections.<name>`:
+
+```json { "system": "todoist", "project": { "env": "HOME_PROJECT" }, "kind": "task", "direction": "both", "fields": { "content": "name", "description": "notes", "due": "due", "deadline": "deadline", "priority": "priority", "labels": "labels", "section": "list", "assignee": "who", "parent": "parent", "completed": "done" } } ```
+
+`project` is its id or its name, or the environment variable that holds one. `section` or `label` beside it keeps only those tasks; a task made here is put in the section, or given the label, which the labels field does not show. `direction` is `"both"` or `"read"` (Todoist owns the records, and acts here that would change one are refused); `conflicts`, `every` and `paused` are as any connection's.
+
+1. **Give each part a field that can hold it.** Only `content` is required.
+
+| Part | Field | |------|-------| | `content`, `description` | `string` or `text` | | `due` | `date` (its day) or `datetime` (its moment; a full day is midnight in the account's time zone) | | `deadline` | `date` | | `priority` | `integer`, 1 the most urgent as p1 to 4; or an enum of `p1`…`p4`, or of `urgent`, `high`, `medium`, `low` | | `labels` | `list` of strings | | `section` | `string`, or an enum whose options are its sections | | `assignee` | `string` (the name) or `email` | | `parent` | a relation of one, to a kind a Todoist connection keeps | | `completed` | `boolean` |
+
+1. **Map `completed`.** A task completed in Todoist sets that field and never removes a record; unmapped, it looks open here for good. Completing a task that repeats, on either side, moves it to its next date: the field clears and the date follows. A task deleted there, or moved out of the project, section or label, is removed here. Removing a record here, or setting it aside, deletes its task, and Todoist deletes every subtask with it, kept here or not; a record linked by a mapped `parent` is moved out from under it first.
+
+1. **Say a repeat with `repeats: true` on the due field.** "every day", "every 2 weeks", "every mon, wed" and "every 2, 15" are the repeat beside the date. What cannot be said back with the same meaning — "every! 3 months", "every last workday", hours, start and end dates, a repeating time in an account of another time zone than the app's — stays in Todoist, its date kept here; a change to that date here is held unsent and said in `report.refused`, while the rest of the record is sent; a repeat made here with an until, a count or a skipped day is held too, and a new record that says one waits whole.
+
+1. **Give the host the token, never the document.** `serve` and `preview` read the account's personal API token (Todoist's Settings → Integrations → Developer) from `TODOIST_TOKEN`, or `<auth.env>_TOKEN`; a host that keeps it hands `runConnections({ token, project })`. OAuth is the host's own.
+
+The transport is `packages/core/src/sync/todoist.ts`; its first comment says what it relies on in Todoist's documentation.
+
+### Then find out whether it worked
+
+```sh
+npx graview check --document app.json
+```
+
+It refuses a part in a field that cannot hold it (`connection-field-type`), a field the kind lacks or one named twice (`connection-field`), a parent that is no relation of one (`connection-relation`) or reaches a kind no Todoist connection keeps (`connection-relation-target`), and a token written in the declaration (`connection-secret`); it warns when nothing holds `completed` (`connection-completed`). Report what it said.
+
+Then run it against `scriptedTodoist()` from `@graview/core/sync` in a test, as `declared-connections-run-beside-the-store.test.ts` does: the first pass sends no command, a task completed there leaves its record, a record changed here sends only what changed, and a field changed on both sides is held. Against a real account, `node scripts/verify-todoist.mjs` (a token of your own, never in CI) writes its claims to `docs/todoist.json`; `--stub` runs them against the scripted one, which proves the claims and not Todoist.
+
+### What the check cannot see
+
+- Whether the account sees the project, and whether its plan takes deadlines: the pass says what Todoist refused (`report.problem`, `report.refused`).
+- What the host keeps of the engine (`connections.json` beside the data): without it, a record made from a task stays as it is here and is not sent. A declared project, section or label that changes stops the connection, and removes nothing.
+- Whether records already here before the connection should be sent: they are made in Todoist on the first pass, as any record not there is. Start with `"direction": "read"` to look first.
+- Whether an enum's sections are the project's: a section it does not name is refused as it arrives.
+
+---
+
+Keep a kind of a Graview app in step with a Todoist project, or one section or label of it, declared as a connection — a task's content, due date, deadline, priority, labels, section, assignee, parent and completion each in a field, both ways through a personal API token the host holds — and verify with graview check and a scripted Todoist that the first run sends nothing and a task completed there removes no record.
+
+The page: https://graview.dev/docs/skills/graview-todoist.html · Every Graview docs page, for a model: https://graview.dev/llms.txt
+
+---
+
 Source: https://graview.dev/docs/skills/graview-view-drawing.html
 
 # graview-view-drawing
 
-`graview-view-drawing` is one of Graview's 31 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Draw in a Graview worker view — the HTML, SVG and CSS the host keeps of it, the app's tokens and brand, the images a view may show (the app's logo, the app's own images, the pictures on records), a record's video or the app's reel the host plays and its full-screen viewer, files a person drops on it — and find out what the host refused rather than assuming it drew.
+`graview-view-drawing` is one of Graview's 32 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Draw in a Graview worker view — the HTML, SVG and CSS the host keeps of it, the app's tokens and brand, the images a view may show (the app's logo, the app's own images, the pictures on records), a record's video or the app's reel the host plays and its full-screen viewer, files a person drops on it — and find out what the host refused rather than assuming it drew.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -6380,7 +6442,7 @@ Source: https://graview.dev/docs/skills/graview-view-forms.html
 
 # graview-view-forms
 
-`graview-view-forms` is one of Graview's 31 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Let a Graview worker view change records — a bound press (data-act), the fields a person types into, a record's own text filled to edit (data-prefill), a field that saves as it is typed (data-save) and the view hearing what became of each act (acted) — and prove a press applies and a field the view filled is refused, rather than assuming the form works.
+`graview-view-forms` is one of Graview's 32 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Let a Graview worker view change records — a bound press (data-act), the fields a person types into, a record's own text filled to edit (data-prefill), a field that saves as it is typed (data-save) and the view hearing what became of each act (acted) — and prove a press applies and a field the view filled is refused, rather than assuming the form works.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -6479,7 +6541,7 @@ Source: https://graview.dev/docs/skills/graview-view-links.html
 
 # graview-view-links
 
-`graview-view-links` is one of Graview's 31 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Send a person from a Graview worker view to a record, a place or a list — an <a data-record>, or a whole card or row bound to a record that opens on a click, a phone's tap and Enter — narrowed and to a section, and prove each lands by pressing it on a phone as well as a desk rather than assuming a card the describer lists opens.
+`graview-view-links` is one of Graview's 32 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Send a person from a Graview worker view to a record, a place or a list — an <a data-record>, or a whole card or row bound to a record that opens on a click, a phone's tap and Enter — narrowed and to a section, and prove each lands by pressing it on a phone as well as a desk rather than assuming a card the describer lists opens.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -6559,7 +6621,7 @@ Source: https://graview.dev/docs/skills/graview-view-specs.html
 
 # graview-view-specs
 
-`graview-view-specs` is one of Graview's 31 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Say how a Graview kind's card, row and page read, as data — blocks from a closed set bound by {field} templates and rule-language conditions, headlines, figures and lists of related records — and the values worked out from others (computed) that they show, verified by graview check and the page rather than by assuming the spec drew.
+`graview-view-specs` is one of Graview's 32 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Say how a Graview kind's card, row and page read, as data — blocks from a closed set bound by {field} templates and rule-language conditions, headlines, figures and lists of related records — and the values worked out from others (computed) that they show, verified by graview check and the page rather than by assuming the spec drew.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -6638,7 +6700,7 @@ Source: https://graview.dev/docs/skills/graview-visitor-forms.html
 
 # graview-visitor-forms
 
-`graview-visitor-forms` is one of Graview's 31 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Open one act of a Graview app to people who never join it — an RSVP, a sign-up, a request — as a form drawn alone, run as a visitor the host mints per answer, its answers landing as records and nothing else of the app shown — verified by graview check and by opening the form as that visitor.
+`graview-visitor-forms` is one of Graview's 32 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Open one act of a Graview app to people who never join it — an RSVP, a sign-up, a request — as a form drawn alone, run as a visitor the host mints per answer, its answers landing as records and nothing else of the app shown — verified by graview check and by opening the form as that visitor.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -6708,7 +6770,7 @@ Source: https://graview.dev/docs/skills/graview-worker-view.html
 
 # graview-worker-view
 
-`graview-worker-view` is one of Graview's 31 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Write a Graview worker view — one plain script, no imports and no build, that draws HTML, SVG and CSS for a kind or the home through the graview global — with a manifest the host enforces, and prove it runs rather than assuming it does.
+`graview-worker-view` is one of Graview's 32 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Write a Graview worker view — one plain script, no imports and no build, that draws HTML, SVG and CSS for a kind or the home through the graview global — with a manifest the host enforces, and prove it runs rather than assuming it does.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -6820,7 +6882,7 @@ Source: https://graview.dev/docs/skills/graview-workflows.html
 
 # graview-workflows
 
-`graview-workflows` is one of Graview's 31 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Have a Graview app do something on its own — fill next week from a pattern, keep one record in step with another, set aside what is done, send what is public each morning — declared as a workflow (or a kind that follows another), checked by graview check and proven by a dry run before anything is kept.
+`graview-workflows` is one of Graview's 32 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Have a Graview app do something on its own — fill next week from a pattern, keep one record in step with another, set aside what is done, send what is public each morning — declared as a workflow (or a kind that follows another), checked by graview check and proven by a dry run before anything is kept.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -8509,7 +8571,7 @@ Source: https://graview.dev/docs/site.html
 
 # This site is a Graview app
 
-graview.dev is a Graview app: one declaration, [`apps/site/app.json`](https://github.com/en-dash-consulting/graview/blob/main/apps/site/app.json), and 518 records written out of the repository by `node scripts/site-docs.mjs`. Every page the site serves is one of those records, rendered as static HTML by `renderPlace` from `@graview/pages/static` in the site's own design, so a search engine and a model read plain pages, and none of them can say what the records do not.
+graview.dev is a Graview app: one declaration, [`apps/site/app.json`](https://github.com/en-dash-consulting/graview/blob/main/apps/site/app.json), and 520 records written out of the repository by `node scripts/site-docs.mjs`. Every page the site serves is one of those records, rendered as static HTML by `renderPlace` from `@graview/pages/static` in the site's own design, so a search engine and a model read plain pages, and none of them can say what the records do not.
 
 ## The site, running
 
@@ -8523,10 +8585,10 @@ This is that declaration, compiled in your browser by the same compiler `graview
 
 | Kind | What it is | Records |
 | --- | --- | --- |
-| `page` | An address graview.dev serves: a web page, the Markdown twin beside it, or a file for crawlers and models. | 71 |
+| `page` | An address graview.dev serves: a web page, the Markdown twin beside it, or a file for crawlers and models. | 72 |
 | `package` | An npm package Graview ships, read off its package.json, its README.md and its barrel. | 14 |
 | `entry` | One subpath a package exports, as a product imports it. | 125 |
-| `skill` | An authoring skill an assistant reads before it changes a Graview app, read off its SKILL.md. | 31 |
+| `skill` | An authoring skill an assistant reads before it changes a Graview app, read off its SKILL.md. | 32 |
 | `check` | A thing graview check can say, read out of the checker's source. | 132 |
 | `command` | A graview subcommand, read off the help the CLI prints. | 13 |
 | `concept` | One of the ideas a Graview declaration is made of: not in the repository, the reason it is shaped the way it is. | 7 |

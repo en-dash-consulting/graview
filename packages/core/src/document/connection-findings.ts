@@ -7,16 +7,18 @@ import { creatingActFor, type UnfitCreatingAct } from "../sync/creating-act.js";
 import type { AnyMutationDefinition } from "../mutations/types.js";
 import { humanizeField } from "../schema/humanize.js";
 import { NOTION_FITS, NOTION_INFERABLE, NOTION_READ_ONLY, NOTION_SECRET, notionFieldType, notionFits } from "../sync/notion-types.js";
+import { TODOIST_FITS, TODOIST_SECRET, todoistPriorities, type TodoistPart } from "../sync/todoist-types.js";
 import { startAndEndOf } from "../wall-time.js";
 import { weekdayOf } from "../sync/recurrence.js";
 import { error, warning, type Finding, type FindingFix } from "./findings.js";
-import { ConnectionSpec, guestsInField, guestsViaRelation, notionSourcesOf, type GoogleCalendarConnectionSpec, type GuestsViaRelation, type NotionConnectionSpec, type NotionSourceSpec } from "./connection-spec.js";
+import { ConnectionSpec, guestsInField, guestsViaRelation, notionSourcesOf, type GoogleCalendarConnectionSpec, type GuestsViaRelation, type NotionConnectionSpec, type NotionSourceSpec, type TodoistConnectionSpec } from "./connection-spec.js";
 import type { FieldSpec, GraviewDocument } from "./schema.js";
 
 /*
  * A DECLARED CONNECTION, JUDGED (`connections.<name>`): what its shape
  * cannot say — that the kind and its fields are this document's and of the
- * types a calendar event's parts or a Notion database's properties are,
+ * types a calendar event's parts, a Notion database's properties or a
+ * Todoist task's parts are,
  * that a filter is one color Google names or one tag, that no secret is
  * written in it, and, given the compiled app, that the acts an inbound
  * change lands through are there. Each is a sentence `graview check` says
@@ -34,7 +36,7 @@ export function connectionFindings(document: GraviewDocument, app?: GraviewApp):
     // A secret written into the declaration is refused before anything else is said of it, and never repeated.
     const secret = secretIn(raw, at);
     if (secret) {
-      findings.push(error("connection-secret", secret, "this is an integration's secret, and a secret is never written in the app: it would travel with every copy and export of it", 'keep it in the host\'s environment (NOTION_TOKEN, or the variable "auth": { "env" } names) and take it out of here'));
+      findings.push(error("connection-secret", secret.at, `this is ${secret.system === "todoist" ? "an account's API token" : "an integration's secret"}, and a secret is never written in the app: it would travel with every copy and export of it`, `keep it in the host's environment (${secret.system === "todoist" ? "TODOIST_TOKEN" : "NOTION_TOKEN"}, or the variable "auth": { "env" } names) and take it out of here`));
       continue;
     }
     // The shape first, said as the compiler says a document's: a connection that is not one is judged no further.
@@ -44,17 +46,24 @@ export function connectionFindings(document: GraviewDocument, app?: GraviewApp):
       continue;
     }
     const connection = parsed.data;
-    findings.push(...(connection.system === "notion" ? notionConnection(at, connection, document, app) : googleConnection(at, name, connection, document, app)));
+    const other = connection.system === "todoist" && Object.entries(document.connections ?? {}).find(([key, one]) => key !== name && Object.keys(document.connections!).indexOf(key) < Object.keys(document.connections!).indexOf(name) && (one as { system?: unknown }).system === "todoist" && (one as { kind?: unknown }).kind === connection.kind && !((one as { direction?: unknown }).direction === "read" && connection.direction === "read"));
+    if (other) findings.push(error("connection-kind", `${at}.kind`, `the connection ${other[0]} keeps ${connection.kind} in step with Todoist already, and two would each send the other's tasks on`, "give each a kind of its own, or make both read"));
+    findings.push(...(connection.system === "notion" ? notionConnection(at, connection, document, app) : connection.system === "todoist" ? todoistConnection(at, connection, document, app) : googleConnection(at, name, connection, document, app)));
   }
   return findings;
 }
 
-/** Where in a connection a string reads as a Notion integration's secret, if anywhere. */
-function secretIn(value: unknown, at: string): string | undefined {
-  if (typeof value === "string") return NOTION_SECRET.test(value) ? at : undefined;
+/** Where in a connection a string reads as a Notion integration's secret or a Todoist account's token, if anywhere, and whose it is. */
+function secretIn(value: unknown, at: string): { readonly at: string; readonly system: "notion" | "todoist" } | undefined {
+  const whose = (text: string) => (NOTION_SECRET.test(text) ? "notion" : TODOIST_SECRET.test(text) ? "todoist" : undefined);
+  if (typeof value === "string") {
+    const system = whose(value);
+    return system && { at, system };
+  }
   if (!value || typeof value !== "object") return undefined;
   for (const [key, inner] of Object.entries(value)) {
-    if (NOTION_SECRET.test(key)) return at;
+    const system = whose(key);
+    if (system) return { at, system };
     const found = secretIn(inner, `${at}.${key}`);
     if (found) return found;
   }
@@ -64,6 +73,7 @@ function secretIn(value: unknown, at: string): string | undefined {
 const KEYS: Readonly<Record<string, string>> = {
   "google-calendar": "system, calendar, auth, kind, fields, filter, direction, conflicts, every, paused and description",
   notion: "system, database, source, auth, kind, properties, sources, create, direction, conflicts, every, paused and description",
+  todoist: "system, project, section, label, auth, kind, fields, direction, conflicts, every, paused and description",
 };
 
 /** A shape the connection does not have, at its place: an unknown key, or a value of the wrong kind. */
@@ -71,7 +81,7 @@ function shapeFinding(at: string, raw: unknown, issue: { readonly code: string; 
   const path = [at, ...issue.path.map(String)].join(".");
   if (issue.code === "unrecognized_keys" && issue.keys) {
     const system = String((raw as { system?: unknown } | undefined)?.system ?? "");
-    return error("unknown-key", path, `${issue.keys.map((key) => `"${key}"`).join(", ")} ${issue.keys.length === 1 ? "is" : "are"} not part of a${system === "notion" ? " Notion" : system === "google-calendar" ? " Google calendar" : ""} connection`, `a connection says ${KEYS[system] ?? KEYS["google-calendar"]}`);
+    return error("unknown-key", path, `${issue.keys.map((key) => `"${key}"`).join(", ")} ${issue.keys.length === 1 ? "is" : "are"} not part of a${system === "notion" ? " Notion" : system === "google-calendar" ? " Google calendar" : system === "todoist" ? " Todoist" : ""} connection`, `a connection says ${KEYS[system] ?? KEYS["google-calendar"]}`);
   }
   // A system that is none of them is said at `system`, as every other wrong value is said at its key.
   if (issue.code === "invalid_union" && issue.path.length === 0 && (issue as { note?: string }).note === "No matching discriminator") {
@@ -302,6 +312,83 @@ function notionSource(at: string, connection: NotionConnectionSpec, source: Noti
   return findings;
 }
 
+/** What a task's part is, as a refusal says it. */
+const TODOIST_SAID: Readonly<Record<TodoistPart, string>> = {
+  content: "the task's content is words",
+  description: "the task's description is words",
+  due: "the task's due date is a day or a moment",
+  deadline: "the task's deadline is a day",
+  priority: "the task's priority is a number, 1 to 4, or a choice naming the four",
+  labels: "the task's labels are a list of words",
+  section: "the task's section is a name",
+  assignee: "the task's assignee is a name or an email",
+  completed: "whether the task is completed is a yes or no",
+};
+
+/** A Todoist connection, judged: its kind, that each part is held in a field that can hold it, and its parent in a relation of one. */
+function todoistConnection(at: string, connection: TodoistConnectionSpec, document: GraviewDocument, app?: GraviewApp): Finding[] {
+  const findings: Finding[] = [];
+  const kind = document.kinds[connection.kind];
+  if (!kind) return [noKind(at, document, connection.kind, "the project's tasks")];
+  const { parent, ...parts } = connection.fields;
+  const mapped: string[] = [];
+  const seen = new Map<string, string>();
+  for (const [part, field] of Object.entries(parts) as [TodoistPart, string][]) {
+    const path = `${at}.fields.${part}`;
+    if (part === "section" && connection.section !== undefined) {
+      findings.push(error("connection-field", path, `the connection keeps one section, ${connection.section}, so every task of it is in that section and ${field} would say it of each`, "drop section from fields, or keep the whole project"));
+      continue;
+    }
+    const twice = seen.get(field);
+    if (twice) {
+      findings.push(error("connection-field", path, `${field} already holds the task's ${twice}, and one field holds one part of a task`, "give each part a field of its own"));
+      continue;
+    }
+    seen.set(field, part);
+    if (!kind.fields[field] && kind.computed?.[field] !== undefined && (part === "content" || part === "description" || part === "deadline")) {
+      const problem = computedProblem(connection.kind, field, `the task's ${part}`, connection.direction);
+      if (problem) findings.push(problem(path));
+      continue;
+    }
+    const spec = kind.fields[field];
+    if (!spec) {
+      findings.push(error("connection-field", path, `${connection.kind} has no field called ${field} to hold the task's ${part}`, `name one of ${Object.keys(kind.fields).join(", ")}`));
+      continue;
+    }
+    mapped.push(field);
+    const fits: readonly string[] = TODOIST_FITS[part];
+    const several = spec.type === "enum" && spec.multiple === true;
+    const ofOther = part === "labels" && spec.type === "list" && spec.of !== undefined && spec.of !== "string";
+    const unnamed = part === "priority" && spec.type === "enum" && todoistPriorities(spec.options ?? []) === undefined;
+    if (!fits.includes(spec.type) || several || ofOther) {
+      findings.push(error("connection-field-type", path, `${TODOIST_SAID[part]}, and ${field} is a ${several ? "choice of several" : spec.type} field`, `name a ${fits.join(" or ")} field`));
+    } else if (unnamed) {
+      findings.push(error("connection-field-type", path, `${TODOIST_SAID[part]}, and ${field}'s choices (${(spec.options ?? []).join(", ")}) do not name the four`, 'give it four options, "p1" to "p4" or "urgent", "high", "medium" and "low", or name an integer field'));
+    }
+  }
+  if (connection.fields.completed === undefined) {
+    findings.push(warning("connection-completed", `${at}.fields`, `nothing holds whether a task is completed, so one completed in Todoist looks open here: it is never removed`, 'map "completed" to a boolean field'));
+  }
+  const relations: string[] = [];
+  if (parent !== undefined) {
+    const path = `${at}.fields.parent`;
+    const edge = kind.edges?.[parent];
+    const kept = new Set(Object.values(document.connections ?? {}).flatMap((raw) => ((raw as { system?: unknown }).system === "todoist" ? [(raw as { kind?: unknown }).kind] : [])));
+    if (!edge) {
+      findings.push(error("connection-relation", path, `a task's parent is another task, and ${connection.kind} has no relation called ${parent} to reach it by`, `declare one ("${parent}": { "to": ["${connection.kind}"], "cardinality": "one" }), or leave parent out`));
+    } else if (edge.cardinality !== "one") {
+      findings.push(error("connection-relation", path, `a task has one parent, and ${connection.kind}'s ${parent} reaches many`, `make ${parent} "cardinality": "one"`));
+    } else if (edge.to === "*" || edge.to.some((target) => !kept.has(target))) {
+      findings.push(error("connection-relation-target", path, `${connection.kind}'s ${parent} reaches ${edge.to === "*" ? "any kind" : listed(edge.to)}, and a task's parent is a task a Todoist connection keeps (${[...kept].join(", ")})`, `say the kind it reaches with "to", and keep that kind with a Todoist connection, or leave parent out`));
+    } else relations.push(parent);
+  }
+  if (app && mapped.length > 0) {
+    findings.push(...landing(at, connection.kind, mapped, { made: "a task made in Todoist", fields: "the task's fields", change: "a change in Todoist", deleted: "a task deleted in Todoist", theirs: "Todoist tasks", one: "a Todoist task", part: "a part of the task", things: "tasks", mapping: "fields" }, app, document));
+  }
+  if (app) findings.push(...linking(connection.kind, relations, document, app, { where: () => `${at}.fields.parent`, made: "a task made a subtask in Todoist", taken: "a subtask moved out of its parent in Todoist", leave: () => "leave parent out of fields" }));
+  return findings;
+}
+
 /** Whether a field holds a guest's addresses: a list of them (of strings, or of nothing said), or one email. */
 const holdsAddresses = (spec: FieldSpec): boolean => spec.type === "email" || (spec.type === "list" && (spec.of === undefined || spec.of === "string"));
 
@@ -433,6 +520,8 @@ interface TheirWords {
   readonly one: string;
   readonly part: string;
   readonly things: string;
+  /** Where the connection maps its fields, when it is not told by the words: `fields`. */
+  readonly mapping?: "fields";
 }
 
 /** A Google connection's declaration, for the fix that rewrites it (`set-connection`). */
@@ -481,7 +570,7 @@ function landing(at: string, kindName: string, fields: readonly string[], said: 
     findings.push(
       error(
         "connection-edit",
-        `${at}.${said.change.includes("calendar") ? "fields" : "properties"}`,
+        `${at}.${said.mapping ?? (said.change.includes("calendar") ? "fields" : "properties")}`,
         own
           ? `${said.change} lands through edit-${kindName}, which does not write ${unwritten.join(", ")}: the app declares its own edit-${kindName}`
           : `${said.change} lands through edit-${kindName}, which does not write ${unwritten.join(", ")}: ${fixed.length > 0 ? `${fixed.join(", ")} ${fixed.length === 1 ? "is" : "are"} fixed` : `no edit-${kindName} is there`}`,

@@ -8,8 +8,8 @@ description: Keep a Graview app in step with another system — a graph projecte
 Often the records already live somewhere: a tracker, an analysis, a
 calendar. The app is then a projection of them that people act on, and
 every act has to reach the system that owns the record — or be refused, in
-a sentence, where that system owns it. Storing, migrating, serving and
-exporting the app itself is `graview-ship`.
+a sentence, where that system owns it. Storing and serving the app is
+`graview-ship`; Todoist, `graview-todoist`.
 
 ## Do this
 

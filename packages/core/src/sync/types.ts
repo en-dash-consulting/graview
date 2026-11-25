@@ -129,6 +129,13 @@ export interface RemoteWrite {
   /** Our node id, so the ack can be matched back without guessing. */
   readonly localId: string;
   readonly fields?: Readonly<Record<string, unknown>>;
+  /**
+   * The remote's names of the fields that changed here since both sides last
+   * agreed, for a record the remote has: a transport that writes part by
+   * part sends these alone, and leaves what another person changed there
+   * meanwhile. Absent when the record is new there: all of `fields`.
+   */
+  readonly changed?: readonly string[];
   readonly deleted?: boolean;
 }
 
@@ -139,6 +146,10 @@ export interface RemoteAck {
   readonly version: string;
   /** Set when the remote refused. The engine keeps the local state and says so. */
   readonly error?: string;
+  /** What the remote holds, in its names, where it is not what was sent: a part held unsent is agreed as it is there, so it stays owed. */
+  readonly fields?: Readonly<Record<string, unknown>>;
+  /** Why part of the write was not sent, when the rest was: said in the report's `refused`. */
+  readonly held?: string;
 }
 
 /**

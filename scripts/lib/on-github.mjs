@@ -195,7 +195,7 @@ export function copyInto(root, files, into) {
  * they would overwrite each other and the checkout's own `--failed`.
  */
 /** The harnesses whose verdict is named otherwise than the script (verify-pages.mjs writes docs/pages-face.json). */
-export const VERDICT_NAMES = { pages: ["pages-face"], lines: ["lines-check"], shrunk: ["shrunk-interface"], watch: ["watch-check"], site: ["site-check"], notion: ["notion-stub"] };
+export const VERDICT_NAMES = { pages: ["pages-face"], lines: ["lines-check"], shrunk: ["shrunk-interface"], watch: ["watch-check"], site: ["site-check"], notion: ["notion-stub"], todoist: ["todoist-stub"] };
 
 /** Whether a path under docs/ is harness `name`'s own: docs/<name>.*, docs/<name>/…, its watch; never docs/<name>-* by itself, which is another harness's (chrome-quiet beside chrome). */
 export const ownedBy = (name, path) =>

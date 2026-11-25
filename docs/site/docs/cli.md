@@ -121,8 +121,8 @@ graview serve <entry> [--data <dir>] [--port <n>] [--seed <file>] [--sqlite <fil
     loopback too. Health answers without it. On any other --host it will not
     start unless --trust-seat-headers says the network in front of it can
     be trusted, and then it believes every seat header, the system's too.
-    The app's declared connections (a Google calendar, a Notion database) run beside it, with
-    credentials from the environment and their cursors beside the data;
+    The app's declared connections (a Google calendar, a Notion database,
+    a Todoist project) run beside it, with credentials from the environment and their cursors beside the data;
     --no-sync leaves them off. What people looked for and could not do
     (a search that found nothing, an act refused) is kept for 90 days in
     friction.json beside the data, each person reading only their own and
