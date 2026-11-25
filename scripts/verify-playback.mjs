@@ -52,6 +52,7 @@ const shot = async (page, name) => {
 };
 const ADDED = ["Measure the hallway", "Label the boxes", "Defrost the freezer"];
 /** `@graview/core/past` as the todo example's dev server serves it (its alias is the source), so the page's own store classes fold it. */
+const TOUCHED = `/@fs${resolve(repoRoot, "packages/core/src/graph/touched.ts")}`;
 const PAST = `/@fs${resolve(repoRoot, "packages/core/src/past.ts")}`;
 /** `@graview/core/seat` the same way: what a host answers the archive with for a seat (`archivedSeenBy`), and the archive from an epoch it keeps (`archiveFrom`). */
 const SEAT = `/@fs${resolve(repoRoot, "packages/core/src/seat.ts")}`;
@@ -388,13 +389,33 @@ try {
       await page.click('[data-testid="restore-here"]');
       await page.waitForTimeout(500);
       run.restored = await drawn(page);
-      run.restoredStore = await page.evaluate(async ([seq, module]) => {
+      run.restoredStore = await page.evaluate(async ([seq, module, touchedModule]) => {
         const { pastOf } = await import(module);
+        const { untouched, touchedOf, toucherOf } = await import(touchedModule);
         const store = window.__playbackStores.find((one) => one.schema.kinds.includes("task"));
-        const key = (snapshot) => JSON.stringify([[...snapshot.nodes].map((node) => JSON.stringify(node)).sort(), [...snapshot.edges].map((edge) => `${edge.kind}:${edge.from}->${edge.to}`).sort()]);
+        // The app's own fields and links, as they stood. When a record was last touched is the framework's, and an undo
+        // stamps its own time (core's `touched.ts`): the records the restore wrote say it, every other says what it said
+        // before it, and none is made at another time.
+        const key = (snapshot) => JSON.stringify([[...snapshot.nodes].map((node) => JSON.stringify(untouched(node))).sort(), [...snapshot.edges].map((edge) => `${edge.kind}:${edge.from}->${edge.to}`).sort()]);
         const last = store.batches().at(-1);
-        return { same: key(store.graph.snapshot()) === key(pastOf(store, seq).graph.snapshot()), oneUndo: last.ops.every((op) => op.undoes !== undefined), intent: last.intent };
-      }, [restoredTo, PAST]);
+        const now = store.graph.snapshot();
+        const was = pastOf(store, seq).graph.snapshot();
+        const justBefore = pastOf(store, store.log.length - last.ops.length).graph.snapshot();
+        const said = (snapshot, id) => touchedOf(snapshot.nodes.find((one) => one.id === id) ?? {});
+        const wrote = new Set(last.ops.flatMap((op) => [...op.writes]));
+        const toucher = (id) => last.ops.filter((op) => [...op.writes].includes(id)).at(-1);
+        const wrong = [...now.nodes].flatMap((node) => {
+          const [then, before, after] = [said(was, node.id), said(justBefore, node.id), touchedOf(node)];
+          const made = after.createdAt === then.createdAt && after.createdBy === then.createdBy;
+          const touched = wrote.has(node.id) ? after.updatedAt === toucher(node.id).at && after.updatedBy === toucherOf(toucher(node.id).author) : after.updatedAt === before.updatedAt && after.updatedBy === before.updatedBy;
+          return made && touched ? [] : [{ id: node.id, wrote: wrote.has(node.id), then, before, after }];
+        });
+        const unlike = [...now.nodes].flatMap((node) => {
+          const then = was.nodes.find((one) => one.id === node.id);
+          return then && JSON.stringify(untouched(node)) === JSON.stringify(untouched(then)) ? [] : [{ now: node, then: then ?? null }];
+        });
+        return { same: key(now) === key(was), unlike, touched: { wrote: [...wrote], wrong }, oneUndo: last.ops.every((op) => op.undoes !== undefined), intent: last.intent };
+      }, [restoredTo, PAST, TOUCHED]);
       await context.close();
 
       // FR-196: a compacted store, its archive handed back by the host; then a host that refuses, and one that keeps none.
@@ -478,7 +499,7 @@ report.checks = {
     ),
   ),
   historyIsInTheAppMenuBeforeAnythingHasHappenedAndSaysNoChangesYet: every((run) => run.historyEmptyLog === 0 && run.historyEmpty?.named === 1 && run.historyEmpty.shown.timeline && run.historyEmpty.shown.caption === "No changes yet" && run.historyEmpty.shown.ticks.length === 0),
-  restoreToHereIsOneChangeBackToThatMoment: every((run) => run.restoreOffered && !run.restored.timeline && run.restoredStore?.same && run.restoredStore?.oneUndo && /^Restore to /.test(run.restoredStore?.intent ?? "")),
+  restoreToHereIsOneChangeBackToThatMoment: every((run) => run.restoreOffered && !run.restored.timeline && run.restoredStore?.same && run.restoredStore.touched.wrote.length > 0 && run.restoredStore.touched.wrong.length === 0 && run.restoredStore?.oneUndo && /^Restore to /.test(run.restoredStore?.intent ?? "")),
   // FR-196: with the host's archive the scrubber reaches the start, and seq 1 is drawn as the uncompacted store stood there.
   aCompactedStoresScrubberReachesSeqOneThroughTheArchive: every((run) => run.compacted?.horizon > 1 && run.compacted.archived === run.compacted.horizon && run.atOne?.shown.past === "1" && run.atOne.shown.index === 1 && run.atStart?.shown.past === "0"),
   theMomentBehindTheHorizonIsTheUncompactedStoresGraph: every((run) => [run.atOne, run.atLastArchived, run.atStart].every((at) => at?.store.key !== null && at.store.key === at.was.key && exactly(at.shown, at.was))),

@@ -197,6 +197,7 @@ async function onAnIpad(browser, engine) {
   };
   const todoReady = () => "__todoReady" in window;
   const embedReady = () => window.__ready === true;
+  measuring = "theBarFitsAnIpadInBothOrientations";
   for (const device of IPADS) {
     for (const [app, url, ready] of [
       ["todo, the scene", `${at("todo")}/?today=2026-09-01`, todoReady],
@@ -217,6 +218,7 @@ async function onAnIpad(browser, engine) {
    * as a glide takes and twice that.
    */
   for (const device of ["iPad Pro 11", "iPad Pro 11 landscape"]) {
+    measuring = "aTapOnTheSceneMovesTheCameraOnce";
     const { context, page } = await open(device, `${at("viewport-host")}/?doc=recon&face=scene&height=viewport`, embedReady);
     const tapped = new Set();
     for (let tap = 0; tap < 6; tap++) {
@@ -231,20 +233,17 @@ async function onAnIpad(browser, engine) {
       const next = atTheEdge ? edge : sight.find((one) => !tapped.has(one.id));
       if (!next) break;
       tapped.add(next.id);
-      const following = followTheCity(page, 1600);
-      await page.touchscreen.tap(next.x, next.y);
-      const move = oneMove(await following);
+      const move = oneMove(await followTheCity(page, 1600, () => page.touchscreen.tap(next.x, next.y)));
       // The first tap opens the panel and the city fits what is left: one move.
       const still = tap > 0 && !atTheEdge;
       seen.taps.push({ device, tapped: next.id, ...move, inSight: still, ok: move.districts > 0 && move.turns === 0 && (!still || move.moved <= 1) });
     }
+    measuring = "theSceneHoldsStillWhenSafarisToolbarCollapses";
     // Safari's toolbar folds away: the window grows by it, the width the same.
     const size = page.viewportSize();
     for (const height of [size.height + TOOLBAR, size.height]) {
       const box = await page.evaluate(() => document.querySelector("[data-graview-box]")?.getAttribute("data-graview-box"));
-      const following = followTheCity(page, 1600);
-      await page.setViewportSize({ width: size.width, height });
-      const move = oneMove(await following);
+      const move = oneMove(await followTheCity(page, 1600, () => page.setViewportSize({ width: size.width, height })));
       const after = await page.evaluate(() => document.querySelector("[data-graview-box]")?.getAttribute("data-graview-box"));
       seen.toolbar.push({ device, app: "ten kinds, the scene", to: height, box, after, ...move, ok: move.districts > 0 && move.moved <= 1 && box === after });
     }
@@ -254,9 +253,7 @@ async function onAnIpad(browser, engine) {
   const { context, page } = await open("iPad Pro 11", `${at("todo")}/?today=2026-09-01`, todoReady);
   const size = page.viewportSize();
   for (const height of [size.height + TOOLBAR, size.height]) {
-    const following = followTheCity(page, 1600);
-    await page.setViewportSize({ width: size.width, height });
-    const move = oneMove(await following);
+    const move = oneMove(await followTheCity(page, 1600, () => page.setViewportSize({ width: size.width, height })));
     seen.toolbar.push({ device: "iPad Pro 11", app: "todo, the scene", to: height, ...move, ok: move.districts > 0 && move.moved <= 1 });
   }
   await context.close();
@@ -283,9 +280,14 @@ function barFits(page) {
 }
 const fitsTheScreen = (m) => m !== null && m.page <= m.screen && m.past.length === 0;
 
-/** Every district's box, a frame at a time, from now until `ms` have passed: where the city is on the way. */
-function followTheCity(page, ms) {
-  return page.evaluate(
+/**
+ * Every district's box, a frame at a time, while `act` is done and until
+ * `ms` have passed: where the city is on the way. The two are awaited
+ * together, so an act that fails is the failure said, and the frames never
+ * reject with nobody listening once the browser is closed after it.
+ */
+async function followTheCity(page, ms, act) {
+  const following = page.evaluate(
     (ms) =>
       new Promise((done) => {
         const frames = [];
@@ -304,6 +306,8 @@ function followTheCity(page, ms) {
       }),
     ms,
   );
+  const [frames] = await Promise.all([following, act()]);
+  return frames;
 }
 
 /**
@@ -358,11 +362,16 @@ function inSight(page) {
 const report = { at: new Date().toISOString(), engines, portrait: PORTRAIT, landscape: LANDSCAPE, checks: {} };
 const errors = [];
 const seen = { embed: [], shell: [], zero: [], bar: [], taps: [], toolbar: [] };
+/** The claim being measured: what a run that stops is said to have failed. */
+let measuring = "theEmbedFillsThePhoneAfterEachTurnOnBothFaces";
 let browser;
-const host = await buildHost();
-const todo = await serving("todo", portFor("todo"), repoRoot);
+let host;
+let todo;
 try {
+  host = await buildHost();
+  todo = await serving("todo", portFor("todo"), repoRoot);
   for (const engine of engines) {
+    measuring = "theEmbedFillsThePhoneAfterEachTurnOnBothFaces";
     browser = await launchEngine(engine);
     for (const face of FACES) {
       for (const height of HEIGHTS) {
@@ -380,6 +389,7 @@ try {
          * itself out for the box it has now, not the one before.
          */
         if (face === "scene" && height === "viewport") {
+          measuring = "aSceneWhoseBoxWentToNothingFollowsItBack";
           await page.evaluate(() => (document.getElementById("app").style.display = "none"));
           await page.setViewportSize(LANDSCAPE);
           await page.waitForTimeout(SETTLE);
@@ -387,10 +397,12 @@ try {
           await page.waitForTimeout(SETTLE);
           const back = await measure(page, "embed");
           seen.zero.push({ engine, back, ok: fills(back) });
+          measuring = "theEmbedFillsThePhoneAfterEachTurnOnBothFaces";
         }
         await context.close();
       }
     }
+    measuring = "theShellFillsThePhoneAfterEachTurn";
     // The whole-page Shell: the todo example, as its own window.
     const context = await browser.newContext({ viewport: PORTRAIT, hasTouch: true });
     const page = await context.newPage();
@@ -405,31 +417,35 @@ try {
     await browser.close();
     browser = undefined;
   }
-
-  const every = (list) => list.length > 0 && list.every((one) => one.ok);
-  report.checks.theEmbedFillsThePhoneAfterEachTurnOnBothFaces = { held: seen.embed, ok: every(seen.embed) };
-  report.checks.theShellFillsThePhoneAfterEachTurn = { held: seen.shell, ok: every(seen.shell) };
-  report.checks.aSceneWhoseBoxWentToNothingFollowsItBack = { held: seen.zero, ok: every(seen.zero) };
-  if (engines.includes("webkit")) {
-    report.checks.theBarFitsAnIpadInBothOrientations = { held: seen.bar, ok: every(seen.bar) };
-    // Every tap one move the one way; a district already in sight chosen with nothing moving.
-    report.checks.aTapOnTheSceneMovesTheCameraOnce = { held: seen.taps, ok: every(seen.taps) && seen.taps.some((tap) => tap.inSight) };
-    report.checks.theSceneHoldsStillWhenSafarisToolbarCollapses = { held: seen.toolbar, ok: every(seen.toolbar) };
-  }
-  report.checks.noPageThrew = { errors, ok: errors.length === 0 };
-  report.passed = Object.values(report.checks).every((check) => check.ok);
 } catch (error) {
   report.error = String(error?.stack ?? error);
-  report.passed = false;
 } finally {
-  await browser?.close();
-  host.stop();
-  todo.stop();
+  // A browser that crashed closes with an error of its own: what stopped the run is already said.
+  await browser?.close().catch(() => {});
+  host?.stop();
+  todo?.stop();
 }
+
+const every = (list) => list.length > 0 && list.every((one) => one.ok);
+report.checks.theEmbedFillsThePhoneAfterEachTurnOnBothFaces = { held: seen.embed, ok: every(seen.embed) };
+report.checks.theShellFillsThePhoneAfterEachTurn = { held: seen.shell, ok: every(seen.shell) };
+report.checks.aSceneWhoseBoxWentToNothingFollowsItBack = { held: seen.zero, ok: every(seen.zero) };
+if (engines.includes("webkit")) {
+  report.checks.theBarFitsAnIpadInBothOrientations = { held: seen.bar, ok: every(seen.bar) };
+  // Every tap one move the one way; a district already in sight chosen with nothing moving.
+  report.checks.aTapOnTheSceneMovesTheCameraOnce = { held: seen.taps, ok: every(seen.taps) && seen.taps.some((tap) => tap.inSight) };
+  report.checks.theSceneHoldsStillWhenSafarisToolbarCollapses = { held: seen.toolbar, ok: every(seen.toolbar) };
+}
+// A run that stopped part way failed the claim it was measuring, by name, and says what stopped it; every other was not measured to its end, so none is said to hold or to have failed.
+if (report.error) {
+  for (const [name, check] of Object.entries(report.checks)) report.checks[name] = name === measuring ? { ...check, stopped: report.error, ok: false } : { held: check.held, unfinished: true };
+}
+report.checks.noPageThrew = { errors, ok: errors.length === 0 };
+report.passed = !report.error && Object.values(report.checks).every((check) => check.ok);
 
 mkdirSync(resolve(repoRoot, "docs"), { recursive: true });
 writeFileSync(resolve(repoRoot, "docs/viewport.json"), `${JSON.stringify(report, null, 2)}\n`);
-for (const [name, check] of Object.entries(report.checks)) process.stdout.write(`${check.ok ? "ok  " : "FAIL"} ${name}\n`);
+for (const [name, check] of Object.entries(report.checks)) process.stdout.write(`${check.unfinished ? "--  " : check.ok ? "ok  " : "FAIL"} ${name}\n`);
 if (report.error) process.stdout.write(`${report.error}\n`);
 process.stdout.write("wrote docs/viewport.json\n");
 process.exit(report.passed ? 0 : 1);
