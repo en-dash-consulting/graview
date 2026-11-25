@@ -109,6 +109,12 @@ a sentence, where that system owns it. Storing and serving the app is
    none). A computed field may be mapped: sent, never read back.
    `scriptedNotion()` is a Notion in memory to test against.
 
+   Set aside or merged away here, a record keeps its page or event and what
+   changes there still lands (no guest is mailed); only one removed is
+   deleted there. Deleted there while aside, it stays here, and is made
+   there anew, said in `report.said`, when brought back, its guests invited
+   again under `notify`; so is one an earlier version deleted.
+
    What a change there lands through, credited to the system: a page or
    event made there becomes a record through `add-<kind>`, or else the
    first act that creates the kind with no `on` and requires only mapped

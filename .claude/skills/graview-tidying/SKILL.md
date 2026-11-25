@@ -25,7 +25,8 @@ opens in and how its cards read are `graview-lists`.
    that should never be archived says `archives: false` in `defineNode` (a
    document's `"archives": false`; the edit `set-archives`): it is given no
    archive, unarchive or merge, and its records are kept or removed. An
-   archived record keeps its fields, its links and its history.
+   archived record keeps its fields, its links and its history, and its
+   Notion page, Calendar event or Todoist task (`graview-sync`).
 
 2. **Let the app's own actor tidy, and say what it may not.** An actor
    that links and prunes on its own is an author that says

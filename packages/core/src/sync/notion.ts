@@ -560,14 +560,15 @@ export function notion(options: NotionOptions): RemoteSystem {
       }
     };
 
-    /** Whether a page this sync knew is gone from the source: archived, in the trash, moved out, or not there at all. */
-    const goneFromSource = async (id: string): Promise<boolean> => {
+    /** How a page this sync knew is gone from the source: in the trash or not there at all, moved out of it (`left`), or not gone. */
+    const goneFromSource = async (id: string): Promise<false | "deleted" | "left"> => {
       try {
         const page = await call("GET", `/pages/${encodeURIComponent(id)}`);
         const parent = page["parent"] as Json | undefined;
-        return page["archived"] === true || page["in_trash"] === true || notionKey(String(parent?.["data_source_id"] ?? "")) !== notionKey(await dataSource());
+        if (page["archived"] === true || page["in_trash"] === true) return "deleted";
+        return notionKey(String(parent?.["data_source_id"] ?? "")) !== notionKey(await dataSource()) ? "left" : false;
       } catch (error) {
-        if (error instanceof NotionError && error.status === 404) return true;
+        if (error instanceof NotionError && error.status === 404) return "deleted";
         throw error;
       }
     };
@@ -597,7 +598,8 @@ export function notion(options: NotionOptions): RemoteSystem {
           const listedHere = new Set(pages.map((page) => notionKey(String(page["id"]))));
           for (const id of options.known(spec.resource)) {
             if (listedHere.has(notionKey(id))) continue;
-            if (await goneFromSource(id)) changes.push({ resource: spec.resource, id, version: "gone", deleted: true });
+            const how = await goneFromSource(id);
+            if (how) changes.push({ resource: spec.resource, id, version: "gone", deleted: true, ...(how === "left" ? { left: true } : {}) });
           }
         }
         return { changes, cursor: { ...(since ? { since } : {}), swept: whole ? time : at.swept } };

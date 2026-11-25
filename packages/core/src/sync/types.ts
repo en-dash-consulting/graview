@@ -97,7 +97,8 @@ export interface ResourceMapping {
    * WHAT A RECORD SET ASIDE HERE (archived) IS THERE. Absent: gone, as one
    * removed is, so its delete is sent. `keep`: left as it is, with nothing
    * sent for it while it is aside, still linked, and kept in step again
-   * when it is brought back; only a record removed is deleted there.
+   * when it is brought back; only a record removed is deleted there. What
+   * changes there meanwhile lands here as any change does.
    */
   readonly aside?: "keep";
   /** Our field that holds the remote's id, for those links. Absent: the node's own id. */
@@ -126,6 +127,11 @@ export interface RemoteChange {
   /** Absent when the record was deleted remotely. */
   readonly fields?: Readonly<Record<string, unknown>>;
   readonly deleted?: boolean;
+  /**
+   * Beside `deleted`: it is there still, out of what the sync keeps (its
+   * filter, its source). A record set aside here stays linked to it.
+   */
+  readonly left?: boolean;
 }
 
 /** One thing we want the remote to do. */
@@ -235,6 +241,12 @@ export interface SyncState {
    * changed since goes, whatever the connection maps by then.
    */
   readonly existing?: Readonly<Record<string, ExistingRecord>>;
+  /**
+   * RECORDS SET ASIDE HERE WITH NOTHING THERE, by our id
+   * (`SyncOptions.setAside`): never sent, or deleted there since. Nothing is
+   * sent for one until it is brought back; it is then made there, and said.
+   */
+  readonly alone?: readonly string[];
   /** The last pass, as `connectionStatus` reads it: when, and what it did. */
   readonly lastPass?: PassKept;
 }

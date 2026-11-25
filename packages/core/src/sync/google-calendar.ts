@@ -40,6 +40,8 @@ export function googleCalendarMapping(options: {
     resources: options.events.map((event) => ({
       kind: event.kind,
       resource: "events",
+      // An event whose record is set aside is left as it is: its guests are sent no cancellation.
+      aside: "keep" as const,
       fields: {
         [event.summary]: "summary",
         [event.start]: "start.dateTime",
@@ -237,9 +239,11 @@ export function googleCalendar(options: GoogleCalendarOptions): RemoteSystem {
         // The etag is Google's own version of the record, and the reason an
         // echo of our own write is recognizable at all.
         version: String(item["etag"] ?? ""),
-        ...(item["status"] === "cancelled" || (options.keep && !options.keep(item))
+        ...(item["status"] === "cancelled"
           ? { deleted: true }
-          : { fields: flatten(item) }),
+          : options.keep && !options.keep(item)
+            ? { deleted: true, left: true }
+            : { fields: flatten(item) }),
       }));
       return { changes, cursor: String(result.syncToken ?? cursor ?? "") };
     },

@@ -1,3 +1,4 @@
+import type { ArchivedOption } from "../graph/archived.js";
 import type { LinkResolver } from "./types.js";
 
 /*
@@ -57,7 +58,7 @@ export function addressesOfAttendees(value: unknown): string[] {
 /** The graph a guest book reads: a record by id, and every record. */
 export interface GuestGraph {
   getNode(id: string): unknown;
-  allNodes(): readonly unknown[];
+  allNodes(options?: ArchivedOption): readonly unknown[];
 }
 
 export interface GuestBookOptions {
@@ -89,11 +90,14 @@ export function guestBook(options: GuestBookOptions): LinkResolver {
     localId(key) {
       const wanted = addressesOfKey(key);
       if (wanted.length === 0 || !options.graph) return undefined;
-      for (const raw of options.graph.allNodes()) {
-        const node = raw as Record<string, unknown>;
-        if (!invited(node)) continue;
-        const held = addressesOf(node[options.emails]);
-        if (held.some((one) => wanted.includes(one))) return String(node["id"]);
+      // A live person first; one set aside is still the guest they were.
+      for (const archived of [false, true]) {
+        for (const raw of options.graph.allNodes({ archived })) {
+          const node = raw as Record<string, unknown>;
+          if (!invited(node)) continue;
+          const held = addressesOf(node[options.emails]);
+          if (held.some((one) => wanted.includes(one))) return String(node["id"]);
+        }
       }
       return undefined;
     },

@@ -49,7 +49,8 @@ inbound change lands through — is `graview-sync`.
    project, section or label, is removed here. Removing a record here
    deletes its task, and Todoist deletes every subtask with it, kept here or
    not; a record linked by a mapped `parent` is moved out from under it
-   first. Setting one aside, or merging it into another, deletes nothing:
+   first. Setting one aside, or merging it into another, deletes nothing, as in
+   any connection:
    its task stays as it is, nothing is sent for it, what changes there is
    still taken, and it is the same task's when brought back. A task above
    one set aside is not deleted, nor completed over it, until that one is
