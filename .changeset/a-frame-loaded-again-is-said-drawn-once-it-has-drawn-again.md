@@ -1,7 +1,0 @@
----
-"@graview/guest": patch
----
-
-A frame guest the one face takes in is not said drawn while it loads again. Where a browser cannot move an element as it is (no `Element.moveBefore`: WebKit, and Firefox before 144), an element moved is taken out of the page and put back, and a frame in it loads its page again from nothing; the one face does that as it takes in the page a frame guest is drawn on. The frame kept the `data-guest-view-drawn` it had said of the page before, so the embed's `data-graview-painted` and `data-graview-drawn` could be said, and an app's opening screen lifted, over a guest that was drawing again. Now, the moment the frame's window is another, its mark comes off, it is `aria-busy` again and the guest's session is let go, and it is said drawn again once the new page has drawn, or `data-guest-view-failed="silent"` where the new page never says it is ready in `limits.readyMs`. Held by `a-frame-guest-loaded-again-is-said-drawn-only-once-it-has-drawn-again`, and in a browser by verify-drawn's `aFrameGuestLoadedAgainAsTheFaceTakesItInIsSaidPaintedAndDrawnOnlyOnceItHasDrawnAgain`, which takes `moveBefore` away from the page.
-
-Compatibility: ops and primitives, stored formats, the wire, the declaration and check finding codes, and derived tool names and input schemas are unchanged. The JavaScript API is unchanged. A frame that loads again is said drawn later than it was, once it has drawn: a host that pictures a page waits for that. What Graview Cloud does: nothing.

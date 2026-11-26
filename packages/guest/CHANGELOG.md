@@ -1,5 +1,21 @@
 # @graview/guest
 
+## 0.2.17
+
+### Patch Changes
+
+- 6cda5ca: A frame guest the one face takes in is not said drawn while it loads again. Where a browser cannot move an element as it is (no `Element.moveBefore`: WebKit, and Firefox before 144), an element moved is taken out of the page and put back, and a frame in it loads its page again from nothing; the one face does that as it takes in the page a frame guest is drawn on. The frame kept the `data-guest-view-drawn` it had said of the page before, so the embed's `data-graview-painted` and `data-graview-drawn` could be said, and an app's opening screen lifted, over a guest that was drawing again. Now, the moment the frame's window is another, its mark comes off, it is `aria-busy` again and the guest's session is let go, and it is said drawn again once the new page has drawn, or `data-guest-view-failed="silent"` where the new page never says it is ready in `limits.readyMs`. Held by `a-frame-guest-loaded-again-is-said-drawn-only-once-it-has-drawn-again`, and in a browser by verify-drawn's `aFrameGuestLoadedAgainAsTheFaceTakesItInIsSaidPaintedAndDrawnOnlyOnceItHasDrawnAgain`, which takes `moveBefore` away from the page.
+  
+  Compatibility: ops and primitives, stored formats, the wire, the declaration and check finding codes, and derived tool names and input schemas are unchanged. The JavaScript API is unchanged. A frame that loads again is said drawn later than it was, once it has drawn: a host that pictures a page waits for that. What Graview Cloud does: nothing.
+- e393190: A frame guest kept out of sight is told so, and what it plays stops. A frame its host said may be kept for a return (`guestView({ keeps: true })`) is moved, still running, to a shelf off the page as its page is left, and a `<video>` or a sound of the guest's own, once played, went on playing there, heard from a page the person had left; a worker view's videos already stopped. The host now tells the frame `{ type: "away", away: true }` over its port as it is put on the shelf and `{ type: "away", away: false }` as it is put back. The frame's client pauses every `<video>` and `<audio>` in the guest's document that is playing on the first, and plays again on the second what it paused that still stands paused. The guest's own code hears both, after the client, for a sound of its own making (Web Audio, a `new Audio()` never put in the document, media in a shadow root): `guest.onAway((away) => …)` returns its stop, and `guest.away` says which it is now. Held by `a-kept-frame-guest-is-told-it-is-off-the-page`.
+  
+  Compatibility: ops and primitives, stored formats, the declaration and check finding codes, and derived tool names and input schemas are unchanged. The wire gains one message from host to guest, `{ type: "away", away }`, on the frame protocol; the protocol's version is unchanged, and a guest that does not know it drops it unread. The JavaScript API is additive: `away` and `onAway` on `Guest`. The inlined guest client changed, so a host that pins its hash takes the new `GUEST_CLIENT_SHA256`. What Graview Cloud does: serve the new client (or name the new hash in a frame's policy); nothing else.
+- Updated dependencies [1e43396]
+- Updated dependencies [64c3dac]
+- Updated dependencies [26dc3d1]
+  - @graview/core@0.2.17
+  - @graview/react@0.2.17
+
 ## 0.2.16
 
 ### Patch Changes
