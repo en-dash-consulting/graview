@@ -31,10 +31,11 @@ import { seedbedViews } from "./ui/views.js";
  *
  * `docs/site/index.html` used to show a photograph per chapter. This is the
  * bundle that replaces each with the chapter itself: the same declaration,
- * the same seed, opened at the same stop the photograph was taken at, with
- * the three faces a click away. Built by `vite build --config
- * vite.site.config.ts` into `docs/site/chapters.js`; the page's own copy
- * loads it by name and the artifact build inlines it.
+ * the same seed, opened at the same stop the photograph was taken at, as
+ * the one face: the page over the garden's own city, Page · Nearby · Map,
+ * held to its box. Built by `vite build --config vite.site.config.ts` into
+ * `docs/site/chapters.js`; the page's own copy loads it by name and the
+ * artifact build inlines it.
  */
 declare global {
   interface Window {
@@ -70,11 +71,13 @@ export function mountChapter(element: HTMLElement, n: number, face?: EmbedFace, 
   const handle = mount(element, {
     app: chapter.app,
     seed: chapter.seed,
-    // The page's own say first, then the chapter's face (a pages chapter
-    // opens on its pages), else the stop decides — altitude or the scene.
+    // The page's own say first (a picture stays a picture), then the
+    // chapter's. Every other face is the one face: a chapter with a page
+    // opens on it, and one without opens where its stop names — the Map for
+    // the overview, a record's page for a record, a kind's list for a kind.
     ...(face ? { face } : chapter.face === "pages" ? { face: "pages" as const } : {}),
     ...(stop ?? chapter.stop ? { stop: (stop ?? chapter.stop)! } : {}),
-    path: (chapter.path ?? "/pages").replace(/^\/pages/, "") || "/",
+    ...(chapter.path ? { path: chapter.path.replace(/^\/pages/, "") || "/" } : {}),
     ...(chapter.principal ? { principal: chapter.principal } : {}),
     // The page's scheme where it says one: a frame on a night band is dark whatever the reader's setting.
     ...(scheme ? { scheme } : {}),

@@ -151,6 +151,8 @@ async function buildHost() {
         const compiled = compileDocumentWithoutCheck({ ...enDash, ...warnings, brand }, { today: () => "2026-10-07" });
         if (!compiled.ok) throw new Error("the document did not compile");
         window.__handle = mount(document.getElementById("app"), {
+          // The routed face and its scene, which this harness holds: an embed draws the one face unless told otherwise.
+          sceneUnderPages: false,
           app: compiled.app,
           seed: { nodes: [
             { id: "w1", kind: "workshop", title: "Farm Bureau POM workshop", status: "held", held: "2026-09-30" },

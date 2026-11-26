@@ -11,9 +11,10 @@ this package serves lists, records, forms, problems and history as ordinary link
   Map`, Alt+↑ and Alt+↓, a pinch — moves the same page into a panel beside its records'
   buildings, then out onto the whole city. There is no Scene/Pages switch and no way to
   another address. `sceneUnderPages: false` keeps the routed face alone, with its switch
-  and its links to the Scene at `sceneHref`; an embedded face (`embedded`) is the routed
-  face in its box unless its host says `true`. `onTheOneFace(context)` says which a context
-  draws. `graview create` writes one `PagesApp` at `/`, and so does `apps/todo`.
+  and its links to the Scene at `sceneHref`; an embedded face (`embedded`) is the one face
+  too, and `inBox` holds every layer of it to the element marked
+  `data-graview-one-face-box` that holds it, as `@graview/embed` does in a box of somebody
+  else's page. `onTheOneFace(context)` says which a context draws. `graview create` writes one `PagesApp` at `/`, and so does `apps/todo`.
 - **The seat and the studio, on the bar.** `seat` on the context (handed the call
   recorder, as the Scene's `Shell` takes it) is held in the bell's Activity under "The
   agent's seat", with the calls it makes; `studio` (`<StudioPlace app={…} />` from

@@ -627,7 +627,7 @@ const DOCS = {
         `        <li><a href="skills/graview-new-app.html"><strong>graview-new-app</strong><span>The shape of the declaration, the shell that comes for free, and the CI that keeps it honest.</span></a></li>\n` +
         `        <li><a href="skills/graview-node-kind.html"><strong>graview-node-kind</strong><span>Add a kind — fields, edges, label, plural, roles — and verify it with graview check.</span></a></li>\n` +
         `        <li><a href="skills/graview-invariant.html"><strong>graview-invariant</strong><span>A rule that names the acts that would repair it, then make it fire.</span></a></li>\n` +
-        `        <li><a href="skills/graview-pages.html"><strong>graview-pages</strong><span>The routed face, from the derived pages to a design of your own.</span></a></li>\n` +
+        `        <li><a href="skills/graview-pages.html"><strong>graview-pages</strong><span>The pages, from the derived ones to a design of your own.</span></a></li>\n` +
         `        <li><a href="skills/graview-ship.html"><strong>graview-ship</strong><span>Persistence, migrations, export and health, self-hosted or behind a service.</span></a></li>\n` +
         `      </ul>`) +
       section("one-release", "One release, run from the project",
@@ -697,8 +697,8 @@ const DOCS = {
       `    </section>\n` +
       section("city", "The city, at altitude",
         `      <p>Every kind is a district; every record a building on its own plot; every edge a road with its words on it. Drag the ground, press a district, come down to a plot.</p>\n` + frame(16, "The garden, grown", "The example garden at altitude, live", ' data-stop="#overview=1" data-settle="1"')) +
-      section("pages", "The routed face",
-        `      <p>The same store as ordinary pages — here in the garden's own design: an almanac over the same acts, rules and log.</p>\n` + frame(13, "The garden's own face", "The garden's routed pages, live", ' data-face="pages"')) +
+      section("pages", "Every page",
+        `      <p>The same store as ordinary pages — here in the garden's own design: an almanac over the same acts, rules and log.</p>\n` + frame(13, "The garden's own face", "The garden's pages, live", ' data-face="pages"')) +
       section("studio", "The studio",
         `      <p>The declaration itself, open as a graph, edited with ordinary acts and checked before the change lands.</p>\n` + frame(15, "Seedbed, in the studio", "The declaration open in the studio, live", ' data-settle="0"')) +
       section("seat", "A seat for an agent",
@@ -836,7 +836,7 @@ const DOCS = {
       `      <p class="lede" style="margin-top: 18px;">graview.dev is a Graview app: one declaration, <a class="inl" href="${DECLARATION}"><code>apps/site/app.json</code></a>, and ${total} records written out of the repository by <code>node scripts/site-docs.mjs</code>. Every page the site serves is one of those records, rendered as static HTML by <code>renderPlace</code> from <code>@graview/pages/static</code> in the site's own design, so a search engine and a model read plain pages, and none of them can say what the records do not.</p>\n` +
       `    </section>\n` +
       section("live", "The site, running",
-        `      <p>This is that declaration, compiled in your browser by the same compiler <code>graview check</code> uses, over the same records the pages are rendered from: the city of its packages, skills, check findings and pages. Press a district; come down to a record; switch to its pages.</p>\n` +
+        `      <p>This is that declaration, compiled in your browser by the same compiler <code>graview check</code> uses, over the same records the pages are rendered from: the city of its packages, skills, check findings and pages. Read its home; rise to its map and press a district; come down to a record's page.</p>\n` +
         `      <div class="chapter-live" data-graview-document="site-app" data-graview-seed="site-records" data-stop="#overview=1" data-label="graview.dev" role="region" aria-label="graview.dev as a Graview app, live"><p class="chapter-loading">graview.dev, loading…</p></div>`) +
       section("declared", "What it declares",
         `      <p><b>${escape(declared.name ?? "graview.dev")}</b>: ${escape(declared.description ?? "")} ${kinds.length} kinds, each read out of the tree:</p>\n` +

@@ -99,6 +99,8 @@ async function buildHost() {
         const compiled = compileDocumentWithoutCheck(many ? recon : tasks, { today: () => "2026-09-01" });
         if (!compiled.ok) throw new Error("the document did not compile");
         window.__handle = mount(document.getElementById("app"), {
+          // The routed face and its scene, which this harness holds: an embed draws the one face unless told otherwise.
+          sceneUnderPages: false,
           app: compiled.app,
           seed: many ? reconSeed : ${JSON.stringify(SEED)},
           principal: { kind: "human", id: many ? "person-0" : "p1", roles: ["owner"] },

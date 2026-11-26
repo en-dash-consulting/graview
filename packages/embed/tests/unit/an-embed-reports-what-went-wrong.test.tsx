@@ -43,7 +43,7 @@ async function mounting(options: Omit<EmbedOptions<typeof schema>, "app">) {
   document.body.append(host);
   let handle!: EmbedHandle;
   await act(async () => {
-    handle = mount(host, { app, seed, fonts: false, ...options });
+    handle = mount(host, { sceneUnderPages: false, app, seed, fonts: false, ...options });
   });
   mounted.push({ handle, host });
   return { handle, host };

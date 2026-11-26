@@ -9,8 +9,9 @@ import { EXAMPLE_TODAY } from "./ui/when.js";
  *
  * Each mount carries Rota's own theme scoped to its own element — the brand,
  * the kit, the typefaces — and leaves the host page's serif and paper
- * completely alone. Two stops, two pictures, one declaration: the week over
- * the shifts, and the coverage grid over the volunteers.
+ * completely alone. Two stops, two pages, one declaration: each the one face
+ * held to its box, opened where its stop names — the week, and the
+ * volunteers.
  *
  * The seat is the volunteer's, because that is the honest one for a public
  * page: somebody reading an article about the hall may take a shift on, and

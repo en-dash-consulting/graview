@@ -271,6 +271,8 @@ if (!compiled.ok) throw new Error("does not compile");
 const me = { kind: "human", id: opened.principal.id, roles: opened.principal.roles };
 const remote = await openRemote({ app: compiled.app, url: location.origin, principal: me, live: true, subprotocol: true, pollMs: 1200, openTimeoutMs: 3000 });
 mount(root, {
+  // The routed face and its scene, which this harness holds: an embed draws the one face unless told otherwise.
+  sceneUnderPages: false,
   app: compiled.app,
   store: remote.store,
   principal: me,

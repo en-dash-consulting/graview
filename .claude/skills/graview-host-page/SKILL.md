@@ -25,7 +25,7 @@ decides the frame; the app still decides what is in it.**
    `addressOf(place, { basePath })` (`@graview/core`) spells a place's
    link. A host that keeps its own history stays on memory, hears
    `onNavigate(path, how)` and answers its own Back with `setPath(path)`.
-   `sceneUnderPages: true` draws the one face (`graview-pages`), its Map
+   The one face (`graview-pages`) stands against the window, its Map
    at `<base>/places/overview`.
    A product shell of its own that shows the scene at a route mounts
    `face: "graview"` there with `bar: { faces: false, name: false }` and

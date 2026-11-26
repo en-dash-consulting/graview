@@ -390,6 +390,8 @@ function ScrollReset() {
         at.scrollTop = 0;
         return;
       }
+      // A face held to a box of somebody else's page (`inBox`) scrolls only itself: the host's window stays where the reader left it.
+      if (at.hasAttribute("data-graview-one-face-box")) return;
     }
     window.scrollTo(0, 0);
     // The address is the page; its search and hash are where you are on it.
@@ -418,6 +420,9 @@ function ScrollReset() {
      */
     const active = document.activeElement;
     if (typingIn(active)) return;
+    // Held to a box of somebody else's page, only while the keyboard is in the box: it is never taken from the host's page.
+    const box = mark.current?.closest("[data-graview-one-face-box]");
+    if (box && !(active instanceof Node && box.contains(active))) return;
     const main = mark.current?.closest("main") ?? document.querySelector("main");
     const heading = mark.current?.closest("[data-graview-face]")?.querySelector<HTMLElement>("[data-graview-page-title]") ?? main?.querySelector<HTMLElement>("h1, h2") ?? null;
     const target = heading ?? main ?? null;

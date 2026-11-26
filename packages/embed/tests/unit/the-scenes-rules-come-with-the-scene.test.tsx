@@ -22,7 +22,7 @@ async function drawn(face: EmbedOptions["face"]) {
   document.body.appendChild(host);
   let handle: EmbedHandle | undefined;
   await act(async () => {
-    handle = mount(host, { app, seed, fonts: false, face } as EmbedOptions);
+    handle = mount(host, { sceneUnderPages: false, app, seed, fonts: false, face } as EmbedOptions);
   });
   let done = false;
   void handle!.drawn().then(() => (done = true));

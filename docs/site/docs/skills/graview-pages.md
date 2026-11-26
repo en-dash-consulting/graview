@@ -95,7 +95,7 @@ Replacing every surface — the shell under the bar, the home, the problems, eac
 
 ### On somebody else's page
 
-`graview-embed` mounts the app into one element of any page (`face: "pages"`, `path`, `routing`): the routed face in a box, without the city. A host whose page IS the app passes `sceneUnderPages: true` to `mount`.
+`graview-embed` mounts the app into one element of any page: the one face held to that box. `routing: "address"` stands it against the window.
 
 ### Then find out whether it worked
 

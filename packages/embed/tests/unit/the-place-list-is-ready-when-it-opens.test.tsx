@@ -33,7 +33,7 @@ describe("a pick from the place list", () => {
     document.body.appendChild(host);
     let handle: ReturnType<typeof mount> | undefined;
     await act(async () => {
-      handle = mount(host, { app, seed: seed as never, face: "graview", principal: { kind: "human", id: "u", roles: [] }, fonts: false });
+      handle = mount(host, { sceneUnderPages: false, app, seed: seed as never, face: "graview", principal: { kind: "human", id: "u", roles: [] }, fonts: false });
     });
     await settle();
     for (const [key, said] of [

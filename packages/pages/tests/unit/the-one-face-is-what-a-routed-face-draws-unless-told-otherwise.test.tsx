@@ -15,7 +15,7 @@ import { onTheOneFace, PagesApp, type PageContext } from "../../src/index.js";
  * handed `views` is the page over the Scene's own city — Page, Nearby, Map
  * — with no option given. `sceneUnderPages: false` is a host's way to keep
  * the routed face alone; an embedded face (somebody else's page around it)
- * draws the routed face in its box unless its host asks for the one face.
+ * is the one face too, held to its box, unless its host says `false`.
  */
 const task = defineNode("task", { fields: z.object({ label: z.string() }), plural: "Tasks" });
 const schema = createSchema([task]);
@@ -27,7 +27,7 @@ async function drawn(extra: Partial<PageContext<typeof schema>>) {
   document.body.appendChild(host);
   const root = createRoot(host);
   await act(async () => root.render(<PagesApp context={{ store: store(), views: views(), ...extra } as PageContext<typeof schema>} initialPath="/tasks" />));
-  for (let turn = 0; turn < 200 && extra.sceneUnderPages !== false && !extra.embedded && !host.querySelector("[data-graview-one-place]"); turn++) {
+  for (let turn = 0; turn < 200 && extra.sceneUnderPages !== false && !host.querySelector("[data-graview-one-place]"); turn++) {
     await act(async () => new Promise((resolve) => setTimeout(resolve, 5)));
   }
   await act(async () => new Promise((resolve) => setTimeout(resolve, 0)));
@@ -50,9 +50,9 @@ describe("the one face is what a routed face draws unless told otherwise", () =>
     expect(oneFace).toBe(false);
   });
 
-  it("draws the routed face in an embed's box unless the embed asks for the one face", async () => {
-    expect(onTheOneFace({ views: views(), embedded: true })).toBe(false);
-    expect(onTheOneFace({ views: views(), embedded: true, sceneUnderPages: true })).toBe(true);
+  it("draws the one face in an embed's box too, unless the embed says sceneUnderPages: false", async () => {
+    expect(onTheOneFace({ views: views(), embedded: true } as never)).toBe(true);
+    expect(onTheOneFace({ views: views(), embedded: true, sceneUnderPages: false } as never)).toBe(false);
   });
 
   it("needs the views the city is drawn with", () => {

@@ -116,7 +116,7 @@ describe("the one face's city under the embed draws with the Scene's rules", () 
   });
 
   it("writes none on the routed face without the city", async () => {
-    const host = await whole({ scheme: "light" });
+    const host = await whole({ scheme: "light", sceneUnderPages: false });
     await until(() => host.querySelector("[data-graview-app-bar]") !== null);
     expect(cityIn(host)).toBe(false);
     expect(sceneSheetsIn(host, "light")).toBe(0);

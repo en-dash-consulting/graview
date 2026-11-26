@@ -32,7 +32,7 @@ async function choose(face: "scene" | "pages") {
   const host = document.createElement("div");
   document.body.appendChild(host);
   const root = createRoot(host);
-  await act(async () => root.render(<Embed app={app} seed={seed} face={face} principal={owner} fonts={false} label="The org" {...(face === "pages" ? { path: "/places/strengths" } : {})} />));
+  await act(async () => root.render(<Embed sceneUnderPages={false} app={app} seed={seed} face={face} principal={owner} fonts={false} label="The org" {...(face === "pages" ? { path: "/places/strengths" } : {})} />));
   await act(async () => new Promise((done) => setTimeout(done, 30)));
   const cell = host.querySelector<HTMLElement>("[data-graview-joins]");
   await act(async () => {

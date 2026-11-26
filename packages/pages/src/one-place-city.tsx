@@ -6,7 +6,7 @@ import { sceneCss } from "@graview/primitives/scene";
 import { useGraview, useNavigation, useViolations } from "@graview/react/provider";
 import { useOneFace } from "./one-place-control.js";
 import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
-import { aimAt, anchorOf, BOARD_ASPECT, carriedBetween, carriedThrough, frameSpacingAt, boardFaceWidth, framedTogether, homeReadableZoom, boardLeast, boardMost, boardWidthFor, fitBeside, fitCamera, SIGN_GAP, SIGN_POST, signRoom, cameraBetween, cameraPutting, CITY, cityArea, footOf, leaveFrom, routeLine, LEVEL_LIVE, levelZooms, PAGE, pageBox, PANEL, panelBox, PHONE, project, restingLevel, SHEET_ORIGIN, standingAt, standingCss, unionOf, wordOnScreen, type Box, type Live, type PageWhere, type Point } from "./one-place-geometry.js";
+import { aimAt, anchorOf, BOARD_ASPECT, carriedBetween, carriedThrough, frameSpacingAt, boardFaceWidth, framedTogether, homeReadableZoom, boardLeast, boardMost, boardWidthFor, fitBeside, fitCamera, frameOrigin, SIGN_GAP, SIGN_POST, signRoom, cameraBetween, cameraPutting, CITY, cityArea, footOf, leaveFrom, routeLine, LEVEL_LIVE, levelZooms, PAGE, pageBox, PANEL, panelBox, PHONE, project, restingLevel, SHEET_ORIGIN, standingAt, standingCss, unionOf, wordOnScreen, type Box, type Live, type PageWhere, type Point } from "./one-place-geometry.js";
 import type { OnePlaceCityProps } from "./one-place.js";
 import { placeSigns } from "./one-place-signs.js";
 import { pluralOf } from "./page-typography.js";
@@ -155,7 +155,7 @@ interface Drawn {
   readonly part: Point;
 }
 
-export function OnePlaceCity({ where, out, sheet, connected, boards, current, boardEls, boardLayer, fab, view, lessMotion, resolve, openRecord, openKind, onGround, motion, onAltitude, sceneRules }: OnePlaceCityProps) {
+export function OnePlaceCity({ where, out, frame, sheet, connected, boards, current, boardEls, boardLayer, fab, view, lessMotion, resolve, openRecord, openKind, onGround, motion, onAltitude, sceneRules }: OnePlaceCityProps) {
   /*
    * THE SCENE'S OWN RULES, where the host's sheet has none (the embed's
    * frame writes `themeBaseCss`): fetched with this part, after the page's
@@ -169,6 +169,21 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
   const overlay = useRef<SVGSVGElement>(null);
   const rings = useRef<HTMLDivElement>(null);
   const camera = useRef<SceneCamera | null>(null);
+  /*
+   * EVERY RECTANGLE IN THE FRAME'S TERMS. The view, the page's box and every
+   * layer here are placed from the frame's corner: the window's, or the
+   * box's the face is held to (`inBox`, the containing block of each). The
+   * browser says a rectangle from the window's corner, so the box's is
+   * taken off it — read once a call, from a layout already done.
+   */
+  function rectIn(element: Element): DOMRect;
+  function rectIn(element: Element | null | undefined): DOMRect | undefined;
+  function rectIn(element: Element | null | undefined): DOMRect | undefined {
+    if (!element) return undefined;
+    const rect = element.getBoundingClientRect();
+    const at = frameOrigin(frame?.current ?? null);
+    return at.x === 0 && at.y === 0 ? rect : new DOMRect(rect.x - at.x, rect.y - at.y, rect.width, rect.height);
+  }
 
   /*
    * THE SCENE'S STOP: always the overview — its lens over the grid and its
@@ -534,17 +549,17 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
       for (const plot of holder.querySelectorAll<SVGGElement>("[data-graview-plot]")) {
         const kind = kindOfId(plot.getAttribute("data-graview-plot"));
         const tile = plot.querySelector(".graview-plot-tile") ?? plot;
-        if (kind) plots.set(kind, boxOf(tile.getBoundingClientRect()));
+        if (kind) plots.set(kind, boxOf(rectIn(tile)));
       }
       const buildings = new Map<string, Box>();
-      for (const building of holder.querySelectorAll("[data-graview-building]")) buildings.set(building.getAttribute("data-graview-building")!, boxOf(building.getBoundingClientRect()));
+      for (const building of holder.querySelectorAll("[data-graview-building]")) buildings.set(building.getAttribute("data-graview-building")!, boxOf(rectIn(building)));
       /*
        * A district's "+n" — the buildings its plot has no room for — is words
        * in the picture, as a building's name is: stood clear of as a building
        * is, so no district's name runs into it ("+43PLANTS 10").
        */
       holder.querySelectorAll(".graview-village-rest").forEach((rest, i) => {
-        const box = boxOf(rest.getBoundingClientRect());
+        const box = boxOf(rectIn(rest));
         if (box.width > 0) buildings.set(`${REST_KEY}${i}`, box);
       });
       return { plots, buildings };
@@ -610,10 +625,10 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
     const keptOutNow = (): Box[] => {
       const view = state.current.view;
       const plane = sheet.current;
-      const dockRect = fab.current?.querySelector("[data-graview-one-face-dock]")?.getBoundingClientRect();
+      const dockRect = rectIn(fab.current?.querySelector("[data-graview-one-face-dock]"));
       return [
         { x: 0, y: 0, width: view.width, height: view.top ?? 0 },
-        ...(plane && altitude > 0.5 && altitude < 1.5 ? [boxOf(plane.getBoundingClientRect())] : []),
+        ...(plane && altitude > 0.5 && altitude < 1.5 ? [boxOf(rectIn(plane))] : []),
         ...(dockRect && dockRect.width > 0 ? [boxOf(dockRect)] : []),
       ];
     };
@@ -772,10 +787,10 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
     const footNow = (): { readonly now: readonly Box[]; readonly rest: readonly Box[]; readonly key: string } => {
       const holder = fab.current;
       if (!holder) return { now: [], rest: [], key: "" };
-      const bottom = holder.getBoundingClientRect().bottom;
+      const bottom = rectIn(holder).bottom;
       const height = state.current.view.height;
       const now = [holder.querySelector("[data-graview-one-face-dock]"), holder.querySelector("[data-graview-past-slot] > *")].flatMap((el) => {
-        const r = el?.getBoundingClientRect();
+        const r = rectIn(el);
         return r && r.width > 0 && r.height > 0 ? [boxOf(r)] : [];
       });
       // At rest the region stands 16 pixels off the window's foot: each rect where it would be there.
@@ -809,7 +824,7 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
     };
     /** How much of the window above a phone's sheet the control and the legend keep, at Nearby. */
     const footRoom = (): number => {
-      const dock = fab.current?.querySelector("[data-graview-one-face-dock]")?.getBoundingClientRect();
+      const dock = rectIn(fab.current?.querySelector("[data-graview-one-face-dock]"));
       return dock ? dock.height + 24 : 72;
     };
 
@@ -1647,8 +1662,8 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
       const shown = a <= PANEL ? ease(clamp01((a - 0.6) / 0.4)) : 1 - ease(clamp01((a - PANEL) / 0.45));
       const found: Drawn[] = [];
       if (shown > 0.01) {
-        const pageRect = boxOf(plane.getBoundingClientRect());
-        const controlRect = fab.current?.querySelector('[data-graview-one-face-dock]')?.getBoundingClientRect();
+        const pageRect = boxOf(rectIn(plane));
+        const controlRect = rectIn(fab.current?.querySelector('[data-graview-one-face-dock]'));
         const area = cityArea(pageRect, at.view, controlRect ? boxOf(controlRect) : null, phone);
         // Everything that stands at the foot this frame, each its own rect: no line runs under any of them.
         const reserved = footNow().now;
@@ -1679,7 +1694,7 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
           const port = element.closest("[data-graview-one-place]");
           if (!port) return null;
           let box = ports.get(port);
-          if (!box) ports.set(port, (box = port.getBoundingClientRect()));
+          if (!box) ports.set(port, (box = rectIn(port)));
           return box;
         };
         /* One line a record: from where it is shown, in sight on the page, to where it stands — gathered first, routed once every part is known. */
@@ -1709,7 +1724,7 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
           if (!visible) continue;
           const boxes = recordBoxesOf(element);
           if (boxes) {
-            const rect = element.getBoundingClientRect();
+            const rect = rectIn(element);
             if (rect.width < 1 || rect.height < 1) continue;
             // Its pixels carried through its box as this frame paints it: the page scales as it moves a level.
             const scale = element.offsetWidth > 0 ? rect.width / element.offsetWidth : 1;
@@ -1747,7 +1762,7 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
             target = resolved?.type === "record" ? { type: "record", id: resolved.id } : resolved?.type === "list" ? { type: "list", kind: resolved.kind } : null;
           }
           if (!target || (target.type === "record" && target.id === subjectId)) continue;
-          const rect = element.getBoundingClientRect();
+          const rect = rectIn(element);
           if (rect.width < 1 || rect.height < 1) continue;
           offer(target, { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 }, visible, boxOf(rect));
         }
@@ -1942,7 +1957,7 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
     const besidePressable = (to: Point): boolean => pressable.some((b) => to.x > b.x - 20 && to.x < b.x + b.width + 20 && to.y > b.y - 20 && to.y < b.y + b.height + 20);
     /* The overlay, written in the frame it is measured in: no React state per frame. */
     const draw = (found: readonly Drawn[], opacity: number) => {
-      const control = fab.current?.querySelector('[data-graview-one-face-dock]')?.getBoundingClientRect() ?? null;
+      const control = rectIn(fab.current?.querySelector('[data-graview-one-face-dock]')) ?? null;
       const svg = overlay.current;
       const ringLayer = rings.current;
       if (!svg || !ringLayer) return;

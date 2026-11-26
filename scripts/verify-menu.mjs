@@ -146,6 +146,8 @@ async function serveMenuHost() {
           return { applied: true, undo };
         };
         window.__handle = mount(document.getElementById("app"), {
+          // The routed face and its scene, which this harness holds: an embed draws the one face unless told otherwise.
+          sceneUnderPages: false,
           app: compiled.app,
           seed: ${JSON.stringify(BOARD_SEED)},
           principal,

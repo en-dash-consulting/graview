@@ -204,7 +204,7 @@ describe("showHistory() on the mount handle", () => {
     const host = placed();
     let handle: EmbedHandle | undefined;
     await act(async () => {
-      handle = mount(host, { app, fonts: false, face: "scene", store: written(), principal: me } as unknown as EmbedOptions);
+      handle = mount(host, { sceneUnderPages: false, app, fonts: false, face: "scene", store: written(), principal: me } as unknown as EmbedOptions);
       handle.showHistory();
     });
     try {
@@ -269,7 +269,7 @@ describe("showHistory() on the mount handle", () => {
     const host = placed();
     let handle: EmbedHandle | undefined;
     await act(async () => {
-      handle = mount(host, { app, fonts: false, face: "picture", store: written(), principal: me } as unknown as EmbedOptions);
+      handle = mount(host, { sceneUnderPages: false, app, fonts: false, face: "picture", store: written(), principal: me } as unknown as EmbedOptions);
     });
     try {
       await act(async () => handle!.drawn());
@@ -329,7 +329,7 @@ describe("History under a host's own bar", () => {
       const host = placed();
       let handle: EmbedHandle | undefined;
       await act(async () => {
-        handle = mount(host, { ...pagesAt(written()), bar } as unknown as EmbedOptions);
+        handle = mount(host, { sceneUnderPages: false, ...pagesAt(written()), bar } as unknown as EmbedOptions);
       });
       try {
         await settled(() => expect(host.textContent).toContain("Third"));

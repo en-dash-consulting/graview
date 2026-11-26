@@ -98,6 +98,8 @@ async function inAHostsPage(browser, report) {
         const compiled = compileDocumentWithoutCheck(vendors);
         window.__handed = [];
         const handle = mount(document.getElementById("graview-builder"), {
+          // The routed face and its scene, which this harness holds: an embed draws the one face unless told otherwise.
+          sceneUnderPages: false,
           app: compiled.app,
           principal: { kind: "human", id: "editor", roles: ["viewer"] },
           studio: {

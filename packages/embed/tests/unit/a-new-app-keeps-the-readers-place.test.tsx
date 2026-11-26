@@ -14,7 +14,7 @@ import { mount, preload, type EmbedHandle, type EmbedOptions } from "../../src/i
  * was put back at the home, whatever they had open. `setApp` swaps them
  * under the reader and keeps the face, the page open on Pages and the
  * scene's stop; what the change took away falls back to its nearest parent.
- * `where()` reads the place, for a host that must remount (`mount(…, { at })`).
+ * `where()` reads the place, for a host that must remount (`mount(…, { sceneUnderPages: false, at })`).
  */
 const task = defineNode("task", { fields: z.object({ label: z.string() }), plural: "Tasks" });
 const person = defineNode("person", { fields: z.object({ label: z.string() }), plural: "People" });
@@ -54,7 +54,7 @@ async function open(options: Partial<EmbedOptions>, address = "/an-article") {
   const app = options.app ?? appOf("both");
   let handle: EmbedHandle | undefined;
   await act(async () => {
-    handle = mount(host, { app, store: storeOf(app, ["t1", "t2", "p1"]), fonts: false, studio: false, ...options } as EmbedOptions);
+    handle = mount(host, { sceneUnderPages: false, app, store: storeOf(app, ["t1", "t2", "p1"]), fonts: false, studio: false, ...options } as EmbedOptions);
   });
   // A place handed back waits for its rules to be fetched, which act would hold until the face it waits for: so a tick at a time.
   let drawn = false;

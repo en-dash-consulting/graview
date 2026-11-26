@@ -89,6 +89,8 @@ window.__failures = [];
 window.__problems = [];
 const asked = new URLSearchParams(location.search);
 window.__handle = mount(document.getElementById("app"), {
+  // The routed face and its scene, which this harness holds: an embed draws the one face unless told otherwise.
+  sceneUnderPages: false,
   app: threatApp,
   seed: threatSeed,
   principal: sam,

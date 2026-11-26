@@ -41,7 +41,7 @@ describe("a document's declared lenses, in the embed's scene", () => {
     const host = document.createElement("div");
     document.body.appendChild(host);
     const root = createRoot(host);
-    await act(async () => root.render(<Embed app={app} seed={seed as never} face="scene" principal={{ kind: "human", id: "m1", roles: ["keeper"] }} fonts={false} />));
+    await act(async () => root.render(<Embed sceneUnderPages={false} app={app} seed={seed as never} face="scene" principal={{ kind: "human", id: "m1", roles: ["keeper"] }} fonts={false} />));
     await act(async () => new Promise((done) => setTimeout(done, 30)));
     // The app menu says the scene is drawn (FR-137); the bar names what the scene shows, and lists its pictures — each declared lens among them (FR-144).
     expect(await facePressed(host, "scene")).toBe("true");
@@ -51,10 +51,10 @@ describe("a document's declared lenses, in the embed's scene", () => {
     expect(host.querySelector('[data-testid="app-place-home"]')).toBeNull();
     // The host decides the face (`onFace`): it is told, and draws the pages.
     const asked: string[] = [];
-    await act(async () => root.render(<Embed app={app} seed={seed as never} face="scene" onFace={(face) => asked.push(face)} principal={{ kind: "human", id: "m1", roles: ["keeper"] }} fonts={false} />));
+    await act(async () => root.render(<Embed sceneUnderPages={false} app={app} seed={seed as never} face="scene" onFace={(face) => asked.push(face)} principal={{ kind: "human", id: "m1", roles: ["keeper"] }} fonts={false} />));
     await pressFace(host, "pages");
     expect(asked).toEqual(["pages"]);
-    await act(async () => root.render(<Embed app={app} seed={seed as never} face="pages" principal={{ kind: "human", id: "m1", roles: ["keeper"] }} fonts={false} />));
+    await act(async () => root.render(<Embed sceneUnderPages={false} app={app} seed={seed as never} face="pages" principal={{ kind: "human", id: "m1", roles: ["keeper"] }} fonts={false} />));
     await act(async () => new Promise((done) => setTimeout(done, 30)));
     // Each is a picture among the places, by its title, after the home and the lists.
     const pictures = [...host.querySelectorAll('[data-testid="app-places"] [data-place-group="pictures"] [data-testid^="app-place-place:"]')];

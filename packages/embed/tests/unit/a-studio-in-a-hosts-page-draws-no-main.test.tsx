@@ -48,7 +48,7 @@ async function hostPage(studio: EmbedOptions["studio"]): Promise<HTMLElement> {
   const { app, store } = builder();
   await act(async () => {
     handles.push(
-      mount(element, {
+      mount(element, { sceneUnderPages: false,
         app,
         store,
         principal: { kind: "human", id: "builder" },

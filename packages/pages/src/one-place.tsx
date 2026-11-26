@@ -11,7 +11,7 @@ import { pluralOf } from "./page-typography.js";
 import { kindOfSlug, recordPath, pluralSlug } from "./registry.js";
 import { OneFaceContext, type OneFace } from "./one-place-control.js";
 import { HeldHere } from "./held-element.js";
-import { BOARD_ASPECT, boardFaceWidth, boardsInTheirPlaces, sameFit, titleThatFits, frameSpacing, smallWindow, CITY, LEVEL_NAMES, nearestThatWay, PAGE, PANEL, panelBox, panelRange, panelStoreKey, PHONE, type Box, type PageWhere, type TitleFit, type View } from "./one-place-geometry.js";
+import { BOARD_ASPECT, boardFaceWidth, boardsInTheirPlaces, sameFit, titleThatFits, frameOrigin, frameSpacing, ONE_FACE_BOX, smallWindow, CITY, LEVEL_NAMES, nearestThatWay, PAGE, PANEL, panelBox, panelRange, panelStoreKey, PHONE, type Box, type PageWhere, type TitleFit, type View } from "./one-place-geometry.js";
 
 /**
  * PAGES AND THE SCENE ARE ONE PLACE (Graview HQ feature:f-page-zooms-out-to-the-city).
@@ -49,6 +49,8 @@ const OnePlaceCity = lazyPart(retryingImport(() => import("./one-place-city.js")
 
 const lessMotion = (): boolean => typeof window !== "undefined" && typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 const windowSize = () => ({ width: document.documentElement.clientWidth || window.innerWidth, height: window.innerHeight });
+/** The box the one face is held to (`inBox`): its own size, inside its edges. */
+const boxSize = (box: HTMLElement) => ({ width: box.clientWidth, height: box.clientHeight });
 
 /** What the frame asks the camera for, read by the city part each frame. */
 export interface Motion {
@@ -86,6 +88,8 @@ export interface OnePlaceCityProps {
   readonly where: PageWhere;
   /** Whether the page has left the window (or is asked to): the Scene is drawn, and its view is the overview, only then. */
   readonly out: boolean;
+  /** The box the face is held to (`inBox`), or null for the window: every layer and every rectangle is placed from its corner. */
+  readonly frame?: RefObject<HTMLElement | null>;
   /** The page's own element: the one thing that moves between the levels. */
   readonly sheet: RefObject<HTMLDivElement | null>;
   /** The Connected list's box in the page, grown as the page becomes the panel. */
@@ -402,12 +406,39 @@ export function OnePlace<S extends AnySchema>({
   /** Put down at the city by a press on the ground or Escape: the keyboard is not put back on a view until a level is moved. */
   const deselected = useRef(false);
   const kept = useRef<{ readonly scrollY: number; readonly address: string } | null>(null);
-
-  useEffect(() => {
-    const resized = () => setView(windowSize());
+  /*
+   * THE FRAME: the window, or the box the face is held to (`inBox`) — the
+   * element marked `data-graview-one-face-box` that holds it, the
+   * containing block of every layer below. Its size is the view's, and the
+   * page scrolls inside it rather than the window.
+   */
+  // Embedded, held to a box unless its host says otherwise (the embed says `false` where the host's page is the app).
+  const inBox = context.inBox ?? context.embedded === true;
+  const frame = useRef<HTMLElement | null>(null);
+  useLayoutEffect(() => {
+    const box = inBox ? (sheet.current?.parentElement?.closest<HTMLElement>(`[${ONE_FACE_BOX}]`) ?? null) : null;
+    frame.current = box;
+    if (!box) {
+      const resized = () => setView(windowSize());
+      resized();
+      window.addEventListener("resize", resized);
+      return () => window.removeEventListener("resize", resized);
+    }
+    const resized = () => setView((was) => {
+      const next = boxSize(box);
+      return next.width === was.width && next.height === was.height ? was : next;
+    });
+    resized();
+    const watch = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(resized);
+    watch?.observe(box);
     window.addEventListener("resize", resized);
-    return () => window.removeEventListener("resize", resized);
-  }, []);
+    return () => {
+      watch?.disconnect();
+      window.removeEventListener("resize", resized);
+    };
+  }, [inBox]);
+  /** Where the page is scrolled: the window's scroll, or the page's own in a box. */
+  const scrolledTo = (): number => (frame.current ? (sheet.current?.scrollTop ?? 0) : window.scrollY);
 
   /*
    * THE BOARDS: every page and view the app offers — its home, each kind's
@@ -465,7 +496,7 @@ export function OnePlace<S extends AnySchema>({
 
   /** Out of the window: where the page was scrolled, for the page as it moves and for the way back in. */
   const keep = () => {
-    if (!now.away && !kept.current) kept.current = { scrollY: window.scrollY, address };
+    if (!now.away && !kept.current) kept.current = { scrollY: scrolledTo(), address };
   };
   const goLevel = useCallback(
     (level: number) => {
@@ -489,7 +520,11 @@ export function OnePlace<S extends AnySchema>({
     }
     const was = kept.current;
     kept.current = null;
-    if (was) window.scrollTo({ left: 0, top: was.address === address ? was.scrollY : 0, behavior: "instant" as ScrollBehavior });
+    if (!was) return;
+    const top = was.address === address ? was.scrollY : 0;
+    // In a box the page scrolls itself, and the host's window is left where it is.
+    if (frame.current) plane.scrollTop = top;
+    else window.scrollTo({ left: 0, top, behavior: "instant" as ScrollBehavior });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [now.away]);
 
@@ -707,6 +742,8 @@ export function OnePlace<S extends AnySchema>({
       // Never with the browser's own chords (its zoom is Cmd or Ctrl and plus, minus, 0), never while the keys are writing, never into a view's frame.
       const target = (event.composedPath()[0] ?? event.target) as EventTarget | null;
       if (event.defaultPrevented || event.repeat || event.isComposing || event.metaKey || event.ctrlKey || event.shiftKey || typingIn(target)) return;
+      // In a box, only while the keyboard is in it: on somebody else's page a key pressed elsewhere is that page's, and moves no face in it.
+      if (frame.current && !(event.target instanceof Node && frame.current.contains(event.target))) return;
       // Where the keys mean something of their own — a menu, a list to type into, a grid — they are theirs.
       if (target instanceof Element && target.closest('[role="menu"], [role="listbox"], [role="combobox"], [role="grid"], [role="textbox"], [role="spinbutton"], [role="tree"]')) return;
       if (document.querySelector("[data-graview-overlay]:not([hidden])")) return;
@@ -776,6 +813,11 @@ export function OnePlace<S extends AnySchema>({
   const cameFrom = useRef(now.level);
   useLayoutEffect(() => {
     const active = document.activeElement;
+    // In a box of somebody else's page the keyboard is placed only while it is in the box: opening at a level, or moved by the host, it is not taken from the host's page.
+    if (frame.current && !(active instanceof Node && frame.current.contains(active))) {
+      cameFrom.current = now.level;
+      return;
+    }
     const onBoards = boardLayer.current?.contains(active) === true;
     // Only a move between levels places the keyboard: a page that opens at Page leaves it where the routed face puts it, as the derived pages do.
     const moved = cameFrom.current !== now.level;
@@ -839,7 +881,8 @@ export function OnePlace<S extends AnySchema>({
         top: view.top,
         width: view.width,
         height: view.height - view.top,
-        overflowY: "auto",
+        // At the city it is its board, and scrolls nothing: no scrollable region holding nothing the keyboard reaches.
+        overflowY: now.level >= CITY && !now.moving ? "hidden" : "auto",
         overflowX: "hidden",
         zIndex: ONE_FACE_LAYERS.page,
         background: "var(--graview-ground, Canvas)",
@@ -854,7 +897,29 @@ export function OnePlace<S extends AnySchema>({
         ["--graview-one-face-bar" as string]: "0px",
         // Its gutter and its room above and below: set each frame by the city part, from the altitude (`frameSpacingAt`), so they move with the page's box.
       }
-    : { display: "contents", ["--graview-one-face-bar" as string]: `${barHeight}px`, ...(frameSpacing(false) as CSSProperties) };
+    : inBox
+      ? {
+          /*
+           * READ IN A BOX, the page is the box's under the bar, and scrolls
+           * itself: the window's box is the box's (the containing block of
+           * every layer here), so it is already where stepping out begins,
+           * and the host's page scrolls on around it.
+           */
+          position: "fixed",
+          left: 0,
+          top: view.top,
+          width: view.width,
+          height: view.height - view.top,
+          overflowY: "auto",
+          overflowX: "hidden",
+          overscrollBehavior: "contain",
+          zIndex: ONE_FACE_LAYERS.page,
+          background: "var(--graview-ground, Canvas)",
+          containerType: "inline-size",
+          ["--graview-one-face-bar" as string]: "0px",
+          ...(frameSpacing(false) as CSSProperties),
+        }
+      : { display: "contents", ["--graview-one-face-bar" as string]: `${barHeight}px`, ...(frameSpacing(false) as CSSProperties) };
   const subject = where.type === "record" ? where.id : null;
   const whole = useWholeView(sheet, `${where.type}:${subject ?? ""}`);
 
@@ -880,10 +945,10 @@ export function OnePlace<S extends AnySchema>({
       {/* THE APP'S BAR, fixed at the window's top over the page and the city alike: the shell draws it here (`page-shell.tsx`). First in the document, as the derived pages have it, so Tab reaches the bar before the page's own links at every level; its layer, not its place, sets it over the rest. */}
       <div ref={holdBar} data-testid="one-place-bar" data-graview-one-face-bar="" style={{ position: "fixed", left: 0, right: 0, top: 0, zIndex: ONE_FACE_LAYERS.bar, background: "var(--graview-ground, Canvas)" }} />
       <Suspense fallback={null}>
-        <OnePlaceCity where={where} out={now.away} sheet={sheet} connected={connected} boards={standing} current={current} boardEls={boardEls} boardLayer={boardLayer} fab={fab} view={view} lessMotion={lessMotion()} resolve={resolve} openRecord={openRecord} openKind={openKind} onGround={onGround} motion={motion} onAltitude={onAltitude} {...(context.sceneRules ? { sceneRules: context.sceneRules } : {})} />
+        <OnePlaceCity where={where} out={now.away} frame={frame} sheet={sheet} connected={connected} boards={standing} current={current} boardEls={boardEls} boardLayer={boardLayer} fab={fab} view={view} lessMotion={lessMotion()} resolve={resolve} openRecord={openRecord} openKind={openKind} onGround={onGround} motion={motion} onAltitude={onAltitude} {...(context.sceneRules ? { sceneRules: context.sceneRules } : {})} />
       </Suspense>
       <div ref={sheet} data-graview-one-place={now.level} {...(away ? { "data-graview-away": "" } : {})} {...(inPanel ? { "data-graview-in-panel": "" } : {})} data-graview-standing-on={where.type === "record" ? where.id : where.type === "list" ? `kind:${where.kind}` : where.type} style={sheetStyle}>
-        <div {...(now.level >= CITY ? { inert: true } : {})} style={away ? { minHeight: "100%", display: "flex", flexDirection: "column" } : { display: "contents" }}>
+        <div {...(now.level >= CITY ? { inert: true, "aria-hidden": true } : {})} style={away ? { minHeight: "100%", display: "flex", flexDirection: "column" } : { display: "contents" }}>
           {/* Under a host's bar (an embed's, in the slot) the shell keeps no room for it: the page keeps it here. */}
           {context.embedded ? <div aria-hidden="true" data-graview-bar-room="" style={{ height: "var(--graview-one-face-bar, 0px)", flex: "0 0 auto" }} /> : null}
           {/* Over a view that is the record's whole page, what it is linked to comes first: seen, and reached by the keyboard and a screen reader, before the view. */}
@@ -892,7 +957,7 @@ export function OnePlace<S extends AnySchema>({
           {/* What the record is linked to, grown into the page as it becomes the panel: its rows the lines leave from. */}
           {away && subject && !whole ? <Connected store={store} id={subject} box={connected} sheet={sheet} openRecord={openRecord} whole={false} /> : null}
           {/* Room at the page's foot only where the control would stand over the page's last words: none where the foot is empty beside it. */}
-          {away ? null : <FootRoom fab={fab} sheet={sheet} />}
+          {away ? null : <FootRoom fab={fab} sheet={sheet} inBox={inBox} />}
         </div>
       </div>
       {/*
@@ -933,7 +998,7 @@ export function OnePlace<S extends AnySchema>({
           </button>
         ))}
       </div>
-      {now.level === PANEL && !now.moving ? <PanelEdge view={view} size={sizePanel} keep={keepPanel} motion={motion} /> : null}
+      {now.level === PANEL && !now.moving ? <PanelEdge view={view} size={sizePanel} keep={keepPanel} motion={motion} frame={frame} /> : null}
       <Altitude box={fab} level={now.level} moving={now.moving} goTo={goTo} where={where} chosen={chosen} boards={boards} current={current} store={store} motion={motion} begin={beginAway} />
       <style>{ONE_PLACE_CSS}</style>
     </OneFaceContext.Provider>
@@ -1474,7 +1539,7 @@ const CONTENT = "a[href], button, input, select, textarea, img, svg, video, canv
  * control's top. A footer whose words stand at its right, the control at
  * its empty left, keeps no room at all.
  */
-function FootRoom({ fab, sheet }: { readonly fab: RefObject<HTMLDivElement | null>; readonly sheet: RefObject<HTMLDivElement | null> }) {
+function FootRoom({ fab, sheet, inBox }: { readonly fab: RefObject<HTMLDivElement | null>; readonly sheet: RefObject<HTMLDivElement | null>; readonly inBox: boolean }) {
   const room = useRef<HTMLDivElement>(null);
   const [height, setHeight] = useState(0);
   useEffect(() => {
@@ -1490,9 +1555,12 @@ function FootRoom({ fab, sheet }: { readonly fab: RefObject<HTMLDivElement | nul
         return r && r.width > 0 && r.height > 0 ? [r] : [];
       });
       if (parts.length === 0) return setHeight(0);
-      const scrollY = window.scrollY;
-      const whole = document.documentElement.scrollHeight - spacer.offsetHeight;
-      const end = Math.max(0, whole - window.innerHeight);
+      // What scrolls the page: the window, or in a box the page itself — each measured from its own top.
+      const top0 = inBox ? plane.getBoundingClientRect().top : 0;
+      const scrollY = inBox ? plane.scrollTop : window.scrollY;
+      const tall = inBox ? plane.clientHeight : window.innerHeight;
+      const whole = (inBox ? plane.scrollHeight : document.documentElement.scrollHeight) - spacer.offsetHeight;
+      const end = Math.max(0, whole - tall);
       let lowest = -Infinity;
       for (const el of plane.querySelectorAll<HTMLElement>("*")) {
         if (el === spacer || spacer.contains(el)) continue;
@@ -1501,7 +1569,7 @@ function FootRoom({ fab, sheet }: { readonly fab: RefObject<HTMLDivElement | nul
         if (!said) continue;
         const r = el.getBoundingClientRect();
         if (r.width === 0 || r.height === 0) continue;
-        if (r.bottom + scrollY < end + window.innerHeight - 400) continue;
+        if (r.bottom - top0 + scrollY < end + tall - 400) continue;
         if (!parts.some((part) => r.right > part.left - 8 && r.left < part.right + 8)) continue;
         // Fixed to the window (a notice, a dialog): it does not scroll to the page's end.
         if (el.offsetParent === null && getComputedStyle(el).position === "fixed") continue;
@@ -1516,12 +1584,12 @@ function FootRoom({ fab, sheet }: { readonly fab: RefObject<HTMLDivElement | nul
           if (style.overflowY !== "visible") seen = Math.min(seen, at.getBoundingClientRect().bottom);
         }
         if (seen === -Infinity) continue;
-        lowest = Math.max(lowest, seen + scrollY);
+        lowest = Math.max(lowest, seen - top0 + scrollY);
       }
       if (lowest === -Infinity) return setHeight(0);
       // The control's top where it rests, and air above it: the lowest such part ends there at the scroll's end.
-      const top = Math.min(...parts.map((part) => part.top)) - 8;
-      const need = Math.ceil(lowest - top + window.innerHeight - whole);
+      const top = Math.min(...parts.map((part) => part.top)) - top0 - 8;
+      const need = Math.ceil(lowest - top + tall - whole);
       setHeight((was) => (Math.abs(was - Math.max(0, need)) < 1 ? was : Math.max(0, need)));
     };
     const soon = () => {
@@ -1529,8 +1597,11 @@ function FootRoom({ fab, sheet }: { readonly fab: RefObject<HTMLDivElement | nul
     };
     soon();
     const sized = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(soon);
-    // The page is in the window's flow here (its box is the document's): the body's size is the page's.
-    sized?.observe(document.body);
+    // The page is in the window's flow here (its box is the document's): the body's size is the page's. In a box, the page's own.
+    // In a box, the page itself and the sheet it scrolls in (the wrapper between them draws no box of its own).
+    const content = inBox ? sheet.current?.querySelector("[data-graview-one-face-page]") : document.body;
+    if (content) sized?.observe(content);
+    if (inBox && sheet.current) sized?.observe(sheet.current);
     if (fab.current) sized?.observe(fab.current);
     const changed = typeof MutationObserver === "undefined" ? null : new MutationObserver(soon);
     if (sheet.current) changed?.observe(sheet.current, { childList: true, subtree: true, characterData: true });
@@ -1541,7 +1612,7 @@ function FootRoom({ fab, sheet }: { readonly fab: RefObject<HTMLDivElement | nul
       changed?.disconnect();
       window.removeEventListener("resize", soon);
     };
-  }, [fab, sheet]);
+  }, [fab, sheet, inBox]);
   return <div ref={room} aria-hidden="true" data-graview-altitude-room="" style={{ height }} />;
 }
 
@@ -1758,14 +1829,18 @@ export { PHONE };
  * most, a double press puts it back. The city beside it follows on the one
  * camera as it moves (`one-place-city.tsx`).
  */
-function PanelEdge({ view, size, keep, motion }: { readonly view: View; readonly size: (to: number | undefined) => void; readonly keep: () => void; readonly motion: { readonly current: Motion } }) {
+function PanelEdge({ view, size, keep, motion, frame }: { readonly view: View; readonly size: (to: number | undefined) => void; readonly keep: () => void; readonly motion: { readonly current: Motion }; readonly frame: RefObject<HTMLElement | null> }) {
   const phone = view.width <= PHONE;
   const range = panelRange(view);
   const panel = panelBox(view);
   const now = view.panel ?? range.default;
   const clamp = (value: number) => Math.max(range.min, Math.min(range.max, value));
   const bar = view.top ?? 0;
-  const fromPointer = (event: { clientX: number; clientY: number }) => (phone ? (event.clientY - bar) / Math.max(1, view.height - bar) : view.width - 12 - event.clientX);
+  // The pointer in the frame's terms: the window's, or the box's the face is held to.
+  const fromPointer = (event: { clientX: number; clientY: number }) => {
+    const at = frameOrigin(frame.current);
+    return phone ? (event.clientY - at.y - bar) / Math.max(1, view.height - bar) : view.width - 12 - (event.clientX - at.x);
+  };
   const step = phone ? 0.04 : 24;
   const said = phone ? `${Math.round((1 - now) * 100)}% of the window` : `${Math.round(now)} pixels wide`;
   return (

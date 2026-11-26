@@ -63,6 +63,8 @@ const files = {
 const manifest = handled ? JOURNEY_HANDLED_MANIFEST : JOURNEY_MANIFEST;
 const definition = { manifest, worker: { source: handled ? JOURNEY_HANDLED_JS : JOURNEY_JS }, onFailure: (reason, detail) => window.__failures.push([reason, detail]), onProblem: (said) => window.__problems.push(said) };
 window.__handle = mount(document.getElementById("app"), {
+  // The routed face and its scene, which this harness holds: an embed draws the one face unless told otherwise.
+  sceneUnderPages: false,
   app: handled ? weekendOnDayApp : timed ? weekendTimedApp : weekendApp,
   seed: weekendSeed,
   principal: asked.get("seat") === "theo" ? theo : nana,

@@ -141,6 +141,8 @@ const brands = { first: { ...${JSON.stringify(first)}, schemes: SCHEMES }, secon
 window.__problems = [];
 const definition = { manifest: ${JSON.stringify(MASTHEAD_MANIFEST)}, worker: { source: ${JSON.stringify(`${MASTHEAD_JS}\ngraview.style(${JSON.stringify(ownFaceSheet(repoRoot))});\n`)} }, asset: (path) => path, onFailure: (reason, detail) => window.__failures.push([reason, detail]), onProblem: (said) => window.__problems.push(said) };
 window.__handle = mount(document.getElementById("app"), {
+  // The routed face and its scene, which this harness holds: an embed draws the one face unless told otherwise.
+  sceneUnderPages: false,
   app: offersApp,
   seed: offersSeed,
   principal: lin,

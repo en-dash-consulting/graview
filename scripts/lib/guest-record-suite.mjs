@@ -61,6 +61,8 @@ const manifest = { ...${JSON.stringify(RECORD_MANIFEST)}, ...(asked.get("eager")
 const definition = { manifest, worker: { source: asked.get("eager") ? window.EAGER : window.EXAMPLE }, author: "Made by Claude, for nick", onFailure: (reason, detail) => window.__failures.push([reason, detail]) };
 const calls = { manifest: ${JSON.stringify(CALL_MANIFEST)}, worker: { source: asked.get("eager") ? window.EAGER_CALLS : window.CALLS }, onFailure: (reason, detail) => window.__failures.push([reason, detail]) };
 window.__handle = mount(document.getElementById("app"), {
+  // The routed face and its scene, which this harness holds: an embed draws the one face unless told otherwise.
+  sceneUnderPages: false,
   app: workshopApp,
   seed: workshopSeed,
   principal: asked.get("seat") === "rae" ? rae : nick,

@@ -1867,7 +1867,7 @@ export const pages = createPageRegistry&lt;S, PageComponent&lt;S&gt;&gt;(schema)
 <h3>Rung two: a product design</h3>
 <p>Replacing every surface — the shell under the bar, the home, the problems, each kind's list and record — is a product: <code>graview-pages-design</code>, with its own tabs lit from the section a kind's pages are in, and Find and the way back in its own bar.</p>
 <h3>On somebody else's page</h3>
-<p><code>graview-embed</code> mounts the app into one element of any page (<code>face: "pages"</code>, <code>path</code>, <code>routing</code>): the routed face in a box, without the city. A host whose page IS the app passes <code>sceneUnderPages: true</code> to <code>mount</code>.</p>
+<p><code>graview-embed</code> mounts the app into one element of any page: the one face held to that box. <code>routing: "address"</code> stands it against the window.</p>
 <h3>Then find out whether it worked</h3>
 <div class="code" data-scroller><pre><code class="language-sh">pnpm build &amp;&amp; npx graview check ./dist/domain/app.js   # the declaration is still whole
 pnpm test                                               # render every page you registered</code></pre></div>
