@@ -42,7 +42,8 @@ const openProfile = async (page) => {
 };
 
 const APPS = {
-  todo: { port: portFor("todo"), ready: "__todoReady", query: "&today=2026-09-01", states: {
+  // Things' root is the one face; the states below are its Scene's own face's, at /scene/.
+  todo: { port: portFor("todo"), ready: "__todoReady", query: "&today=2026-09-01", scene: "/scene", states: {
     lists: async () => {},
     /*
      * AT THE READER'S LARGEST TEXT, which is 200% of the browser's own and
@@ -932,7 +933,7 @@ try {
         const viewport = typeof entry === "function" ? { width: 1560, height: 940 } : entry.viewport;
         const page = await browser.newPage({ viewport });
         try {
-          await page.goto(`http://localhost:${app.port}/?theme=light${app.query ?? ""}`, { waitUntil: "load" });
+          await page.goto(`http://localhost:${app.port}${app.scene ?? ""}/?theme=light${app.query ?? ""}`, { waitUntil: "load" });
           await page.waitForFunction((f) => f in window, app.ready, { timeout: 120_000 });
           await page.waitForTimeout(900);
           await go(page);

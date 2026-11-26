@@ -49,6 +49,8 @@ const APPS = {
   todo: {
     port: portFor("todo"),
     ready: "__todoReady",
+    // Things' root is the one face; the states below but the pages are its Scene's own face's, at /scene/.
+    scene: "/scene",
     // The example is written around a day, so the screenshots pin it — a
     // survey whose pictures change every morning is a survey nobody can
     // compare.
@@ -110,8 +112,8 @@ const APPS = {
         await page.click('[data-testid="overview"]');
       },
       /*
-       * THE OTHER FACE, photographed like any state: the routed pages from
-       * the same declaration, at the same two schemes.
+       * THE ONE FACE, photographed like any state: the app's pages at its
+       * root, from the same declaration, at the same two schemes.
        */
       pages: async (page) => {
         const scheme = new URL(page.url()).searchParams.get("theme");
@@ -411,7 +413,7 @@ try {
         for (const [state, go] of Object.entries(app.states)) {
           const page = await browser.newPage({ viewport: { width: 1560, height: 940 } });
           try {
-            await page.goto(`http://localhost:${app.port}/?theme=${scheme}${app.query ?? ""}`, {
+            await page.goto(`http://localhost:${app.port}${app.scene ?? ""}/?theme=${scheme}${app.query ?? ""}`, {
               waitUntil: "load",
             });
             await page.waitForFunction((flag) => flag in window, app.ready, { timeout: 120_000 });
