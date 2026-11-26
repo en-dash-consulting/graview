@@ -1,6 +1,6 @@
 import { checkKitContrast, resolveKit, type AnySchema, type GraviewApp, type KitOverrides, type Principal } from "@graview/core";
 import { compileDocument } from "@graview/core/check";
-import { mount, mountWhenNear, type EmbedFace, type EmbedHandle } from "@graview/embed";
+import { mount as mountEmbed, mountWhenNear, type EmbedFace, type EmbedHandle, type EmbedOptions } from "@graview/embed";
 import { registerWorkerView, type WorkerViewManifest } from "@graview/guest/host/views";
 import { rotaApp } from "@graview/rota";
 import { rotaViews } from "@graview/rota/views";
@@ -23,6 +23,15 @@ import newspaperSource from "@site-asks/season/newspaper.js?raw";
 import { seedbedBrand as SEEDBED_BRAND } from "./domain/brand.js";
 import { CHAPTERS, type Chapter } from "./domain/chapters.js";
 import { seedbedDesign } from "./ui/design.js";
+
+/*
+ * THE FACES COME FROM THE PAGE. graview.dev serves the garden's Figtree and
+ * Fraunces itself (apps/site/chrome.mjs declares them beside its own), so a
+ * frame on it never asks Google Fonts for a brand's faces.
+ */
+function mount<S extends AnySchema>(element: HTMLElement, options: EmbedOptions<S>): EmbedHandle {
+  return mountEmbed(element, { fonts: false, ...options });
+}
 import { seedbedPages } from "./ui/pages.js";
 import { seedbedViews } from "./ui/views.js";
 

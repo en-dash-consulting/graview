@@ -57,8 +57,8 @@ describe("what a crawler reads off every page", () => {
   it("finds a language, a viewport, a theme color, a title, a description, a canonical address and a card on every page", () => {
     for (const file of pages) {
       const html = read(file);
-      expect(html, file).toMatch(/^<!doctype html>\n<html lang="en">/);
-      expect(html, file).toContain('<meta name="viewport" content="width=device-width, initial-scale=1">');
+      expect(html, file).toMatch(/^<!doctype html>\n<html lang="en"[ >]/);
+      expect(html, file).toContain('<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">');
       expect(html, file).toContain('<meta name="theme-color"');
       // One <title> in the head; an inline SVG's own <title> is its accessible name, not the page's.
       expect(html.slice(0, html.indexOf("</head>")).match(/<title>/g), file).toHaveLength(1);

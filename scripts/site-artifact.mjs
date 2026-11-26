@@ -43,7 +43,10 @@ const withScript = inlined.replace(
   /<script src="chapters\.js"><\/script>/,
   () => `<script>${readFileSync(resolve(repoRoot, "docs/site/chapters.js"), "utf8").replace(/<\/script>/g, "<\\/script>")}</script>`,
 );
-const body = [`<title>${title}</title>`, ...links, "", withScript, ""].join("\n");
+// And the home's map: three.js and the script that draws with it, inline, in that order.
+const inline = (file) => readFileSync(resolve(repoRoot, "docs/site", file), "utf8").replace(/<\/script>/g, "<\\/script>");
+const withHome = withScript.replace(/<script src="home\.js"><\/script>/, () => `<script>${inline("vendor/three-r128.min.js")}</script>\n<script>${inline("home.js")}</script>`);
+const body = [`<title>${title}</title>`, ...links, "", withHome, ""].join("\n");
 
 const out = process.argv[2] ?? resolve(tmpdir(), "graview-artifact.html");
 writeFileSync(out, body, "utf8");

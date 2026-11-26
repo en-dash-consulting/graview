@@ -110,16 +110,20 @@ describe("every recipe", () => {
   }
 });
 
-describe("the front page", () => {
-  it("opens on the prompt with the first recipe's task, mounts that recipe's app beside it, and links every recipe", () => {
+describe("the home", () => {
+  it("hands an agent the prompt start.md answers first, and links the recipes from the docs", () => {
+    /*
+     * The front page no longer opens on a recipe: it draws one story and
+     * ends on one prompt, the ask to map the repository, which start.md
+     * takes first. The recipes are the same procedure with a task named,
+     * one press away in the docs.
+     */
     const landing = read("index.html");
-    const first = index.recipes[0]!;
-    const text = /<p class="prompt-text" id="prompt-text">([\s\S]*?)<\/p>/.exec(landing)?.[1] ?? "";
-    expect(text.replace(/<[^>]+>/g, "").replace(/&rsquo;/g, "'")).toBe(index.prompt.replace("{task}", first.task));
-    expect(landing).toContain(`class="chapter-live hero-live" data-graview-recipe="${first.slug}"`);
-    // The first recipe is the hero's first tab; the others are listed under the recipes, each linked.
-    expect(landing).toContain(`data-task="${index.prompt.replace("Read https://graview.dev/start.md, then ", "").replace(/\.$/, "").replace("{task}", first.task).replace("'", "’")}"`);
-    for (const recipe of index.recipes) expect(landing, recipe.slug).toContain(`href="docs/recipes/${recipe.slug}.html"`);
+    const prompt = /<code id="prompt">([\s\S]*?)<\/code>/.exec(landing)?.[1] ?? "";
+    expect(prompt.replace(/&rsquo;/g, "'")).toBe("Read https://graview.dev/start.md, then map this repo as a Graview app and show me what's in it.");
+    expect(landing).toContain('href="docs/index.html"');
+    expect(read("docs/index.html")).toContain('href="recipes.html"');
+    for (const recipe of index.recipes) expect(read("docs/recipes.html"), recipe.slug).toContain(`href="recipes/${recipe.slug}.html"`);
     expect(landing).toContain("npm create graview@latest");
   });
 });
@@ -131,6 +135,27 @@ describe("start.md, the page the agent reads", () => {
 
   it("is linked from llms.txt", () => {
     expect(read("llms.txt")).toContain("https://graview.dev/start.md");
+  });
+
+  it("takes the home's prompt, map this repo and show me what is in it: the part chosen and said, the app shown, then the report", () => {
+    /*
+     * The ask on the front page leaves the choice to the agent, so the page
+     * it reads says how to make it (a part that maps clearly, with relations
+     * and a gap a rule can find, seeded from what is there), to say what it
+     * chose, and to end by showing the person the app before reporting.
+     */
+    expect(start).toMatch(/\*\*Map this repo and show me what is in it\.\*\*/);
+    const choose = /1\. \*\*If the task is to map the repository, choose the part first\.\*\*([\s\S]*?)\n2\. /.exec(start)?.[1] ?? "";
+    expect(choose).toMatch(/maps most clearly/);
+    expect(choose).toMatch(/relations between them/);
+    expect(choose).toMatch(/a rule has something to find/);
+    expect(choose).toMatch(/Say what you chose and why/);
+    const report = start.slice(start.indexOf("## 6. Report back"));
+    expect(report).toMatch(/^## 6\. Report back\n\nShow the person the app first/);
+    expect(report).toContain("which part of the repository you mapped and why you chose it");
+    // And the asks it already took are still there: a named part, and a domain in words.
+    expect(start).toMatch(/\*\*An app from a named part of the repository\*\*/);
+    expect(start).toMatch(/\*\*An app for something named in words\*\*/);
   });
 
   it("walks the six steps in order", () => {

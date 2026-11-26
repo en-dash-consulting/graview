@@ -23,6 +23,7 @@ import { fileURLToPath } from "node:url";
 import { engineName, launchEngine } from "./lib/engine.mjs";
 import { chooseSteps, partPath } from "./lib/parts.mjs";
 import { frames, settled } from "./lib/settled.mjs";
+import { homeFrames, homeInEngines, homeMap, homePlain } from "./lib/home-checks.mjs";
 
 const require = createRequire(import.meta.url);
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -66,8 +67,8 @@ const arrive = async (page, url) => {
 };
 
 const PAGES = [
-  /* The prompt and the recipe it opens on, the season the asks reshape and the rota, live; the other recipes mount when their tab is chosen. */
-  { file: "index.html", name: "the page", live: 3, skip: "#what" },
+  /* The home: one canvas and the story over it, no live Graview; its own claims are in lib/home-checks.mjs. */
+  { file: "index.html", name: "the page", live: 0, skip: "#story" },
   /* The long tour, moved off the front page: eight feature frames and the first step of the stepper. */
   { file: "tour.html", name: "the tour", live: 9, skip: "#tour" },
   /* Sixteen chapters and the kit's own frame. */
@@ -271,7 +272,7 @@ async function keyboard(sheet) {
   report.criteria[`theSkipLinkReachesTheContentOn_${sheet.file}`] =
     (await one.evaluate(() => location.hash)) === sheet.skip;
   report.criteria[`focusIsVisibleOn_${sheet.file}`] = await one.evaluate(() => {
-    const link = document.querySelector(".jump a");
+    const link = document.querySelector(".site-nav a");
     link.focus();
     const style = getComputedStyle(link);
     return style.outlineStyle === "solid" && parseFloat(style.outlineWidth) >= 2;
@@ -317,93 +318,6 @@ async function stepper() {
       [...document.querySelectorAll(".step-panel")].filter((p) => !p.hidden).length === 1,
   );
   await stepper.close();
-}
-
-async function hero() {
-  /*
-   * THE HERO'S TABS, which are the front page's whole argument now: choose
-   * another app and the prompt says it, Copy copies it, and the app on the
-   * stage is a DIFFERENT app — a repository's docs, a volunteer rota, a
-   * garden in its own design opened on its pages. Tabs that change the words
-   * and leave the picture would be the worst thing this page could do.
-   */
-  const front = await browser.newPage({ viewport: { width: 1280, height: 900 } });
-  await arrive(front, pageAt("index.html"));
-  await front.waitForFunction(() => document.querySelector('#stage-docs [data-graview-view^="kind:"]') !== null, null, { timeout: 20_000 }).catch(() => {});
-  const districtsOn = (id) => front.evaluate((id) => [...document.querySelectorAll(`#${id} [data-graview-view^="kind:"]`)].map((el) => el.getAttribute("data-graview-view")).sort().join(","), id);
-  const docsDistricts = await districtsOn("stage-docs");
-  await front.click("#rt-rota");
-  await front.waitForFunction(() => document.querySelector('#stage-rota [data-graview-view^="kind:"]') !== null, null, { timeout: 20_000 }).catch(() => {});
-  const rotaDistricts = await districtsOn("stage-rota");
-  report.criteria.aHeroTabMountsThatApp =
-    docsDistricts !== "" && rotaDistricts !== "" && docsDistricts !== rotaDistricts &&
-    (await front.evaluate(() => document.getElementById("stage-docs")?.hidden === true && document.getElementById("stage-rota")?.hidden === false));
-  report.criteria.theTabSaysItsTaskInThePrompt = await front.evaluate(
-    () => document.getElementById("prompt-task")?.textContent === "make a Graview app for our volunteer rota" && (document.querySelector(".copy-prompt")?.getAttribute("data-copy") ?? "").includes("then make a Graview app for our volunteer rota."),
-  );
-  await front.focus("#rt-rota");
-  await front.keyboard.press("ArrowRight");
-  await front.waitForFunction(() => document.querySelector('#stage-garden [data-graview-face="pages"]') !== null, null, { timeout: 20_000 }).catch(() => {});
-  report.criteria.theHeroTabsAreReachableFromTheKeyboard = await front.evaluate(
-    () => document.activeElement?.id === "rt-garden" && [...document.querySelectorAll(".stage-panel")].filter((p) => !p.hidden).length === 1,
-  );
-  report.criteria.theGardenOpensOnItsOwnPages = await front.evaluate(() => document.querySelector('#stage-garden [data-graview-face="pages"]') !== null);
-  await front.close();
-}
-
-async function bare() {
-  /* The first frame is finished before anything loads: a picture of the city and the prompt, not a box that says loading. */
-  const bare = await browser.newPage({ viewport: { width: 1280, height: 900 }, javaScriptEnabled: false });
-  await bare.goto(pageAt("index.html"), { waitUntil: "load" });
-  report.criteria.theFirstFrameIsFinishedWithoutScript = await bare.evaluate(() => {
-    const poster = document.querySelector("#stage-docs .poster .dark svg");
-    const box = poster?.getBoundingClientRect();
-    return !!box && box.width > 200 && box.height > 150 && (document.getElementById("prompt-text")?.textContent ?? "").includes("start.md");
-  });
-  await bare.close();
-}
-
-async function asks() {
-  /*
-   * THE INTERFACE IS GENERATED, THEN ASKED FOR. The hero's run does not stop
-   * at a working app: it ends on the modules redrawn as a departures board,
-   * a worker view the view host runs, with the three docs its repair wrote
-   * reading WRITTEN. And under it each ask redraws the same season: the
-   * list a person asked for has Sign up on the game nobody brings snacks
-   * to, the newspaper has a WANTED ad for it. A view's drawing is in a
-   * shadow root, so its words are read there.
-   */
-  const asked = await browser.newPage({ viewport: { width: 1280, height: 900 } });
-  await arrive(asked, pageAt("index.html"));
-  const drawnIn = (selector, words) =>
-    asked
-      .waitForFunction(
-        ({ selector, words }) => {
-          const host = document.querySelector(selector);
-          if (!host) return false;
-          const said = [...host.querySelectorAll("*")].map((el) => el.shadowRoot?.textContent ?? "").join(" ");
-          return words.every((word) => said.includes(word));
-        },
-        { selector, words },
-        { timeout: 45_000, polling: 250 },
-      )
-      .then(() => true, () => false);
-  await asked.locator("#stage-docs").scrollIntoViewIfNeeded();
-  report.criteria.theHeroRunEndsOnTheDeparturesBoard =
-    (await drawnIn("#stage-docs", ["DEPARTURES", "WRITTEN", "packages/search"])) &&
-    (await asked.evaluate(() => document.querySelector('#hero-run li[data-step="ask"]')?.classList.contains("now") === true && document.querySelector("#stage-docs [data-graview-face]")?.getAttribute("data-graview-face") === "pages"));
-  await asked.locator("#asks").scrollIntoViewIfNeeded();
-  await asked.waitForFunction(() => document.querySelector('[data-graview-app="season"] [data-graview-embed]') !== null, null, { timeout: 20_000 }).catch(() => {});
-  const generatedSays = await asked
-    .waitForFunction(() => (document.querySelector('[data-graview-app="season"]')?.textContent ?? "").includes("Brookside Bears"), null, { timeout: 20_000 })
-    .then(() => true, () => false);
-  await asked.click('.ask-chips [data-ask="remaining-games"]');
-  const listSays = await drawnIn('[data-graview-app="season"]', ["Brookside Bears", "Sign up", "One still needs snacks."]);
-  await asked.click('.ask-chips [data-ask="courier"]');
-  const paperSays = await drawnIn('[data-graview-app="season"]', ["The Comets Courier", "WANTED", "Brookside Bears game"]);
-  report.asks = { generatedSays, listSays, paperSays };
-  report.criteria.eachAskRedrawsTheSameSeasonWithItsRuleShowing = generatedSays && listSays && paperSays;
-  await asked.close();
 }
 
 async function own() {
@@ -494,37 +408,6 @@ async function chapters() {
   await page.close();
 }
 
-async function reduced() {
-  const reduced = await browser.newPage({ viewport: { width: 1280, height: 900 }, reducedMotion: "reduce" });
-  await arrive(reduced, pageAt("index.html"));
-  await settled(reduced, { most: 400 });
-  // The opener's own Graview is on screen at load, so its cards are the
-  // thing to ask: under reduced motion the theme turns their transitions off.
-  await reduced.waitForFunction(() => document.querySelector("[data-graview-view]") !== null, null, { timeout: 20_000 }).catch(() => {});
-  report.criteria.reducedMotionIsHonored = await reduced.evaluate(() => {
-    const card = document.querySelector("[data-graview-view]");
-    return (
-      card !== null &&
-      parseFloat(getComputedStyle(card).transitionDuration) < 0.05 &&
-      getComputedStyle(document.documentElement).scrollBehavior === "auto"
-    );
-  });
-  await reduced.close();
-}
-
-async function forced() {
-  const forced = await browser.newPage({ viewport: { width: 1280, height: 900 }, forcedColors: "active" });
-  await arrive(forced, pageAt("index.html"));
-  await settled(forced, { most: 400 });
-  report.criteria.forcedColorsKeepTheMeaningfulMarks = await forced.evaluate(
-    () => {
-      // The ask the season is drawn from is marked by its edge alone, so it keeps that mark in system colors.
-      const pressed = document.querySelector('.ask-chips [aria-pressed="true"]');
-      return pressed !== null && getComputedStyle(pressed).forcedColorAdjust === "none";
-    },
-  );
-  await forced.close();
-}
 
 /*
  * THE STEPS, each on pages of its own, so the chain runs them in parts
@@ -536,13 +419,13 @@ const steps = chooseSteps([
   ),
   ...PAGES.map((sheet) => ({ name: `keyboard/${sheet.file}`, run: () => keyboard(sheet) })),
   { name: "stepper", run: stepper },
-  { name: "hero", run: hero },
-  { name: "bare", run: bare },
-  { name: "asks", run: asks },
   { name: "own", run: own },
   { name: "chapters", run: chapters },
-  { name: "reduced", run: reduced },
-  { name: "forced", run: forced },
+  /* The home (lib/home-checks.mjs): three engines, the map's presses, the plain page, frame times. */
+  { name: "home/engines", run: () => homeInEngines(report, pageAt) },
+  { name: "home/map", run: () => homeMap(report, browser, pageAt) },
+  { name: "home/plain", run: () => homePlain(report, browser, pageAt) },
+  { name: "home/frames", run: () => (ENGINE === "chromium" ? homeFrames(report, browser, pageAt) : undefined) },
 ]);
 
 browser = await launchEngine(ENGINE, { headless: true });

@@ -45,6 +45,10 @@ describe("the site says what the repository says", () => {
     expect(run("site-css.mjs")).toBeNull();
   });
 
+  it("writes the one head, header and footer into every hand-designed page", () => {
+    expect(run("site-chrome.mjs")).toBeNull();
+  });
+
   it("puts the repository's own numbers on the landing page", () => {
     /*
      * The one claim a marketing page cannot be trusted with. Nobody recounts
@@ -68,7 +72,7 @@ describe("the site says what the repository says", () => {
     expect(pages).toContain("node scripts/site-numbers.mjs --release && node scripts/site-docs.mjs");
     expect(pages).not.toMatch(/^\s+paths:/m);
     // The page still carries the count, as a number, for those two to fill in.
-    expect(readFileSync(resolve(repoRoot, "docs/site/index.html"), "utf8")).toMatch(/<strong data-number="tests">\d+<\/strong>/);
+    expect(readFileSync(resolve(repoRoot, "docs/site/index.html"), "utf8")).toMatch(/<strong data-number="tests">\d{1,3}(,\d{3})*<\/strong>/);
   });
 
   it("has docs pages that match the packages, skills and findings in the tree", () => {
@@ -76,10 +80,6 @@ describe("the site says what the repository says", () => {
        sitemap and the landing pages' structured data, all written by the
        same run: tests/site-for-machines.test.ts holds what they promise. */
     expect(run("site-docs.mjs")).toBeNull();
-  });
-
-  it("draws the hero's first frame from the chapter the hero mounts", () => {
-    expect(run("site-poster.mjs")).toBeNull();
   });
 });
 
@@ -102,32 +102,55 @@ describe("what the pages promise each other", () => {
     expect(read("tour.html")).toContain('id="surfaces"');
   });
 
-  it("opens the landing page on the claim, then two doors, the agent's prompt and Graview Cloud, then the interface asked for, before what is built on it", () => {
+  it("opens the home on the claim and the prompt, then the six scenes as captions in the page, then the questions", () => {
+    /*
+     * The home is one canvas, and nothing on the canvas is a word: every
+     * caption is the page's own text, in reading order, so a keyboard, a
+     * screen reader and a browser without WebGL get the whole story.
+     */
     const landing = read("index.html");
     const main = landing.slice(landing.indexOf("<main"));
-    const h1 = main.indexOf("<h1");
-    const cloud = main.indexOf('href="https://graview.cloud/#invite"');
-    const prompt = main.indexOf('id="prompt-text"');
-    expect(h1).toBeGreaterThan(-1);
-    // The headline says what it is; the agent's prompt and its tabs, then the hosted door beside it.
-    expect(prompt).toBeGreaterThan(h1);
-    expect(main.indexOf('class="recipe-tabs"')).toBeGreaterThan(prompt);
-    expect(cloud).toBeGreaterThan(prompt);
-    // The bar's one filled link is the hosted door too.
-    expect(landing.slice(0, landing.indexOf("<main"))).toContain('class="go" href="https://graview.cloud/#invite"');
-    // No stat strip in the hero: the one number left on the page is the footer's.
-    const hero = /<section id="what"[\s\S]*?<\/section>/.exec(main)?.[0] ?? "";
-    expect(hero).not.toMatch(/data-number=/);
-    // The sections the page is cut to, in order: Cloud's band once the reader has seen what an app is.
-    const order = ["what", "asks", "builds", "gives", "cloud", "built", "faq"].map((id) => main.indexOf(`<section id="${id}"`));
-    expect(order.every((at) => at > -1)).toBe(true);
-    expect([...order].sort((a, b) => a - b)).toEqual(order);
-    expect(main.match(/<section id="/g)).toHaveLength(7);
-    // Each feature goes to its own section of the tour.
-    for (const anchor of ["surfaces", "rules", "lenses", "agent", "acts", "studio"]) {
-      expect(main).toContain(`href="tour.html#${anchor}"`);
-      expect(read("tour.html")).toContain(`id="${anchor}"`);
-    }
+    const h1 = /<h1 id="h-home">([\s\S]*?)<\/h1>/.exec(main)?.[1] ?? "";
+    expect(h1.replace(/<[^>]+>/g, "")).toBe("Any agent can draw the screen. Look behind it.");
+    const prompt = main.indexOf('id="prompt"');
+    expect(prompt).toBeGreaterThan(main.indexOf("<h1"));
+    const scenes = [...main.matchAll(/<li class="cap" data-beat="(\d)" data-scene="[^"]+">[\s\S]*?<h2>([\s\S]*?)<\/h2>/g)].map(([, beat, h2]) => [Number(beat), h2.replace(/<[^>]+>/g, "")]);
+    expect(scenes).toEqual([
+      [1, "This is what a screen should be standing on."],
+      [2, "It knows what can change, and what is wrong."],
+      [3, "Your agent reads it before it draws."],
+      [4, "So ask for any screen. Every one is true."],
+      [5, "And a button does what it says."],
+      [6, "Give your agent something real to draw on."],
+    ]);
+    // The closing scene hands over the same prompt, then the questions follow the story.
+    const closing = /<li class="cap" data-beat="6"[\s\S]*?<\/li>/.exec(main)?.[0] ?? "";
+    const copy = "Read https://graview.dev/start.md, then map this repo as a Graview app and show me what's in it.";
+    expect(closing).toContain(`data-copy="${copy}"`);
+    expect(main.split(`data-copy="${copy}"`).length - 1).toBe(2);
+    expect(main.indexOf('<section id="faq"')).toBeGreaterThan(main.indexOf('data-beat="6"'));
+    // The canvas says what it shows, and the story is drawn by the site's own copy of three.js.
+    expect(main).toMatch(/<canvas id="gl" role="img" aria-label="[^"]{40,}">/);
+    expect(readFileSync(resolve(repoRoot, "docs/site/home.js"), "utf8")).toContain('lib.src = "vendor/three-r128.min.js"');
+  });
+
+  it("takes every fact on the home from the site's numbers, never from a hand", () => {
+    /*
+     * The closing line says how many tests, how many skills, which license
+     * and which version. Each is marked for scripts/site-numbers.mjs, which
+     * fills it from the tree (the test count only at a release) and fails
+     * the check above when one disagrees.
+     */
+    const landing = read("index.html");
+    const facts = /<ul class="facts">([\s\S]*?)<\/ul>/.exec(landing)?.[1] ?? "";
+    const strong = [...facts.matchAll(/<strong([^>]*)>/g)].map(([, attrs]) => attrs.trim());
+    expect(strong).toEqual(['data-number="tests"', 'data-number="skills"', 'data-fact="license"', 'data-fact="version"']);
+    const graview = JSON.parse(readFileSync(resolve(repoRoot, "packages/graview/package.json"), "utf8")) as { version: string; license: string };
+    expect(graview.license).toBe("Elastic-2.0");
+    expect(facts).toContain('<strong data-fact="license">Elastic License 2.0</strong>');
+    expect(facts).toContain(`<strong data-fact="version">${graview.version}</strong>, pre-1.0`);
+    // And a count said in a sentence is marked too.
+    expect(landing).toMatch(/through <span data-number-word="skills">[a-z-]+<\/span> skills/);
   });
 
   it("links the docs and the long version to each other and back", () => {
@@ -188,11 +211,11 @@ describe("the site is a Graview app", () => {
       return statSync(path).isDirectory() ? walk(path) : [relative(SITE_DIR, path)];
     });
   /* What the site serves to read: every page, twin and file for crawlers and models. Not the site's own
-     assets (the stylesheet, the bundle, the face, the pictures), not the recipes' committed files, not
+     assets (the stylesheet, the bundle, the faces, three.js and its license, the pictures), not the recipes' committed files, not
      this folder's README and not the narrow-width fixture. */
   const served = walk(SITE_DIR)
     .filter((file) => /\.(html|md|txt|xml)$/.test(file))
-    .filter((file) => !file.startsWith("brand/") && !file.startsWith("_") && file !== "README.md")
+    .filter((file) => !file.startsWith("brand/") && !file.startsWith("vendor/") && !file.startsWith("_") && file !== "README.md")
     .sort();
 
   it("has a declaration that passes graview check with no error and no warning", () => {

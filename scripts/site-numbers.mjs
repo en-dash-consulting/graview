@@ -130,6 +130,24 @@ export function spelled(n) {
 }
 const capital = (word, like) => (/^[A-Z]/.test(like) ? word[0].toUpperCase() + word.slice(1) : word);
 
+/**
+ * A FACT ON THE PAGE IS READ OFF THE PACKAGE, TOO. The home's closing line
+ * says which license and which version, and both are the `graview`
+ * package's own: `data-fact="license"` its license, said in words, and
+ * `data-fact="version"` its version, which moves only when a release does
+ * (`pnpm release:prepare` and `pnpm version-packages` run this).
+ */
+const LICENSES = { "Elastic-2.0": "Elastic License 2.0" };
+export function factsOf() {
+  const manifest = JSON.parse(readFileSync(at("packages/graview/package.json"), "utf8"));
+  const license = LICENSES[manifest.license];
+  if (!license) throw new Error(`packages/graview/package.json says license "${manifest.license}", which scripts/site-numbers.mjs has no words for`);
+  return { license, version: manifest.version };
+}
+
+/** A count as the page writes it: digits, grouped in thousands. */
+export const written = (n) => Number(n).toLocaleString("en-US");
+
 /** Counts that move with nearly every pull request: written only with `--release`. */
 export const VOLATILE = ["tests", "testFiles"];
 
@@ -140,16 +158,25 @@ export function countsFor({ release = false } = {}) {
   return counts;
 }
 
-/** The pages that carry counts: the landing page, and the long version. */
+/** The pages that carry counts: the home, the tour and the long version. */
 export const PAGES = ["apps/site/pages/index.html", "apps/site/pages/tour.html", "apps/site/pages/progression.html"];
 
 /** Fill every marked count on a page; `wrong` collects what disagreed. */
-export function fill(html, counts, wrong = []) {
+export function fill(html, counts, wrong = [], facts = factsOf()) {
   return html
     .replace(/(<(strong|span) data-number="([a-zA-Z]+)">)([^<]*)(<\/\2>)/g, (whole, open, _tag, name, said, close) => {
       const found = counts[name];
       if (found === null || found === undefined) return whole;
-      if (String(found) !== said) wrong.push(`${name}: the page says ${said}, the repository says ${found}`);
+      if (written(found) !== said) wrong.push(`${name}: the page says ${said}, the repository says ${written(found)}`);
+      return `${open}${written(found)}${close}`;
+    })
+    .replace(/(<(strong|span) data-fact="([a-zA-Z]+)">)([^<]*)(<\/\2>)/g, (whole, open, _tag, name, said, close) => {
+      const found = facts[name];
+      if (found === undefined) {
+        wrong.push(`${name}: the page asks for a fact scripts/site-numbers.mjs does not know`);
+        return whole;
+      }
+      if (found !== said) wrong.push(`${name}: the page says ${said}, the package says ${found}`);
       return `${open}${found}${close}`;
     })
     .replace(/(<span data-number-word="([a-zA-Z]+)">)([^<]*)(<\/span>)/g, (whole, open, name, said, close) => {
