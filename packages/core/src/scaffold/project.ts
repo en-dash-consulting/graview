@@ -562,6 +562,7 @@ export function readme(ids: Ids, workspace = false): string {
 src/ui/
   views.tsx      registerDefaultViews, then your own where the generic one is wrong
   pages.tsx      the ${ids.kind}'s page and the home, in your words, over the derived ones
+  seat.tsx       the agent's seat and the studio, on the app's bar
 src/main.tsx     the theme, the store that remembers, and the app on one face
 tests/           the rule fires on a graph that breaks it, and its repair resolves it`;
   const linked = ids.link
@@ -620,8 +621,11 @@ the interface, or an agent reads a tool schema.
   drawn relation selectable, and offer the acts from either end.
 - **The past is a horizon.** \`lifecycle\` on the kind keeps a closed ${ids.spoken}
   in the record and out of the counts; \`?past=1\` widens the view.
-- **A seat and a tool surface.** The seat on every page and the derived tool
-  schemas read the same declaration.
+- **A seat, the studio and a tool surface.** The bar's bell holds the agent's
+  seat in its Activity — at zero it offers starter data — and the person's
+  menu holds the studio, the app's own declaration as a graph: change it
+  there, and in development Apply writes it back into \`src/domain\`. Both
+  read the same declaration as the derived tool schemas.
 - **One face.** \`/\` is the app as ordinary routed pages, at any width. It
   lands on a gallery of the app's pictures — every kind drawn as a card until
   you title a lens, then the lens by its name — with lists, records, forms

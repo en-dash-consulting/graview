@@ -14,6 +14,11 @@ this package serves lists, records, forms, problems and history as ordinary link
   and its links to the Scene at `sceneHref`; an embedded face (`embedded`) is the routed
   face in its box unless its host says `true`. `onTheOneFace(context)` says which a context
   draws. `graview create` writes one `PagesApp` at `/`, and so does `apps/todo`.
+- **The seat and the studio, on the bar.** `seat` on the context (handed the call
+  recorder, as the Scene's `Shell` takes it) is held in the bell's Activity under "The
+  agent's seat", with the calls it makes; `studio` (`<StudioPlace app={…} />` from
+  `@graview/studio`) is held in the person's menu under "Keeping this app". `graview
+  create` writes both in `src/ui/seat.tsx`.
 
 - **One store, no second path.** Pages read through the same `Store` and write through the
   same mutations with the same principal; withheld actions render disabled with their

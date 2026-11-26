@@ -105,7 +105,11 @@ any other.
    whoever the studio's door is offered to (`mayChangeDeclaration`), and to
    nobody else.
 
-6. **Put it on a page.** The studio is an app: mount `studioApp()` with
+6. **Put it on a page.** On the app's own bar: `studio: <StudioPlace
+   app={app} />` on `PagesApp`'s context (or `Shell`'s `studio`) is a way
+   in under "Keeping this app" in the person's menu, and in development
+   Apply writes the files into `src/domain` through `studioDoor()` in
+   vite.config.ts. Or as an app of its own: mount `studioApp()` with
    `declarationToGraph(app)` as the seed, and register
    `createStudioLens(app).View` over `kind` with a title — a place, "What
    the checker says", one press from anywhere.
