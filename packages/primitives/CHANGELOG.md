@@ -1,5 +1,25 @@
 # @graview/primitives
 
+## 0.2.16
+
+### Patch Changes
+
+- 59c67ba: The pages face says its problem count as soon as the bar's panes arrive, and its bar holds still as they do. The bell's part suspended, and React holds a suspended part's reveal back up to 300 ms after the last fallback it showed, so the bell came to a bar a person was already reading and pushed Find along the row. A lazy module's part may now say what stands in its place until it arrives (`part(draw, { meanwhile })`), and then never suspends: the bell's room is kept from the first draw and the bell drawn in it the moment it is here, and so are the count of the suggestions that wait and the way back after a change.
+  
+  Compatibility: unchanged; `meanwhile` is a new option of `LazyPartOptions`.
+- Updated dependencies [6324b60]
+- Updated dependencies [45dc766]
+- Updated dependencies [557dc4c]
+- Updated dependencies [9b13232]
+- Updated dependencies [d3a3920]
+- Updated dependencies [df14e55]
+- Updated dependencies [59c67ba]
+  - @graview/react@0.2.16
+  - @graview/core@0.2.16
+  - @graview/layout@0.2.16
+  - @graview/render@0.2.16
+  - @graview/tools@0.2.16
+
 ## 0.2.15
 
 ### Patch Changes

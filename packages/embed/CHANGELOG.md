@@ -1,5 +1,33 @@
 # @graview/embed
 
+## 0.2.16
+
+### Patch Changes
+
+- 5e5f34a: The 0.2.16 batch holds together: its branches (a Todoist project kept in step as a connection, archiving that keeps a synced record's Notion page and calendar event, a view playing a YouTube or Vimeo video, a custom page kept as it is left and fetched ahead of its first visit, the opening screen lifting once the page is painted, the pages face's bell coming with its bar, and a frame view's place as tall as it draws) each measured their growth against main alone, and the batch files the raises they add up to — 2.8 KB more up front on a hosted page (2,852 bytes minified and 100 gzipped), and 2.8 KB more up front on a hosted page handed a compiled app (2,828 bytes minified and 100 gzipped). Every face grows by 40,234 bytes minified, the pages face alone by 3,681, the embed with the studio handed in by 9,350, the guest host by 3,090 to 16,704 as it draws more, a worker view's runtime by 899, and what Cloud's worker imports by 88,130. The scene face before it draws measures 1,209,198 bytes with all of them together.
+  
+  Compatibility: ops and primitives — unchanged. Stored formats — unchanged. The wire — unchanged. The declaration and check finding codes — unchanged. Derived tool names and input schemas — unchanged.
+- df14e55: The opening screen lifts when the page has drawn, not when the one face arrives. With `sceneUnderPages` the page and its view were painted within a second and `data-graview-drawn`, which waits for the one face under the page, only once that came; the opening screen stood over a whole page meanwhile, for seconds on a slow network. The embed's root now also says `data-graview-painted` (`PAINTED_ATTRIBUTE` on `@graview/embed` and `@graview/embed/pages`): everything a place waits for before it is said drawn — its views, frame guests, fonts and images, and nothing moving — except the parts that stand under the page, and never for time alone. `@graview/pages/splash` lifts on it. Over a page that holds a frame the screen waits for the face where the browser cannot move a frame without loading it again. A page opened at the city waits for the face and its city, and is not held up by the city's own frame loop, which keeps `data-graview-drawn` waiting out its ten seconds. The screen also lifted on an alert with nothing said in it, and the embed's own live region for notices is one from its first commit, so over an embed it could lift onto an empty page; it lifts now only on an alert that says something. `lazyPart` takes `{ under: true }`, for a part the page is whole without.
+  
+  Compatibility: additive. `data-graview-drawn` and `onDrawn` mean what they meant, and a picture still waits for them; an opening screen still lifts on `data-graview-drawn` alone, so it lifts over a page built before this one. A host that puts an empty `role="alert"` on the page to take the screen away says words in it, or one of the marks.
+- Updated dependencies [6324b60]
+- Updated dependencies [45dc766]
+- Updated dependencies [4aa5227]
+- Updated dependencies [557dc4c]
+- Updated dependencies [9b13232]
+- Updated dependencies [72c8e9f]
+- Updated dependencies [d3a3920]
+- Updated dependencies [df14e55]
+- Updated dependencies [59c67ba]
+  - @graview/guest@0.2.16
+  - @graview/react@0.2.16
+  - @graview/pages@0.2.16
+  - @graview/core@0.2.16
+  - @graview/primitives@0.2.16
+  - @graview/studio@0.2.16
+  - @graview/layout@0.2.16
+  - @graview/tools@0.2.16
+
 ## 0.2.15
 
 ### Patch Changes
