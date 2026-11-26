@@ -1,6 +1,8 @@
 schema: "rex/v2"
 items:
   "f11e784e-aa17-4d1e-9940-7707fabdbe0c":
-    status: "in_progress"
+    status: "completed"
     startedAt: "2026-11-25T19:20:00.000Z"
-    lastModified: "2026-11-25T19:15:00.000Z"
+    completedAt: "2026-11-26T00:00:00.000Z"
+    resolutionDetail: "Built in #707; shipped in 0.2.16 through batch #720."
+    lastModified: "2026-11-26T00:00:00.000Z"
