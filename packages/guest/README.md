@@ -45,7 +45,10 @@ pictures it asked for) and asked for its height — or stayed quiet for a
 moment after, if it never asks — and `data-guest-view-failed="silent"` when
 it does not say it is ready in `limits.readyMs` (eight seconds by default).
 It is `aria-busy` until one or the other; a guest that says it is ready
-after all is drawn then.
+after all is drawn then. A frame that loads its page again — taken out of
+the page and put back where the browser cannot move it as it is (no
+`Element.moveBefore`), as the one face does taking in the page it is on —
+loses its mark and is busy again until the new page has drawn.
 
 ## In the guest
 
@@ -946,9 +949,18 @@ A draft, a preview on the Scene and a view that has not drawn are not kept.
 A face says which view is its page's own (`PageOfItsOwn`, the routed face and
 the one face do); a row, a card or a panel is never kept. A frame is kept
 only where its host says it may be (`guestView({ keeps: true })`), since its
-document runs on out of sight and a sound it plays goes on, and where the
+document runs on out of sight, and where the
 browser can move one without loading it again (`Element.moveBefore`: Chrome
-133, Firefox 144); elsewhere it is loaded again.
+133, Firefox 144); elsewhere it is loaded again. A kept frame is told it is
+off the page and back (`{ type: "away", away }` over its port): the client
+pauses the `<video>` and `<audio>` in its document that are playing and
+plays them again on return, and the guest's code hears both, for a sound of
+its own making (Web Audio, a `new Audio()` never put in the document, media
+in a shadow root):
+
+```ts
+guest.onAway((away) => (away ? music.suspend() : music.resume()));
+```
 
 A host that mounts views by hand has the same in `rest` and `wake` on what
 `mountWorkerView` and `mountGuestView` answer. A first visit waits for

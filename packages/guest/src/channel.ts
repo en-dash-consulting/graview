@@ -20,6 +20,15 @@ export interface Guest {
   readonly props: GuestProps | undefined;
   /** Called with every push. Returns the unsubscribe. */
   subscribe(listener: (props: GuestProps) => void): () => void;
+  /** Whether the host has it off the page, out of sight: a frame kept for a return, its page left. */
+  readonly away: boolean;
+  /**
+   * Called as the host takes it off the page (`true`) and puts it back
+   * (`false`). The frame's client pauses its playing `<video>` and
+   * `<audio>` itself; a sound of the guest's own making (Web Audio) is
+   * its to stop here. Returns the stop.
+   */
+  onAway(listener: (away: boolean) => void): () => void;
   /** Ask for an act by name — or several of it, as one change and one undo, with a list of arguments (FR-193). Resolves with the host's answer; never rejects for a refusal. */
   act(name: string, args?: Readonly<Record<string, unknown>> | readonly Readonly<Record<string, unknown>>[]): Promise<GuestAnswer>;
   /**
@@ -73,6 +82,8 @@ export function openGuest(
   let props: GuestProps | undefined;
   let next = 0;
   const listeners = new Set<(props: GuestProps) => void>();
+  const awayListeners = new Set<(away: boolean) => void>();
+  let away = false;
   const waiting = new Map<string | number, (answer: GuestAnswer) => void>();
   const queued: Unsent[] = [];
 
@@ -92,11 +103,23 @@ export function openGuest(
       waiting.delete(message.id);
     } else if (message.type === "event" && typeof message.listener === "number") {
       hooks.onEvent?.(message);
+    } else if (message.type === "away" && typeof message.away === "boolean") {
+      away = message.away;
     } else if (message.type === "heartbeat" && typeof message.beat === "number") {
       /* The runtime answers, so only a blocked event loop goes quiet. */
       send({ type: "heartbeat", beat: message.beat });
     }
     hooks.onMessage?.(message);
+    /* Heard by the guest's code once the client has done its own with it (its media paused): a listener that throws stops nothing of that. */
+    if (message.type === "away" && typeof message.away === "boolean") {
+      for (const listener of [...awayListeners]) {
+        try {
+          listener(message.away);
+        } catch (error) {
+          console.error(error);
+        }
+      }
+    }
   };
 
   let stop = () => {};
@@ -124,6 +147,13 @@ export function openGuest(
     subscribe(listener) {
       listeners.add(listener);
       return () => listeners.delete(listener);
+    },
+    get away() {
+      return away;
+    },
+    onAway(listener) {
+      awayListeners.add(listener);
+      return () => void awayListeners.delete(listener);
     },
     act(name, args = {}) {
       const id = (next += 1);
@@ -154,6 +184,7 @@ export function openGuest(
       stop();
       port?.close();
       listeners.clear();
+      awayListeners.clear();
     },
   };
   return { guest, send };

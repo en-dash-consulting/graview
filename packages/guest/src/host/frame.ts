@@ -540,6 +540,8 @@ export function mountGuestView<S extends AnySchema>(element: HTMLElement, option
         return false;
       }
       resting = { shelf, theme: look };
+      /* Told it is off the page (HQ f-kept-frame-told-off-page): its client pauses what it plays, and its code hears it. */
+      port?.postMessage({ type: "away", away: true } satisfies HostMessage);
       /* Nothing of it is in sight; what it said of its records stands for when it is. */
       recordBoxesMoved(iframe);
       live.rest({
@@ -566,6 +568,7 @@ export function mountGuestView<S extends AnySchema>(element: HTMLElement, option
       was.shelf.remove();
       onto.removeAttribute("aria-busy");
       session.rest(undefined);
+      port?.postMessage({ type: "away", away: false } satisfies HostMessage);
       recordBoxesMoved(iframe);
       push();
       return true;

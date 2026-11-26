@@ -58,12 +58,42 @@ function frameFonts(): (message: HostMessage) => void {
 }
 
 /**
+ * WHAT IT PLAYS STOPS WHERE NOBODY SEES IT (Graview HQ
+ * feature:f-kept-frame-told-off-page): a frame kept for a return is moved,
+ * still running, off the page as its page is left. Told so, the client
+ * pauses every `<video>` and `<audio>` of the document that is playing, and
+ * told it is back, plays again what it paused that still stands paused.
+ * A sound of the guest's own making — Web Audio, a `new Audio()` never put
+ * in the document, media in a shadow root — is its to stop (`guest.onAway`).
+ */
+function mediaAway(document: () => Document | undefined): (message: HostMessage) => void {
+  let paused: HTMLMediaElement[] = [];
+  return (message) => {
+    if (message.type !== "away" || typeof message.away !== "boolean") return;
+    const here = document();
+    if (!here) return;
+    if (message.away) {
+      for (const media of here.querySelectorAll<HTMLMediaElement>("video, audio")) {
+        if (media.paused) continue;
+        media.pause();
+        paused.push(media);
+      }
+      return;
+    }
+    const again = paused;
+    paused = [];
+    for (const media of again) if (media.isConnected && media.paused) void media.play()?.catch(() => undefined);
+  };
+}
+
+/**
  * Connect a guest view to its host: say it is ready, take the first hello
  * from the parent, and talk only over the port that came with it.
  */
 export function connectGuest(options: ConnectGuestOptions = {}): Guest {
   const at = options.window ?? (globalThis as unknown as GuestWindow);
   const fonts = frameFonts();
+  const media = mediaAway(() => (at as { document?: Document }).document);
   /* Where its records are, said once the host has said hello, and again as they move (record-report.ts): what a line to each is drawn from. A window that lays nothing out says nothing. */
   let reporting: (() => void) | undefined;
   const laidOut = at as unknown as Window & typeof globalThis;
@@ -82,6 +112,7 @@ export function connectGuest(options: ConnectGuestOptions = {}): Guest {
     {
       onMessage: (message) => {
         fonts(message);
+        media(message);
         report();
       },
     },
