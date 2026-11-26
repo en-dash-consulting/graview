@@ -1100,7 +1100,8 @@ html.home:root {
 }
 .gl .cap h2, .gl .cap p { text-shadow: 0 2px 30px #03061A; }
 .gl .cap.on { opacity: 1; transform: none; }
-.gl .cap:not(.on) a, .gl .cap:not(.on) button { pointer-events: none; }
+/* A scene not on screen keeps its words for a screen reader, and lends its controls to nobody: the dots bring it up. */
+.gl .cap:not(.on) a, .gl .cap:not(.on) button { pointer-events: none; visibility: hidden; }
 .gl .cap .w { display: inline-block; opacity: 0; transform: translateY(10px); transition: opacity .55s ease, transform .55s ease; }
 .gl .cap.on .w { opacity: 1; transform: none; }
 .gl .cap > p, .gl .cap .more { opacity: 0; transition: opacity .55s ease .35s; }
