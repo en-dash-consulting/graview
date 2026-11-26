@@ -68,6 +68,8 @@ function showing(principal: Principal, node: Node, graph: Joined, records?: Pick
   const mine = (other: { readonly id: string }) => ownsId(principal, other.id);
   return (sight) => {
     if (!sight.kinds.includes(node.kind) || !grantsTo(sight, acting)) return false;
+    // What the record holds (`where`): a field's value, read where the record is read whole.
+    if (sight.where && !sight.where.is.includes((node as Record<string, unknown>)[sight.where.field])) return false;
     if (!sight.own && !sight.via) return true;
     if (me === undefined) return false;
     return sight.via

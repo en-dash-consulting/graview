@@ -1,3 +1,4 @@
+import { isPlaceless } from "./rooms/kind.js";
 import { judgedOnTouches } from "./graph/touched.js";
 import { everBound, hidesFrom, readingOf, seatLens, seenBy, seesEveryRecord, seesId, toldTouches, type SeenOptions } from "./seen.js";
 import { offersTouches, servedTold, TOLD_TO, UNSEATED } from "./served-touches.js";
@@ -41,7 +42,7 @@ import { TYPE_TEXT, TYPING } from "./text/typing-hook.js";
 import type { FieldRevision } from "./ops/revisions.js";
 import { DECLINES, isAutomated, isTidyingActor, tidyingRefusal, type ActMeanings, type ServedStops } from "./ops/tidying.js";
 import { nameOfAuthor } from "./who.js";
-import { actingAs, asBoundTo, bindable, boundPersonOf, grantsTo, isSystem, meIn, meOf, ownsId, permits, profileOf, rolesSaid, seatedIn, seatPersonOf, withValidProfile, permittedMutations, proposes, subjectKinds, type PolicyWords } from "./permissions/policy.js";
+import { actingAs, actingSeat, asBoundTo, bindable, boundPersonOf, grantsTo, isSystem, meIn, meOf, ownsId, permits, profileOf, rolesSaid, seatedIn, seatPersonOf, withValidProfile, permittedMutations, proposes, subjectKinds, type PolicyWords } from "./permissions/policy.js";
 import { MOST_PROPOSED, PROPOSE_CHANGES, proposeChangesMutation } from "./mutations/propose-changes.js";
 import { namesUnseen, redact } from "./ops/withheld.js";
 import { writersBehind } from "./ops/writers.js";
@@ -1527,6 +1528,9 @@ export class Store<S extends AnySchema> {
     // Who `$me` is: the person, for an agent acting for one (Roadmap f-act-as-me).
     const me = {
       me: author && meIn(this.schema, author),
+      // Who acts as themselves, and when (Graview HQ feature:f-chat-rooms): a message's author and its time.
+      by: author && actingSeat(author),
+      now: this.now(),
       everHeld: (id: string) => recordsOf(this.log).kindOf(id) !== undefined,
       keeps: (kind: string, field: string) => mayKeepField(this.policy?.sees, kind, field),
       ...(author && this.hasNoRecord(author, false) ? { noRecord: true } : {}),
@@ -1699,6 +1703,8 @@ export class Store<S extends AnySchema> {
 
   private kindsKeptNow(principal: Principal): ReadonlySet<string> {
     const kept = new Set<string>();
+    // The framework's own kinds — a room's messages — stand on no list, district, home or export: they are read in their room (Graview HQ feature:f-chat-rooms).
+    for (const definition of this.schema.definitions) if (isPlaceless(definition)) kept.add(definition.kind);
     for (const [name, module] of this.modules.administered) {
       if (this.mayAdminister(name, principal)) continue;
       for (const kind of module.kinds ?? []) kept.add(kind);

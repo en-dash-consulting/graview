@@ -96,6 +96,8 @@ export function PagesContent<S extends AnySchema>({
             ...(props.people ? { people: props.people } : {}),
             /* Where "Notify me" is kept: the host's store, on this face as on the scene. */
             ...(props.subscriptions ? { subscriptions: props.subscriptions } : {}),
+            /* Chat with the host's staff, its panel this face's (Graview HQ feature:f-support-chat). */
+            ...(props.support ? { support: props.support } : {}),
             /* Where "Not now" is kept, and what was done while the reader was away: the host's, on this face as on the scene. */
             dismissals: props.dismissals,
             whileAway: props.whileAway,

@@ -263,6 +263,9 @@ export function compileMutation<S extends AnySchema>(
     readonly seen?: GraphReader<NodeOfSchema<S>>;
     /** The id of the seat the act is run by — the person, for an agent acting for one: the act's `ctx.me`. */
     readonly me?: string | undefined;
+    /** Who is acting as themselves, and when: the act's `ctx.by` and `ctx.now`. */
+    readonly by?: import("./types.js").ActingSeat | undefined;
+    readonly now?: string | undefined;
     /**
      * WHETHER THE SEAT SEES EVERY RECORD OF A KIND (FR-55), or, asked of no
      * kind, of every kind. Ids are unique across the whole store, so an id
@@ -386,6 +389,8 @@ export function compileMutation<S extends AnySchema>(
       if (options.noRecord || (options.selfUnseen && definition.doneAsMe)) throw new ActRefusal(`"${definition.title ?? definition.name}" is done as you, and you have no record here`);
       return options.me;
     },
+    by: options.by,
+    now: options.now,
     emit(primitive) {
       if (primitive.op === "add-node") refuseProfileId(primitive.node.id, options.hostsOwn);
       primitives.push(primitive);

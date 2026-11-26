@@ -318,6 +318,10 @@ const CONCEPTS = [
     "A lens places nodes by a rule the domain supplies — a time, two sets, a coordinate, an outline. It binds ROLES rather than field names, so a lens written for your domain works unchanged in somebody else's, and a test in a second domain is how that claim is kept."],
   ["Who may do what", "graview-permissions",
     "One policy, declared once. The strip, the routed pages and the agent's tools all narrow from it, and an act a seat may not take is struck through with the sentence saying who can — never a button that silently fails."],
+  ["Rooms", "graview-chat",
+    "A room is where the people in an app talk to each other, declared beside the kinds: one for the whole app, or a thread on each record of a kind. What is said is a record, so who may read it, history and undo hold of it as of anything else, a mention tells the person named, and what is new waits on the bell."],
+  ["Chat with the host", "graview-chat",
+    "A host hands the face a support transport, and the person's menu says Chat with it. Each message carries where the person was and what they last could not do, so staff never have to ask, and the thread is theirs alone, never in the app's graph."],
   ["The seat for a model", "graview-agent-seat",
     "An intelligence provider declares what a model may do and how words and pictures reach it. Its turns land in the same log with an author and an intent, and come back out through the same undo."],
 ];

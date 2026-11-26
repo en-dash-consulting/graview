@@ -1,3 +1,4 @@
+import { unfoldedApp } from "../rooms/kind.js";
 import type { GraviewApp } from "../app.js";
 import type { InvariantDefinition } from "../invariants/types.js";
 import type { Policy } from "../permissions/types.js";
@@ -44,8 +45,10 @@ function unsaid(computed: Readonly<Record<string, string | { readonly expr: stri
   ) as Record<string, ComputedSpec>;
 }
 
-export function toDocument<S extends AnySchema>(app: GraviewApp<S>): ToDocumentResult {
-  const remembered = documentOf(app);
+export function toDocument<S extends AnySchema>(folded: GraviewApp<S>): ToDocumentResult {
+  const remembered = documentOf(folded);
+  // The app as its author wrote it: its rooms' message kind, acts, grant and sights are the framework's, folded in again as it compiles (Graview HQ feature:f-chat-rooms).
+  const app = unfoldedApp(folded);
   if (remembered) return { document: remembered, findings: [] };
 
   const findings: Finding[] = [];
@@ -200,6 +203,7 @@ export function toDocument<S extends AnySchema>(app: GraviewApp<S>): ToDocumentR
     ...(app.purpose ? { purpose: { ...structuredClone(app.purpose), ...(app.purpose.jobs ? { jobs: app.purpose.jobs.map((job) => (job.act !== undefined && unwritten.has(job.act) ? (({ act: _act, ...rest }) => structuredClone(rest))(job) : structuredClone(job))) } : {}) } as GraviewDocument["purpose"] } : {}),
     // The screens a device offers are data (Roadmap f-device-nav-bar).
     ...(app.devices ? { devices: structuredClone(app.devices) as GraviewDocument["devices"] } : {}),
+    ...(app.rooms ? { rooms: structuredClone(app.rooms) as GraviewDocument["rooms"] } : {}),
     // View specs are already data: they are the document's views (FR-03).
     ...((app.viewSpecs && Object.keys(app.viewSpecs).length > 0) || app.home ? { views: { ...(app.viewSpecs ?? {}), ...(app.home ? { home: app.home } : {}) } as unknown as GraviewDocument["views"] } : {}),
     // The palette is code; the app's money, locale and time zone are data, and go across (FR-100).

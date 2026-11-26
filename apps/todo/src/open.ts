@@ -3,6 +3,7 @@ import {
   createBrowserAdapter,
   createBroadcastPresence,
   forgetFreshParam,
+  openRemote,
   openStore,
   type OpenedStore,
 } from "@graview/ship/browser";
@@ -42,6 +43,18 @@ export interface OpenedApp {
 }
 
 export async function open(): Promise<OpenedApp> {
+  /*
+   * AGAINST A SERVER, WHERE ASKED: `?server=` and the address `graview
+   * serve` printed opens the store there, so two people in two browsers
+   * are in one app — and in its rooms, each seeing what the other says as
+   * it is said (Graview HQ feature:f-chat-rooms).
+   */
+  const server = typeof window === "undefined" ? null : new URLSearchParams(window.location.search).get("server");
+  if (server) {
+    const principal = openingSeat();
+    const remote = await openRemote({ app: todoApp, url: server, principal });
+    return { opened: { store: remote.store } as unknown as OpenedStore<TodoSchema>, principal, brand: thingsBrand, remembers: false, presence: createBroadcastPresence(todoApp.name) };
+  }
   const opened = await openStore({
     app: todoApp,
     adapter: createBrowserAdapter(),

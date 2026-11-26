@@ -29,6 +29,8 @@ export const PORT_SPAN = 100;
 export const OWN = {
   /** `graview serve` of the rota's data, for `verify-served` and `verify-desk` to open from a folder on a server. */
   served: 5196,
+  /** `graview serve` of Things' data, for `verify-rooms` to sit two people in one room from two browsers (Graview HQ feature:f-chat-rooms). */
+  "rooms-served": 5206,
   /** `graview preview` of a Cloud document and its seed, for `verify-preview`; and the `graview shots` it runs after. */
   preview: 5200,
   "preview-shots": 5201,

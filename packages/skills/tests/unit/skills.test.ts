@@ -41,6 +41,8 @@ const checkSource = [
   ...readdirSync(resolve(SKILLS_DIR, "../../core/src/workflows")).map((name) => readFileSync(resolve(SKILLS_DIR, "../../core/src/workflows", name), "utf8")),
   // A device's screens (`device-*`), judged in one place for the check and the edits alike (Roadmap f-device-nav-bar).
   readFileSync(resolve(SKILLS_DIR, "../../core/src/device-findings.ts"), "utf8"),
+  // An app's rooms, judged (Graview HQ feature:f-chat-rooms): the room-* codes graview-chat names.
+  readFileSync(resolve(SKILLS_DIR, "../../core/src/rooms/findings.ts"), "utf8"),
 ].join("\n");
 
 /**
@@ -63,6 +65,7 @@ describe("the skills package", () => {
     expect(skills.map((skill) => skill.name)).toEqual([
       "graview-agent-seat",
       "graview-brand",
+      "graview-chat",
       "graview-desk",
       "graview-embed",
       "graview-host-page",

@@ -75,6 +75,18 @@ export const todoApp = defineApp({
     lists: { reason: { export: false }, task: { group: { by: "done", closed: ["true"] } } },
   },
   /*
+   * WHERE THE HOUSEHOLD TALKS (Graview HQ feature:f-chat-rooms). One room
+   * for the whole list, and a thread on every task — "who has the van
+   * keys?" said where the van is booked. Declared, not built: the
+   * framework adds the message kind and the acts that post, edit and
+   * remove, a room's page and a task's thread under its page, and counts
+   * what is new on the bell. `@Nora` tells Nora.
+   */
+  rooms: {
+    household: { title: "Household", description: "Anything about the house that is not one task." },
+    "task-talk": { title: "Talk about it", about: "task", moderate: ["keeper"] },
+  },
+  /*
    * THREE PICTURES, DECLARED AND DRAWN (FR-79). Each lens here has a title,
    * so it is a place — a pill on the bar, a drive-in from altitude, a page
    * at /places/<name> — and the framework draws it from these lines
@@ -127,10 +139,11 @@ export type TodoStore = Store<TodoSchema>;
 
 export function createTodoStore(options: Partial<StoreOptions<TodoSchema>> = {}): TodoStore {
   return new Store<TodoSchema>({
-    schema: todoSchema,
-    mutations: todoActs,
+    // The app's own schema, acts and policy: its rooms' message kind and acts folded in (`defineApp`).
+    schema: todoApp.schema as TodoSchema,
+    mutations: todoApp.mutations as typeof todoActs,
     invariants: todoInvariants,
-    policy: todoPolicy,
+    policy: todoApp.policy ?? todoPolicy,
     modules: todoInstallation.modules,
     ...options,
   });

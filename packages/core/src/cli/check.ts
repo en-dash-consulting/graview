@@ -22,6 +22,7 @@ import {
   checkJobs,
   checkDevices,
   checkWorkflows,
+  checkRooms,
   checkAliases,
   checkCites,
   checkTouchedNames,
@@ -136,6 +137,7 @@ export function checkApp<S extends AnySchema>(app: GraviewApp<S>, options: Check
   checkJobs(ctx);
   checkDevices(ctx);
   checkWorkflows(ctx);
+  checkRooms(ctx);
   checkAliases(ctx);
   checkCites(ctx);
   checkTouchedNames(ctx);

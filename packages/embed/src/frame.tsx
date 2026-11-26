@@ -1,3 +1,4 @@
+import type { SupportDeclaration } from "@graview/core";
 import type { HistoryHost } from "@graview/core/history";
 import type { DisplayOptionsHost } from "@graview/core";
 import { assetSrc, faviconHref, type Store, type AnySchema, type Brand, type GraviewApp, type HostFiles, type KeptViews, type ResolveApp, type LinkedRecords, type Person, type PresenceChannel, type Principal, type SignIn, type ViewerState, type AppVideo, type SubscriptionStore, type DismissalStore } from "@graview/core";
@@ -502,6 +503,13 @@ export interface FrameOptions<S extends AnySchema = AnySchema> {
    * unsaid, a reader's subscriptions live in the page's memory.
    */
   readonly subscriptions?: SubscriptionStore;
+  /**
+   * CHAT WITH THE HOST'S STAFF (Graview HQ feature:f-support-chat): the
+   * person's menu offers "Chat with <title>", which opens the routed face's
+   * panel holding the person's thread with the host's staff, carried by
+   * `transport` and never kept in the app's graph. Unsaid, nothing shows.
+   */
+  readonly support?: SupportDeclaration;
   /**
    * WHERE THE READER'S "NOT NOW" IS KEPT, on either face: what this person
    * put out of sight in the Suggested tray (`Dismissal`), as `{ list,

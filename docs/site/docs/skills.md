@@ -1,6 +1,6 @@
 # The skills
 
-Graview's 32 skills are instructions an AI coding assistant reads before it writes a Graview app. Each teaches a model one shape of the declaration, and each ends in `graview check` — reporting what it actually said, rather than claiming the work is done.
+Graview's 33 skills are instructions an AI coding assistant reads before it writes a Graview app. Each teaches a model one shape of the declaration, and each ends in `graview check` — reporting what it actually said, rather than claiming the work is done.
 
 ```sh
 graview skills install .
@@ -10,6 +10,7 @@ graview skills install .
 
 - [graview-agent-seat](https://graview.dev/docs/skills/graview-agent-seat.html): Wire an agent seat into a Graview app that shares the interface's own actions rather than shadowing them, and verify the diffs are identical rather than assuming they are.
 - [graview-brand](https://graview.dev/docs/skills/graview-brand.html): Put an installation's own name, mark, typeface and palette on a Graview app without forking a package, and let graview check measure the contrast rather than trusting it.
+- [graview-chat](https://graview.dev/docs/skills/graview-chat.html): Let the people in a Graview app talk to each other inside it — a room for the whole app, a thread on each record of a kind, mentions that tell the person named, unread counts on the bell — declared as rooms and checked by graview check; and let a host offer “Chat with …” its own staff through a support transport, each message carrying where the person was.
 - [graview-desk](https://graview.dev/docs/skills/graview-desk.html): Put a model INSIDE a Graview product — a surface that takes photographs or words, reaches the model through a declared door, and turns the answer into a plan somebody reviews before it touches the graph.
 - [graview-embed](https://graview.dev/docs/skills/graview-embed.html): Put a Graview app on somebody else's page — a picture in an article, a chapter in the docs, a live demo in a landing page — with its own theme scoped to one element, and nothing on the host touched.
 - [graview-host-page](https://graview.dev/docs/skills/graview-host-page.html): Host a Graview app as the page itself — a service that serves it, a chat's widget, the address bar handed over, the host's own menu and news inside it — and picture its places honestly: wait for data-graview-drawn or onDrawn rather than a timer, open a page on a view proposed and not kept (draftView), and photograph places with graview preview and graview shots (--view, --manifest).
@@ -43,6 +44,6 @@ graview skills install .
 
 ---
 
-The 32 skills that teach an assistant the authoring moves, each ending in a real check.
+The 33 skills that teach an assistant the authoring moves, each ending in a real check.
 
 The page: https://graview.dev/docs/skills.html · Every Graview docs page, for a model: https://graview.dev/llms.txt

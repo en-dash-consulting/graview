@@ -1,3 +1,4 @@
+import type { SupportDeclaration } from "@graview/core";
 import type { HistoryHost } from "@graview/core/history";
 import type { DisplayOptionsHost } from "@graview/core";
 import { freshAddress, sceneTitle, type AnySchema, type Brand, type GraviewApp, type AppVideo, type HostFiles, type ViewerState, type ResolveApp, type LinkedRecords, type Person, type Principal, type Scheme, type Store, type PresenceChannel, type SettingDeclaration, type SignIn, type SubscriptionStore, type DismissalStore, type KeptViews } from "@graview/core";
@@ -230,6 +231,15 @@ export interface PageContext<S extends AnySchema> {
    * the provider's around the face, else the page's own memory.
    */
   readonly subscriptions?: SubscriptionStore;
+  /**
+   * CHAT WITH THE HOST'S STAFF (Graview HQ feature:f-support-chat): the
+   * person's menu offers "Chat with <title>" beside the host's own rows,
+   * and opens a panel that holds the person's thread with them, carried
+   * by the host's `transport` and never kept in the app's graph. Each
+   * message carries where the person was and what they last could not do.
+   * Unsaid, nothing shows.
+   */
+  readonly support?: SupportDeclaration;
   /**
    * WHERE THE READER'S "NOT NOW" IS KEPT, for the provider under the pages when `views` is given: what this person
    * put out of sight in the Suggested tray (`Dismissal`), as `{ list,

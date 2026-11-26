@@ -89,7 +89,12 @@ export const fieldsJudged = (store: object): boolean => FIELD_SIGHT.on === true 
 interface Joined {
   out(id: string, kind?: string): readonly { readonly id: string }[];
   in(id: string, kind?: string): readonly { readonly id: string }[];
+  /** The record an id names, where the reader can say: what a sight that `follows` a field reads. */
+  getNode?(id: string): ({ readonly id: string; readonly kind: string } & Record<string, unknown>) | undefined;
 }
+
+/** Whether a sight shows only some of a kind's records by what they hold (`where`, `follows`), as `own` and `via` show only some by whose they are. */
+export const scopedSight = (sight: Sight): boolean => sight.where !== undefined || sight.follows !== undefined;
 
 /** The kinds a policy keeps to those its sights name. */
 export function sightedKinds(policy: Policy | undefined): ReadonlySet<string> {
@@ -297,6 +302,15 @@ export function sees(
   principal = actingAs(principal);
   return sights.some((sight) => {
     if (!grantsTo(sight, principal)) return false;
+    // What the record holds (Graview HQ feature:f-chat-rooms): a value of one field, a record another names. A record gone, or one read without its fields, is not shown by it.
+    if (sight.where && !sight.where.is.includes((node as Record<string, unknown>)[sight.where.field])) return false;
+    if (sight.follows !== undefined) {
+      const named = (node as Record<string, unknown>)[sight.follows];
+      if (typeof named === "string" && named !== "") {
+        const other = graph.getNode?.(named);
+        if (!other || other.kind === node.kind || !sees(policy, principal, other, graph, records, judged)) return false;
+      }
+    }
     if (!sight.own && !sight.via) return true;
     const me = principal.id;
     if (me === undefined) return false;

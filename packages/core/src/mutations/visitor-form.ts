@@ -39,7 +39,7 @@ const titleOf = (name: string, form: VisitorFormDeclaration) => form.title ?? hu
 export function visitorSeesKind(policy: Policy | undefined, visitor: Principal, kind: string): boolean {
   const sights = policy?.sees;
   if (!sights || sights.length === 0) return true;
-  return sights.some((sight) => sight.kinds.includes(kind) && grantsTo(sight, visitor) && !sight.own && !sight.via);
+  return sights.some((sight) => sight.kinds.includes(kind) && grantsTo(sight, visitor) && !sight.own && !sight.via && sight.where === undefined && sight.follows === undefined);
 }
 
 /** The pickers in a form field, nested groups, variants and lists walked. */

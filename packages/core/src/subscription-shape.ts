@@ -28,7 +28,9 @@ export type SubscriptionWhen =
   | { readonly on: "act"; readonly act?: string; readonly record?: string }
   | { readonly on: "created"; readonly kind: string }
   | { readonly on: "changed"; readonly kind?: string; readonly record?: string }
-  | { readonly on: "reaches"; readonly kind: string; readonly condition: string; readonly record?: string };
+  | { readonly on: "reaches"; readonly kind: string; readonly condition: string; readonly record?: string }
+  /** Somebody else names you in a room's message (`@Name`, Graview HQ feature:f-chat-rooms): every person with a room to be named in is subscribed to this unasked. */
+  | { readonly on: "mentioned" };
 
 /**
  * ONE PERSON'S STANDING ASK: `{ who, app, when }`. `who` is whose sight

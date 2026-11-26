@@ -40,8 +40,9 @@ describe("who is here, and what each of them may do", () => {
 
   it("keeps the installation's kinds from the member entirely, rather than refusing them", () => {
     const s = store();
-    expect([...s.kindsKeptFrom(MEMBER)].sort()).toEqual(["invitation", "user"]);
-    expect([...s.kindsKeptFrom(KEEPER)]).toEqual([]);
+    // A room's messages stand on no place for anybody: they are read in their room (Graview HQ feature:f-chat-rooms).
+    expect([...s.kindsKeptFrom(MEMBER)].sort()).toEqual(["invitation", "message", "user"]);
+    expect([...s.kindsKeptFrom(KEEPER)]).toEqual(["message"]);
   });
 
   it("lets the keeper invite, welcome, withdraw, grant, revoke and remove — and refuses the member each, in the policy's own words", () => {

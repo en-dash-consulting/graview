@@ -274,6 +274,8 @@ export function declareInstallation<const R extends string>(options: Installatio
     grants,
     withPolicy(policy?: Policy): Policy {
       return {
+        // Its sights as they were: who sees what is the app's, and folding the installation's grants in keeps it.
+        ...(policy?.sees ? { sees: policy.sees } : {}),
         roles: [...new Set([...(policy?.roles ?? []), ...roles])],
         grants: [...(policy?.grants ?? []), ...grants],
       };
