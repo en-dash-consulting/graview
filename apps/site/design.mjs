@@ -372,7 +372,7 @@ ${sharedHead({ base })}
 <link rel="alternate" type="text/markdown" href="${twin}" title="This page as Markdown">
 ${ldScript(articleData({ path, title, blurb }))}
 </head>
-<body>
+<body class="docs-page">
 <style>
 ${css}
 </style>
@@ -392,12 +392,6 @@ ${RAIL.map(([href, label]) => `      <a href="${docsRoot}${href}"${href === here
       <a href="${up}/tour.html">The tour</a>
       <a href="${up}/progression.html">The garden, grown</a>
       <a href="${up}/index.html">&larr; graview.dev</a>
-    </div>
-
-    <div class="railfoot">
-      records of a Graview app,<br>
-      written out of the repository,<br>
-      never by hand
     </div>
   </nav>
 

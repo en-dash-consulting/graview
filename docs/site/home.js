@@ -129,7 +129,7 @@
       sheet.style.transform = port || short ? "translateY(" + ((1 - so) * -40).toFixed(1) + "px)" : "translateY(calc(-50% + " + ((1 - so) * -40).toFixed(1) + "px))";
     }
     var inside = t > .55;
-    if (inside !== lastInside) { lastInside = inside; head.classList.toggle("inside", inside); ui.classList.toggle("inside", inside); }
+    if (inside !== lastInside) { lastInside = inside; head.classList.toggle("inside", inside); ui.classList.toggle("inside", inside); root.classList.toggle("in-map", inside); }
     var beat = Math.round(t), show = Math.abs(t - beat) < .36 ? beat : -1;
     if (show !== lastBeat) {
       lastBeat = show;
@@ -253,23 +253,24 @@
       var g = c.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0);
       g.fillStyle = "#EEF0F6"; g.fillRect(0, 0, W, H);
       g.fillStyle = "#FFFFFF"; g.fillRect(0, 0, W, 64); g.fillStyle = "#E1E4EE"; g.fillRect(0, 64, W, 1);
-      var x0 = port ? 16 : Math.max(620, W * 0.46), top = port ? 96 : 116, w = W - x0 - (port ? 16 : 56);
-      if (!port) { g.fillStyle = "#FFFFFF"; for (var k = 0; k < 3; k++) { rr(g, 44, 104 + k * 210, x0 - 110, 186, 14); g.fill(); } }
+      var x0 = port ? 16 : Math.max(short && W < 1000 ? W * 0.56 : 620, W * 0.46), top = port ? 96 : 116, w = W - x0 - (port ? 16 : 56);
+      /* A narrow column (a phone, or a phone held sideways beside the sheet) draws the app's compact layout. */
+      var compact = port || w < 520;
       g.fillStyle = "#586174"; F(g, "700 11px Montserrat"); g.fillText("AN EXAMPLE REPOSITORY", x0, top - 16);
       g.fillStyle = "#18213A"; F(g, "700 26px Montserrat"); g.fillText("Modules", x0, top + 22);
       g.fillStyle = "#FDEFD9"; var pill = "3 modules have no doc"; F(g, "700 14px Montserrat"); var pw = g.measureText(pill).width + 28; rr(g, x0 + 128, top, pw, 32, 16); g.fill(); g.fillStyle = "#8A4A10"; g.fillText(pill, x0 + 142, top + 21);
-      if (!port) { g.fillStyle = "#001769"; rr(g, x0 + w - 196, top - 4, 196, 40, 9); g.fill(); g.fillStyle = "#fff"; F(g, "700 15px Montserrat"); g.fillText("Write the 3 guides", x0 + w - 172, top + 21); }
-      var cy = top + 56, cw = (w - (port ? 12 : 36)) / (port ? 2 : 4), stats = [["Modules", "16"], ["Docs", "14"], ["Decisions", "14"], ["People", "7"]];
+      if (!compact) { g.fillStyle = "#001769"; rr(g, x0 + w - 196, top - 4, 196, 40, 9); g.fill(); g.fillStyle = "#fff"; F(g, "700 15px Montserrat"); g.fillText("Write the 3 guides", x0 + w - 172, top + 21); }
+      var cy = top + 56, cw = (w - (compact ? 12 : 36)) / (compact ? 2 : 4), stats = [["Modules", "16"], ["Docs", "14"], ["Decisions", "14"], ["People", "7"]];
       stats.forEach(function (s, i) {
-        var cx = x0 + (i % (port ? 2 : 4)) * (cw + 12), yy = cy + (port ? Math.floor(i / 2) * 78 : 0);
-        g.fillStyle = "#FFFFFF"; rr(g, cx, yy, cw, port ? 66 : 84, 12); g.fill();
+        var cx = x0 + (i % (compact ? 2 : 4)) * (cw + 12), yy = cy + (compact ? Math.floor(i / 2) * 78 : 0);
+        g.fillStyle = "#FFFFFF"; rr(g, cx, yy, cw, compact ? 66 : 84, 12); g.fill();
         g.fillStyle = "#586174"; F(g, "600 13px Montserrat"); g.fillText(s[0], cx + 16, yy + 24);
-        g.fillStyle = "#001769"; F(g, "700 " + (port ? 24 : 30) + "px Montserrat"); g.fillText(s[1], cx + 16, yy + (port ? 54 : 64));
+        g.fillStyle = "#001769"; F(g, "700 " + (compact ? 24 : 30) + "px Montserrat"); g.fillText(s[1], cx + 16, yy + (compact ? 54 : 64));
       });
-      var ty = cy + (port ? 170 : 116), rh = port ? 46 : 50, n = Math.max(4, Math.min(8, Math.floor((H - (port ? 0 : 36) - ty - 40) / rh)));
+      var ty = cy + (compact ? 170 : 116), rh = compact ? 46 : 50, n = Math.max(4, Math.min(8, Math.floor((H - (compact ? 0 : 36) - ty - 40) / rh)));
       if (port) n = Math.min(n, Math.max(3, Math.floor((H * 0.46 - ty) / rh)));
       g.fillStyle = "#FFFFFF"; rr(g, x0, ty, w, 40 + n * rh + 8, 14); g.fill();
-      var cols = port ? [0, .62] : [0, .42, .6, .82];
+      var cols = compact ? [0, .62] : [0, .42, .6, .82];
       g.fillStyle = "#586174"; F(g, "700 13px Montserrat");
       ["Module", "Docs", "Owner", "Decisions"].forEach(function (t, i) { if (cols[i] !== undefined) g.fillText(t, x0 + 20 + cols[i] * (w - 40), ty + 26); });
       appRows = [];
@@ -279,7 +280,7 @@
         g.fillStyle = "#E8EAF2"; g.fillRect(x0 + 20, y, w - 40, 1);
         g.fillStyle = "#18213A"; F(g, "700 16px Montserrat"); g.fillText(MOD[r], x0 + 20, y + 31);
         g.fillStyle = miss ? "#8A4A10" : "#18213A"; F(g, (miss ? "700" : "500") + " 16px Montserrat"); g.fillText(miss ? "none" : String(DOCS[r]), x0 + 20 + cols[1] * (w - 40), y + 31);
-        if (!port) { g.fillStyle = "#18213A"; F(g, "500 16px Montserrat"); g.fillText(PPL[OWNER[r]], x0 + 20 + cols[2] * (w - 40), y + 31); g.fillText(String(DEC[r]), x0 + 20 + cols[3] * (w - 40), y + 31); }
+        if (!compact) { g.fillStyle = "#18213A"; F(g, "500 16px Montserrat"); g.fillText(PPL[OWNER[r]], x0 + 20 + cols[2] * (w - 40), y + 31); g.fillText(String(DEC[r]), x0 + 20 + cols[3] * (w - 40), y + 31); }
       }
     }
     function small(draw) { var c = document.createElement("canvas"); c.width = 1024; c.height = 640; draw(c.getContext("2d")); var t = new THREE.CanvasTexture(c); t.anisotropy = aniso; return t; }
@@ -353,7 +354,7 @@
         var fn = (big ? "600 34px" : "600 30px") + " Montserrat", sp2 = big ? 5 : 1.5, x = 24;
         F(g, fn); var wn = 0; for (var i = 0; i < name.length; i++) wn += g.measureText(name[i]).width + sp2;
         F(g, "500 34px Montserrat"); var wc = count ? g.measureText(count).width + 16 : 0; F(g, "700 32px Montserrat"); var ww = warn ? g.measureText(warn).width + 62 : 0;
-        var wAll = Math.min(636, 24 + wn + wc + ww + 18);
+        var wAll = Math.min(636, 24 + wn + wc + ww + 18); sp.userData.w = wAll;
         g.fillStyle = "rgba(18,24,50,.94)"; rr(g, 2, 10, wAll - 4, 76, 12); g.fill(); g.lineWidth = 2.5; g.strokeStyle = ok ? "#00E5B9" : (warn ? "#7A5C2E" : "#33407A"); rr(g, 2, 10, wAll - 4, 76, 12); g.stroke();
         g.textBaseline = "middle"; g.fillStyle = "#D5DBF0"; F(g, fn); for (var j = 0; j < name.length; j++) { g.fillText(name[j], x, 50); x += g.measureText(name[j]).width + sp2; }
         if (count) { g.fillStyle = "#8E9AC4"; F(g, "500 34px Montserrat"); g.fillText(count, x + 12, 50); x += wc; }
@@ -463,6 +464,14 @@
 
     /* ── size, the pointer, the fonts ── */
     var lastPtr = null, tapHole = null;
+    var rest = { x: .74, y: .56, ax: .13, ay: .2 };
+    /* Where the hole rests and how far it drifts: over the drawn app, never under the sheet or the header. */
+    function restOf() {
+      if (!port) return { x: .74, y: .56, ax: .13, ay: .2 };
+      var top = head.getBoundingClientRect().bottom, bottom = sheet.offsetTop, r = Math.min(W, H) * HOLE_PHONE;
+      var mid = (top + bottom) / 2, room = Math.max(0, (bottom - top) / 2 - r - 6);
+      return { x: .5, y: mid / H, ax: Math.max(0, .5 - (r + 16) / W), ay: room / H };
+    }
     var mx = port ? .5 : .74, my = port ? .25 : .56, mxS = mx, myS = my, ptrAt = -1e9, sizedW = 0, sizedH = 0;
     function layout(force) {
       var oldSpan = span, wasIn = window.scrollY <= oldSpan + 1, oldT = tTarget;
@@ -474,6 +483,8 @@
       renderer.setSize(W, H, false); cam.aspect = W / H; cam.fov = port ? 58 : 40; cam.updateProjectionMatrix();
       drawApp(appCanvas, W, H, Math.min(dpr, 1.5)); appTex.needsUpdate = true; glass.uniforms.res.value.set(W, H);
       pillH = (port ? 30 : 38) / H * 2 * Math.tan(cam.fov * Math.PI / 360);
+      rest = restOf();
+      if (ptrAt < 0) { mx = mxS = rest.x; my = myS = rest.y; }
     }
     var resizing = 0;
     window.addEventListener("resize", function () { if (resizing) cancelAnimationFrame(resizing); resizing = requestAnimationFrame(function () { resizing = 0; layout(false); wake(); }); });
@@ -493,13 +504,52 @@
       if (slowFrames > 40 && dpr > 1) { dpr = Math.max(1, dpr - .25); renderer.setPixelRatio(dpr); renderer.setSize(W, H, false); slowFrames = 0; }
     }
 
+    /* The boxes the page's own words stand in, read when they change (a scene, a card), never every frame. */
+    var keepOut = [];
+    function keepOutOf() {
+      keepOut = [];
+      var on = ui.querySelector(".cap.on"), gut = port ? 52 : 64;
+      if (on) keepOut.push([on.offsetLeft - 8, on.offsetTop - 12, on.offsetLeft + on.offsetWidth + 8, on.offsetTop + on.offsetHeight + 8]);
+      if (!card.hidden) keepOut.push([card.offsetLeft - 8, card.offsetTop - 8, card.offsetLeft + card.offsetWidth + 8, card.offsetTop + card.offsetHeight + 8]);
+      keepOut.push([0, 0, W, head.getBoundingClientRect().bottom + 4]);
+      keepOut.push([W - gut, 0, W, H]);
+    }
+    var guardedBeat = -2;
+    function guardPills(dt) {
+      var b = Math.round(tNow) + (card.hidden ? 0 : 100);
+      if (b !== guardedBeat) { guardedBeat = b; keepOutOf(); }
+      var unit = H / (2 * Math.tan(cam.fov * Math.PI / 360)), moving = false;
+      /* The story's own labels (made last: a record's, the problems', the rule's, the agent's, the hover's) are placed first; a plot's label gives way where they meet. */
+      var placed = [];
+      for (var i = pills.length - 1; i >= 0; i--) {
+        var p = pills[i], want = 1;
+        if (p.material.opacity > .001) {
+          vA.copy(p.position).project(cam);
+          var x = (vA.x + 1) / 2 * W, y = (1 - vA.y) / 2 * H, w = p.scale.x * ((p.userData.w || 640) / 640) * unit, h = p.scale.y * unit * .8;
+          /* A label that would cross the right gutter slides left along its own line, just enough to fit, rather than being cut. */
+          var over = Math.max(0, x + w - (W - (port ? 52 : 64))), slide = Math.min(over, x - 8, w);
+          p.center.x = slide > 0 ? slide / (p.scale.x * unit) : 0;
+          x -= Math.max(0, slide);
+          if (vA.z > 1) want = 0;
+          else for (var k = 0; k < keepOut.length + placed.length; k++) { var r = k < keepOut.length ? keepOut[k] : placed[k - keepOut.length]; if (x < r[2] && x + w > r[0] && y + h / 2 > r[1] && y - h / 2 < r[3]) { want = 0; break; } }
+          if (want && p.material.opacity > .2) placed.push([x - 4, y - h / 2 - 2, x + w + 4, y + h / 2 + 2]);
+        }
+        var v = p.userData.vis === undefined ? want : p.userData.vis;
+        v += (want - v) * (reduce ? 1 : 1 - Math.exp(-dt * 12));
+        if (Math.abs(want - v) < .01) v = want; else moving = true;
+        p.userData.vis = v;
+        p.material.opacity *= v;
+      }
+      return moving;
+    }
+
     /* ── a frame ── */
     var lastFixed = null, drewAt = null;
     frameFn = function (dt, changed) {
       var t = reduce ? Math.round(tNow) : tNow, a = amb, busy = false;
       drewAt = { t: tNow, scrollY: window.scrollY, span: span };
       /* Left alone, the hole drifts; with the drift spent it comes to rest. */
-      if (now() - ptrAt > 3500) { var ax = port ? .5 : .74, ay = port ? .25 : .56; mx = ax + Math.cos(time * .5) * (port ? .22 : .13) * a; my = ay + Math.sin(time * .8) * (port ? .08 : .2) * a; }
+      if (now() - ptrAt > 3500) { mx = rest.x + Math.cos(time * .5) * rest.ax * a; my = rest.y + Math.sin(time * .8) * rest.ay * a; }
       var ke = reduce ? 1 : 1 - Math.exp(-dt * 9); mxS += (mx - mxS) * ke; myS += (my - myS) * ke;
       if (Math.abs(mx - mxS) > 0.0005 || Math.abs(my - myS) > 0.0005) busy = true;
 
@@ -511,7 +561,11 @@
       if (shown && Math.round(t) !== placedBeat) placeCard();
 
       pose(clamp(t, 0, NB - 1), vP, vT);
-      if (port) { vP.sub(vT).multiplyScalar(1.35).add(vT); var ph = 1 - sm(t, .45, 1); if (ph > 0) { vB.set(-1.9, 0, 2.9); vT.lerp(vB, ph); vB.set(-13.4, 19.5, 14.4); vP.lerp(vB, ph); } }
+      if (port) {
+        vP.sub(vT).multiplyScalar(1.35).add(vT); var ph = 1 - sm(t, .45, 1); if (ph > 0) { vB.set(-1.9, 0, 2.9); vT.lerp(vB, ph); vB.set(-13.4, 19.5, 14.4); vP.lerp(vB, ph); }
+        /* Inside the map, pan the camera to its right so the plots and their labels clear the right edge. */
+        var pan = 3.4 * (1 - ph); vB.subVectors(vT, vP); vB.set(-vB.z, 0, vB.x).normalize().multiplyScalar(pan); vP.add(vB); vT.add(vB);
+      }
       var par = 1 - sm(t, .9, 1.4) * .55; vA.set(1, 0, 1).normalize(); vP.addScaledVector(vA, (mxS - .5) * 2.2 * par); vP.y -= (myS - .5) * 1.4 * par;
       cam.position.copy(vP); cam.lookAt(vT);
 
@@ -574,6 +628,7 @@
       holeR = rad;
       glass.uniforms.m.value.set(mxS * W, (1 - myS) * H); glass.uniforms.r.value = rad; glass.uniforms.fade.value = 1 - gone; glass.uniforms.zoom.value = 1 + open * .5;
 
+      if (guardPills(dt)) busy = true;
       renderer.clear(); renderer.render(scene, cam);
       if (gone < .999) { renderer.clearDepth(); renderer.render(oScene, oCam); }
       return busy;
@@ -666,12 +721,14 @@
         if (!quiet) said.textContent = NOUN[r.kind] + " " + r.name + " selected. " + facts.map(function (f) { return f[0] + ": " + f[1]; }).join(". ") + "." + (problem ? " " + problem : "");
       }
       card.hidden = false;
+      root.classList.add("picking");
+      guardedBeat = -2;
       placeCard();
       if (focus || held) cardName.focus();
     }
     function hideCard() {
       var had = card.contains(document.activeElement);
-      shown = null; card.hidden = true; said.textContent = "";
+      shown = null; card.hidden = true; said.textContent = ""; root.classList.remove("picking"); guardedBeat = -2;
       /* The keyboard never falls to the page when the card it was in goes. */
       if (had) toggle.focus();
     }

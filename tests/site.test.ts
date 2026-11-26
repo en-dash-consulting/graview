@@ -149,8 +149,11 @@ describe("what the pages promise each other", () => {
     expect(graview.license).toBe("Elastic-2.0");
     expect(facts).toContain('<strong data-fact="license">Elastic License 2.0</strong>');
     expect(facts).toContain(`<strong data-fact="version">${graview.version}</strong>, pre-1.0`);
-    // And a count said in a sentence is marked too.
-    expect(landing).toMatch(/through <span data-number-word="skills">[a-z-]+<\/span> skills/);
+    // And a count in a caption is marked too: every number the story says that is not its own example.
+    expect(landing).toMatch(/through <span data-number="skills">\d+<\/span> skills/);
+    const captions = [...landing.matchAll(/<li class="cap"[\s\S]*?<\/li>/g)].map(([cap]) => cap.replace(/<ul class="facts">[\s\S]*?<\/ul>/, "")).join(" ");
+    const unmarked = captions.replace(/<(strong|span) data-number(-word)?="[a-zA-Z]+">[^<]*<\/\1>/g, "").replace(/<[^>]+>/g, " ").match(/\b\d[\d,.]*\b/g) ?? [];
+    expect(unmarked).toEqual([]);
   });
 
   it("links the docs and the long version to each other and back", () => {

@@ -38,6 +38,8 @@ try {
   await page.goto(`http://127.0.0.1:${port}/index.html`, { waitUntil: "load" });
   await page.waitForFunction(() => document.documentElement.classList.contains("drawn"), null, { timeout: 30_000 });
   await page.evaluate(() => document.fonts.ready);
+  /* A picture, not a page: the controls a reader presses (the scenes' dots, the records) are left out of it. */
+  await page.addStyleTag({ content: ".dots, .records { visibility: hidden !important; }" });
   /* The hole over the table, where the map behind it shows its blocks. */
   await page.evaluate(() => window.__home.at(0, 0.73, 0.6));
   await page.waitForTimeout(1500);

@@ -1162,6 +1162,16 @@ main.page > section.tour-intro { padding-top: 64px; }
 .page-nav::-webkit-scrollbar { display: none; }
 .page-nav a { flex: 0 0 auto; color: var(--ink-2); text-decoration: none; display: inline-flex; align-items: center; min-height: 42px; white-space: nowrap; }
 .page-nav a:hover { color: var(--pine); text-decoration: underline; text-underline-offset: 5px; }
+
+/* The header and the footer stand on the page's own column: the docs' and the long version's 1160, the tour's and the missing page's 1280. The home is the map, edge to edge. */
+.docs-page { --site-col: 1160px; }
+.wide-page { --site-col: 1280px; }
+.docs-page .site-head-in, .docs-page .site-foot-in, .wide-page .site-head-in, .wide-page .site-foot-in, .wide-page .page-nav {
+  padding-left: max(var(--pad), env(safe-area-inset-left), calc((100% - var(--site-col)) / 2 + var(--pad)));
+  padding-right: max(var(--pad), env(safe-area-inset-right), calc((100% - var(--site-col)) / 2 + var(--pad)));
+}
+/* Code stands in the prose's column, not past it: a wide line scrolls inside its block. */
+main.col .code, main.col .term, main.col .cta { max-width: 41rem; }
 /* site-css:end */
 </style>
 <style>
@@ -1368,8 +1378,19 @@ html:not(.gl) .cap h2 { font-size: clamp(28px, 4.4vw, 46px); }
   .gl .facts { display: none; }
   .gl .dots { top: 34%; }
   .gl .cap { width: calc(100% - 64px); }
-  .card { top: 118px; left: 12px; right: 12px; width: auto; max-height: 38vh; padding: 14px 16px 16px; }
-  .card.left { left: 12px; }
+  /* A phone's card is a sheet at the foot of the screen, in the caption's place, so the block it is about stays in sight above it. */
+  .card, .card.left {
+    top: auto; left: 10px; right: 10px; bottom: max(12px, calc(env(safe-area-inset-bottom) + 8px)); width: auto;
+    max-height: min(46vh, 420px); padding: 14px 16px 18px; border-radius: 16px; overscroll-behavior: contain;
+  }
+  .card h2 { font-size: 19px; margin-bottom: 8px; }
+  .card-facts { grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 2px 14px; }
+  .card-facts dt { min-width: 0; }
+  .gl.picking .cap.on { opacity: 0; }
+  .gl.picking .cap.on a, .gl.picking .cap.on button { visibility: hidden; }
+  /* At the opening the drawn app is the whole screen: the scenes' dots and the records wait until the reader is inside the map. */
+  .gl:not(.in-map) .dots, .gl:not(.in-map) .records { visibility: hidden; opacity: 0; }
+  .gl .dots, .gl .records { transition: opacity .4s ease; }
   .records { top: 70px; bottom: auto; right: max(12px, env(safe-area-inset-right)); }
   .records-toggle span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   .records-toggle { width: 40px; padding: 0; justify-content: center; }
@@ -1383,6 +1404,13 @@ html:not(.gl) .cap h2 { font-size: clamp(28px, 4.4vw, 46px); }
   .gl .cap h2 { font-size: clamp(22px, 7.5vh, 36px); }
   .gl .cap p { font-size: 14.5px; }
   .gl .facts { display: none; }
+}
+/* A phone held sideways: the card takes the right of the screen, the caption the left, both to the height there is. */
+@media (min-width: 821px) and (max-height: 620px) {
+  .card, .card.left { top: 64px; bottom: auto; left: auto; right: max(64px, calc(env(safe-area-inset-right) + 52px)); width: min(320px, 42vw); max-height: calc(100vh - 80px); }
+  .gl .cap { width: min(560px, 48vw); }
+  .gl.short .sheet { width: min(460px, 52vw); }
+  .gl.picking .records { visibility: hidden; }
 }
 @media (max-width: 820px) and (max-height: 720px) {
   .gl .sheet .lede { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
@@ -1424,7 +1452,7 @@ html:not(.gl) .cap h2 { font-size: clamp(28px, 4.4vw, 46px); }
     <ol class="scenes" aria-label="Behind the screen, in six scenes">
       <li class="cap" data-beat="1" data-scene="What a screen should stand on"><span class="n">One</span><h2>This is what a screen should be standing on.</h2><p>Graview&rsquo;s map of an app: a plot for every kind of thing, a block for every record, a road for every relation. You get it out of the box, from one declaration in TypeScript.</p></li>
       <li class="cap" data-beat="2" data-scene="What can change, and what is wrong"><span class="n">Two</span><h2>It knows what can change, and what is wrong.</h2><p>Actions are declared, so nothing changes any other way. Rules are declared too: in this example, three modules have no doc. The map flags them, and the rule names the action that would fix them.</p></li>
-      <li class="cap" data-beat="3" data-scene="Your agent reads it first"><span class="n">Three</span><h2>Your agent reads it before it draws.</h2><p>As a description in plain words, as a typed tool for every action over MCP, and through <span data-number-word="skills">thirty-two</span> skills that each end in a real check. It never has to guess what exists.</p></li>
+      <li class="cap" data-beat="3" data-scene="Your agent reads it first"><span class="n">Three</span><h2>Your agent reads it before it draws.</h2><p>As a description in plain words, as a typed tool for every action over MCP, and through <span data-number="skills">32</span> skills that each end in a real check. It never has to guess what exists.</p></li>
       <li class="cap" data-beat="4" data-scene="Ask for any screen"><span class="n">Four</span><h2>So ask for any screen. <span class="tq">Every one is true.</span></h2><p>A periodic table, a status page, a bookshelf. Each is handed only the records it asked to read, and it stands on the map over the records it shows, so every row and number traces back to a block you can see.</p></li>
       <li class="cap" data-beat="5" data-scene="A button does what it says"><span class="n">Five</span><h2>And a button does what it says.</h2><p>One press runs a declared action. Three guides are written, the docs plot grows by three, the rule holds, and every screen standing on the map updates at once.</p></li>
       <li class="cap" data-beat="6" data-scene="The prompt to copy"><span class="n">Six</span><h2>Give your agent something real to draw on.</h2>

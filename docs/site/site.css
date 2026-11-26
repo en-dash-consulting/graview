@@ -945,3 +945,13 @@ main.page > section.tour-intro { padding-top: 64px; }
 .page-nav::-webkit-scrollbar { display: none; }
 .page-nav a { flex: 0 0 auto; color: var(--ink-2); text-decoration: none; display: inline-flex; align-items: center; min-height: 42px; white-space: nowrap; }
 .page-nav a:hover { color: var(--pine); text-decoration: underline; text-underline-offset: 5px; }
+
+/* The header and the footer stand on the page's own column: the docs' and the long version's 1160, the tour's and the missing page's 1280. The home is the map, edge to edge. */
+.docs-page { --site-col: 1160px; }
+.wide-page { --site-col: 1280px; }
+.docs-page .site-head-in, .docs-page .site-foot-in, .wide-page .site-head-in, .wide-page .site-foot-in, .wide-page .page-nav {
+  padding-left: max(var(--pad), env(safe-area-inset-left), calc((100% - var(--site-col)) / 2 + var(--pad)));
+  padding-right: max(var(--pad), env(safe-area-inset-right), calc((100% - var(--site-col)) / 2 + var(--pad)));
+}
+/* Code stands in the prose's column, not past it: a wide line scrolls inside its block. */
+main.col .code, main.col .term, main.col .cta { max-width: 41rem; }
