@@ -32,7 +32,7 @@ import {
 } from "./project.js";
 import { agentsMd, claudeMd } from "./agents.js";
 import { schemaTs, mutationsTs, invariantsTs, brandTs, appTs, domainTest } from "./domain.js";
-import { indexHtml, embedHtml, embedTsx, viewsTsx, pagesTsx, mainTsx } from "./ui.js";
+import { indexHtml, embedHtml, embedTsx, viewsTsx, pagesTsx, seatTsx, mainTsx } from "./ui.js";
 import { documentAppTs, documentBrandTs, documentJson, documentSchemaTs, documentTest, templateJson, templateKind, templateViewFiles } from "./from-template.js";
 import type { GraviewTemplate } from "../document/graview-template.js";
 
@@ -191,6 +191,7 @@ export function scaffoldProject(given: ScaffoldOptions): Scaffold {
     range,
     packageManager,
     packageName,
+    gate: led && given.kind === undefined ? led.gate : `add-${kind}`,
     fromTemplate: template !== undefined,
   };
 
@@ -227,6 +228,7 @@ export function scaffoldProject(given: ScaffoldOptions): Scaffold {
     ...domain,
     { path: "src/ui/views.tsx", contents: viewsTsx(ids) },
     { path: "src/ui/pages.tsx", contents: pagesTsx(ids) },
+    { path: "src/ui/seat.tsx", contents: seatTsx(ids) },
     { path: "src/main.tsx", contents: mainTsx(ids) },
     { path: "src/embed.tsx", contents: embedTsx(ids) },
     { path: "tests/domain.test.ts", contents: template ? documentTest(ids) : domainTest(ids) },

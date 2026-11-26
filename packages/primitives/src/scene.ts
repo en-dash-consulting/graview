@@ -45,7 +45,8 @@ export { ShowInstallation } from "./installation.js";
 export { FindBox } from "./find.js";
 export { viewsCss } from "./views-css.js";
 /* What the scene puts in the one bar — its Find and its Activity — and what it keeps on its picture: the same on the whole-page Shell and an embed. */
-export { SceneBarTools, SceneTrail, useCallLog } from "./scene-bar.js";
+export { SceneBarTools, SceneTrail } from "./scene-bar.js";
+export { useCallLog } from "./call-log.js";
 /* The way back after an act, on the scene as on the pages (FR-152, FR-153): an offer on the board, and ⌘Z. */
 export { SceneWayBack } from "./scene-way-back.js";
 // The app as it was (Roadmap f-playback): the timeline, fetched when somebody first looks back.

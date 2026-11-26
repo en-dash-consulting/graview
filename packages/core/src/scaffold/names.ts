@@ -102,6 +102,8 @@ export type Ids = {
   range: string;
   packageManager: "pnpm" | "npm";
   packageName: string;
+  /** The act the starter seat is gated on: one that creates the kind. */
+  gate: string;
   /** Made from a template (FR-08): the declaration is the document in src/domain/app.json. */
   fromTemplate: boolean;
 };

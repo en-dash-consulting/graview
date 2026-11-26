@@ -333,7 +333,7 @@ try {
   page.on("pageerror", (error) => errors.push(error.message));
 
   const open = async (as) => {
-    await page.goto(`${at("todo")}/scene/?today=2026-09-01&fresh=1&as=${as}&${DOOR_KEY_PARAM}=${encodeURIComponent(doorKey())}`, { waitUntil: "load" });
+    await page.goto(`${at("todo")}/?today=2026-09-01&fresh=1&as=${as}&${DOOR_KEY_PARAM}=${encodeURIComponent(doorKey())}`, { waitUntil: "load" });
     await page.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
     await page.waitForTimeout(800);
     await profile();
@@ -722,7 +722,7 @@ try {
         },
       };
     }, `${at("studio-model")}/v1`);
-    await page.goto(`${at("todo")}/scene/?today=2026-09-01&fresh=1&as=user-nora`, { waitUntil: "load" });
+    await page.goto(`${at("todo")}/?today=2026-09-01&fresh=1&as=user-nora`, { waitUntil: "load" });
     await page.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
     await page.waitForTimeout(900);
     await profile();
@@ -797,7 +797,8 @@ try {
   await page.waitForTimeout(600);
   const back = await page.evaluate(() => ({
     studioGone: document.querySelector('[data-testid="studio"]') === null,
-    stillTheApp: document.querySelector('[data-graview-pick="t-deposit"]') !== null,
+    // Things' one face, on the page it opened on, its bar and its page standing.
+    stillTheApp: document.querySelector("[data-graview-one-place]") !== null && document.querySelector('[data-graview-app-bar] [data-testid="profile-button"]') !== null && location.pathname === "/",
   }));
   report.checks.closingPutsYouBackWhereYouWere = { ...back, ok: back.studioGone && back.stillTheApp };
 

@@ -1,6 +1,6 @@
 import { layer, type AnySchema } from "@graview/core";
 import type { ToolCall } from "@graview/tools";
-import { useCallback, useState, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { createPortal } from "react-dom";
 import type { BarFind } from "./app-bar.js";
 import { FindBox } from "./find.js";
@@ -27,20 +27,6 @@ import { Trail } from "./workbench/trail.js";
  * now (`SceneTrail`), in its top corner opposite Up, the way a map carries
  * its own state; the browser keeps its own back and forward.
  */
-
-/** The calls a seat made, newest first, a settling call replacing its own "running" line: the record Activity shows. */
-export function useCallLog(): readonly [readonly ToolCall[], (call: ToolCall) => void] {
-  const [calls, setCalls] = useState<readonly ToolCall[]>([]);
-  const onCall = useCallback((call: ToolCall) => {
-    setCalls((current) => {
-      // A call that settles replaces its own "running" entry rather than
-      // stacking on it, so the rail shows twelve turns, not twelve halves.
-      const settling = call.phase !== "running" && current[0]?.name === call.name && current[0]?.at === call.at;
-      return [call, ...(settling ? current.slice(1) : current)].slice(0, 12);
-    });
-  }, []);
-  return [calls, onCall] as const;
-}
 
 /**
  * THE SCENE'S PART OF THE BAR: its Find in the bar's place for Find, and its

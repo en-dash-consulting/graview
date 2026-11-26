@@ -245,26 +245,9 @@ function TodoShell({
       profileHref={(userId) => `/people/${userId}`}
       // The fixture at `/scene/`: its way back to the pages is the app's root.
       pagesHref="/"
-      /*
-       * THE APP'S OWN DECLARATION, one press away. The keeper who keeps
-       * who is here also keeps what the app IS — its kinds, fields, acts
-       * and rules — and changes it with the same gestures, checked before
-       * anything is written.
-       */
-      studio={<StudioPlace app={todoApp} />}
-      /*
-       * THE SEAT IN ACTIVITY: the tidy button, and at `?chat=1` the app's
-       * conversation beside it — the panel a product places, here so a
-       * harness can drive it (verify-seat: a change to the app proposed
-       * from words, Roadmap f-seat-reshape). Off unless asked for, so no
-       * other harness meets a conversation it did not open.
-       */
-      seat={(onCall) => (
-        <>
-          <TidyButton onCall={onCall} />
-          {CHAT ? <ChatPanel<S> shared onCall={onCall} /> : null}
-        </>
-      )}
+      // The app's own declaration and the seat in Activity, as the one face has them (below).
+      studio={todoStudio}
+      seat={todoSeat}
       remembers={remembers}
       syncUrl={syncUrl}
       renderer={renderer}
@@ -274,6 +257,30 @@ function TodoShell({
     />
   );
 }
+
+/**
+ * THE SEAT IN ACTIVITY, on either face: the tidy button, and at `?chat=1`
+ * the app's conversation beside it — the panel a product places, here so a
+ * harness can drive it (verify-seat: a change to the app proposed from
+ * words, Roadmap f-seat-reshape). Off unless asked for, so no other harness
+ * meets a conversation it did not open.
+ */
+export function todoSeat(onCall: (call: ToolCall) => void) {
+  return (
+    <>
+      <TidyButton onCall={onCall} />
+      {CHAT ? <ChatPanel<S> shared onCall={onCall} /> : null}
+    </>
+  );
+}
+
+/**
+ * THE APP'S OWN DECLARATION, one press away, in the person's menu under
+ * "Keeping this app" on either face. The keeper who keeps who is here also
+ * keeps what the app IS — its kinds, fields, acts and rules — and changes
+ * it with the same gestures, checked before anything is written.
+ */
+export const todoStudio = <StudioPlace app={todoApp} />;
 
 /**
  * The agent seat: hand the list over and watch what it does.

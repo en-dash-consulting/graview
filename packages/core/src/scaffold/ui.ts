@@ -2,8 +2,9 @@ import { type Ids, escapeComment, escapeHtml, escapeJsxText, escapeString } from
 
 /*
  * WHAT A NEW PROJECT DRAWS: the page, the embed, the views the app's city
- * and its pages draw with, the pages in your own words, and the entry that
- * opens the store and mounts the one face.
+ * and its pages draw with, the pages in your own words, the seat and the
+ * studio on its bar, and the entry that opens the store and mounts the one
+ * face.
  */
 
 export function indexHtml(ids: Ids): string {
@@ -350,6 +351,77 @@ export function pages() {
 `;
 }
 
+export function seatTsx(ids: Ids): string {
+  return `import { AgentSeat } from "@graview/primitives";
+import { useGraph, useGraview } from "@graview/react";
+import { templateIntelligence, type ToolCall } from "@graview/tools";
+import { lazy, Suspense } from "react";
+import { ${ids.appVar} } from "../domain/app.js";
+import type { ${ids.SchemaType} } from "../domain/schema.js";
+
+type S = ${ids.SchemaType};
+
+/*
+ * THE SEAT AND THE STUDIO, ON THE APP'S BAR. The bell's Activity holds the
+ * seat under "The agent's seat", with every call it makes; the person's
+ * menu holds the studio under "Keeping this app". \`src/main.tsx\` hands
+ * both to the face.
+ */
+
+/** The agent's seat, handed the call recorder Activity shows its calls with. */
+export function seat(onCall: (call: ToolCall) => void) {
+  return <Starter onCall={onCall} />;
+}
+
+/**
+ * The seat at zero. An empty graph plus a seat that proposes starter data is
+ * the "describe your domain, get a working app" moment. Every proposal is an
+ * ordinary mutation through the derived tool surface — logged, attributed to
+ * the seat, reviewable, undoable.
+ */
+function Starter({ onCall }: { onCall: (call: ToolCall) => void }) {
+  const { store } = useGraview<S>();
+  const nodes = useGraph();
+  const empty = nodes.length === 0;
+  return (
+    <AgentSeat<S>
+      who="starter"
+      testId="agent-starter"
+      count={empty ? 1 : 0}
+      gate="${ids.gate}"
+      label={() => "Add some starter data"}
+      busyLabel="Adding…"
+      idle="There is something here already"
+      onCall={onCall}
+      run={async (agent) => {
+        const starter = templateIntelligence<S>();
+        for (const proposal of await starter.propose(store)) {
+          await agent.run(proposal.mutation, { ...proposal.args });
+        }
+      }}
+    />
+  );
+}
+
+/*
+ * THE APP'S OWN DECLARATION, one press away and in place. The kinds,
+ * fields, edges, acts and rules of \`src/domain\` are a graph here: change
+ * one with the ordinary acts, watch the checker judge it, and Apply writes
+ * the files back into \`src/domain\` through the dev server's door
+ * (\`studioDoor\` in vite.config.ts). Offered to the seat that administers
+ * where there is one, and to whoever is here where there is not — which is
+ * this project, today. In a chunk of its own, never the page's first load.
+ */
+const StudioPlace = lazy(() => import("@graview/studio").then((studio) => ({ default: studio.StudioPlace })));
+
+export const studio = (
+  <Suspense fallback={null}>
+    <StudioPlace app={${ids.appVar}} />
+  </Suspense>
+);
+`;
+}
+
 export function mainTsx(ids: Ids): string {
   return `import { PagesApp } from "@graview/pages";
 import { themeCss, type Scheme } from "@graview/primitives";
@@ -358,6 +430,7 @@ import { createRoot } from "react-dom/client";
 import { ${ids.appVar} } from "./domain/app.js";
 import { ${ids.brandVar} } from "./domain/brand.js";
 import { pages } from "./ui/pages.js";
+import { seat, studio } from "./ui/seat.js";
 import { views } from "./ui/views.js";
 
 const sheet = new CSSStyleSheet();
@@ -425,7 +498,8 @@ const devHostFiles = (import.meta as { env?: { DEV?: boolean } }).env?.DEV ? fil
  * beside the records it shows, then to the whole map of the app. Handed
  * \`views\`, the registry the city draws with, the pages land on a gallery
  * of them — every kind as a card until you title a lens, then the lens by
- * its name — with the seat on every route. \`sceneUnderPages: false\`
+ * its name. The bar's bell holds the agent's seat in its Activity, and the
+ * person's menu the studio (see ui/seat.tsx). \`sceneUnderPages: false\`
  * would keep the pages alone, without the city.
  */
 createRoot(root).render(
@@ -438,6 +512,8 @@ createRoot(root).render(
       settings: ${ids.appVar}.settings ?? [],
       app: ${ids.appVar},
       files: devHostFiles,
+      seat,
+      studio,
     }}
     // Your own pages over the derived ones: see ui/pages.tsx.
     registry={pages()}

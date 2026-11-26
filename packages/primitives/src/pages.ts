@@ -36,6 +36,8 @@ export { useMarkup } from "./markup.js";
 export { AppMark, AppTitle, useFavicon, useThemeColor } from "./app-title.js";
 // One inbox on the routed face's bar (Roadmap f-app-bar-calm), fetched only once it has anything to hold.
 export { BarInbox, useInboxWanted } from "./bar-activity.js";
+// What the app's seat did, for the inbox's Activity, on the one face as on the Scene's.
+export { useCallLog } from "./call-log.js";
 export { AppBar, BarFindContext, barPlaceAt, barPlaces, BAR_HEIGHT, BAR_PHONE, HOME_KEY, HOME_PATH, TOOL, toolStyle, useBarFind } from "./app-bar.js";
 export type { AppMenuRow, BarFace, BarFaces, BarFind, BarGo, BarPlace, BarPlaceGroup, BarScheme, BarShare, BarStatus, SchemeChoice } from "./app-bar.js";
 // The ways past what stands before the work (WCAG 2.4.1), and the groups that are one Tab stop.

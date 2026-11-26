@@ -44,11 +44,11 @@ graview create <dir> [--name "Field Notes"] [--kind note] [--plural notes]
 
 ```
 
-## What it writes (21 files)
+## What it writes (22 files)
 
-The declaration split into domain and UI, so the domain has no React in it and `graview check` can read it headless. `src/domain/` is the whole surface you will work in; `src/main.tsx` mounts one `PagesApp` at `/`, the one face, and `src/ui/` holds the pictures and a page in your own words, each of them replaceable.
+The declaration split into domain and UI, so the domain has no React in it and `graview check` can read it headless. `src/domain/` is the whole surface you will work in; `src/main.tsx` mounts one `PagesApp` at `/`, the one face, and `src/ui/` holds the pictures, a page in your own words, and the agent's seat and the studio on the bar, each of them replaceable.
 
-`package.json`, `tsconfig.json`, `tsconfig.build.json`, `vite.config.ts`, `index.html`, `embed.html`, `.gitignore`, `README.md`, `AGENTS.md`, `CLAUDE.md`, `src/domain/schema.ts`, `src/domain/mutations.ts`, `src/domain/invariants.ts`, `src/domain/brand.ts`, `src/domain/app.ts`, `src/ui/views.tsx`, `src/ui/pages.tsx`, `src/main.tsx`, `src/embed.tsx`, `tests/domain.test.ts`, `.github/workflows/ci.yml`
+`package.json`, `tsconfig.json`, `tsconfig.build.json`, `vite.config.ts`, `index.html`, `embed.html`, `.gitignore`, `README.md`, `AGENTS.md`, `CLAUDE.md`, `src/domain/schema.ts`, `src/domain/mutations.ts`, `src/domain/invariants.ts`, `src/domain/brand.ts`, `src/domain/app.ts`, `src/ui/views.tsx`, `src/ui/pages.tsx`, `src/ui/seat.tsx`, `src/main.tsx`, `src/embed.tsx`, `tests/domain.test.ts`, `.github/workflows/ci.yml`
 
 Dependencies: `@graview/core`, `@graview/layout`, `@graview/tools`, `@graview/render`, `@graview/react`, `@graview/primitives`, `@graview/pages`, `@graview/ship`, `@graview/embed`, `@graview/studio`, `@graview/guest`, `react`, `react-dom`. Dev: `graview`, `@types/node`, `@types/react`, `@types/react-dom`, `typescript`, `vite`, `vitest`. No zod of your own — `@graview/core` re-exports `z`, so a kind's fields are built with exactly the copy the framework was built with.
 
