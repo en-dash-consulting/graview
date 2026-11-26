@@ -123,9 +123,9 @@
     var so = (1 - sm(t, .05, .45)).toFixed(3);
     if (so !== lastSheet) {
       lastSheet = so;
-      /* Gone from sight, never from the keyboard: a press on its prompt brings the opening back. */
+      /* Gone from sight is gone from the keyboard too: nothing faded stays pressable under the scenes. The closing scene hands over the same prompt. */
       sheet.style.opacity = so;
-      sheet.style.pointerEvents = +so < .01 ? "none" : "";
+      sheet.style.visibility = +so < .01 ? "hidden" : "visible";
       sheet.style.transform = port || short ? "translateY(" + ((1 - so) * -40).toFixed(1) + "px)" : "translateY(calc(-50% + " + ((1 - so) * -40).toFixed(1) + "px))";
     }
     var inside = t > .55;
