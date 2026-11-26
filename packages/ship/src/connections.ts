@@ -1,5 +1,5 @@
 import type { AnySchema, GraviewApp, Store } from "@graview/core";
-import { NOTION_AUTH_ENV, connection, notionSourcesOf, sharedLinks, type ConnectionDeclaration, type Fetcher, type GoogleTokenRequest, type SyncReport, type SyncState } from "@graview/core/sync";
+import { NOTION_AUTH_ENV, TODOIST_AUTH_ENV, connection, notionSourcesOf, sharedLinks, type ConnectionDeclaration, type Fetcher, type GoogleTokenRequest, type SyncReport, type SyncState } from "@graview/core/sync";
 
 /**
  * THE APP'S DECLARED CONNECTIONS, RUN BESIDE ITS STORE (`connections.<name>`).
@@ -20,10 +20,11 @@ import { NOTION_AUTH_ENV, connection, notionSourcesOf, sharedLinks, type Connect
  * for a Google calendar `<auth.env>_CLIENT_ID`, `_CLIENT_SECRET` and
  * `_REFRESH_TOKEN` (auth.env is "GOOGLE" unless declared); for a Notion
  * database the internal integration's secret, `<auth.env>_TOKEN` (auth.env
- * is "NOTION" unless declared, so `NOTION_TOKEN`). A host that keeps them
+ * is "NOTION" unless declared, so `NOTION_TOKEN`); for a Todoist project
+ * the account's personal API token, `<auth.env>_TOKEN` (`TODOIST_TOKEN`). A host that keeps them
  * itself (Graview Cloud, per workspace) hands `token` instead — Google's
  * access token, asked again with `{ refresh: true }` when Google refuses
- * one, or Notion's secret.
+ * one, or Notion's secret, or Todoist's token.
  *
  * Every connection shares one set of links (`sharedLinks()`), so a Notion
  * relation finds the record another connection keeps (a check's reindeer, in
@@ -47,8 +48,8 @@ export interface RunConnectionsOptions<S extends AnySchema> {
   /** Reads the KEY=value file a declaration's `auth.file` names (`readEnvFile`). Absent: that file is not read. */
   readFile?(path: string): Readonly<Record<string, string>>;
   /**
-   * THE HOST SEAM: a connection's credential — a Google access token, or a
-   * Notion integration's secret (`declaration.system` says which). Absent:
+   * THE HOST SEAM: a connection's credential — a Google access token, a
+   * Notion integration's secret or a Todoist API token (`declaration.system` says which). Absent:
    * read from the credentials the declaration names.
    */
   token?(request: ConnectionTokenRequest): Promise<string> | string;
@@ -56,9 +57,11 @@ export interface RunConnectionsOptions<S extends AnySchema> {
   calendar?(request: { readonly connection: string; readonly declaration: ConnectionDeclaration }): string | undefined;
   /** A Notion database's id, when the host keeps it. Absent: the declaration's, or the environment variable it names. */
   database?(request: { readonly connection: string; readonly declaration: ConnectionDeclaration }): string | undefined;
+  /** A Todoist project, its id or its name, when the host keeps it. Absent: the declaration's, or the environment variable it names. */
+  project?(request: { readonly connection: string; readonly declaration: ConnectionDeclaration }): string | undefined;
   /** Where credentials and a calendar's `env` are read. `process.env` by default. */
   readonly env?: Readonly<Record<string, string | undefined>>;
-  /** Google's API and its token endpoint, and Notion's API, for a test to script (`scriptedNotion().fetch`). */
+  /** Google's API and its token endpoint, Notion's API and Todoist's, for a test to script (`scriptedNotion().fetch`, `scriptedTodoist().fetch`). */
   readonly fetch?: Fetcher;
   /** Run nothing, and say so: `graview serve --no-sync`. */
   readonly paused?: boolean;
@@ -131,11 +134,12 @@ function refreshingToken(credentials: { readonly clientId: string; readonly clie
 
 /** One pass's news in a line, or nothing when there was none. */
 export function sayReport(report: SyncReport): string | undefined {
-  const notion = report.system === "notion";
-  const place = notion ? "Notion" : "the calendar";
+  const named = ({ notion: "Notion", todoist: "Todoist" } as Record<string, string>)[report.system];
+  const theirs = ({ notion: "Notion's page", todoist: "Todoist's task" } as Record<string, string>)[report.system] ?? "the calendar's";
+  const place = named ?? "the calendar";
   const said: string[] = [];
   if (report.applied.length) said.push(`took ${report.applied.length} from ${place}`);
-  if (report.pushed.length) said.push(`sent ${report.pushed.length} to ${notion ? "Notion" : "it"}`);
+  if (report.pushed.length) said.push(`sent ${report.pushed.length} to ${named ?? "it"}`);
   // Whom the pass invited and took off, counted (Roadmap f-sync-guest-changes-in-history): only writes that reached the calendar.
   const invited = (report.guests ?? []).filter((one) => one.invited.length > 0);
   const invitedCount = invited.reduce((sum, one) => sum + one.invited.length, 0);
@@ -143,8 +147,8 @@ export function sayReport(report: SyncReport): string | undefined {
   if (invitedCount) said.push(`invited ${invitedCount} to ${invited.length} event${invited.length === 1 ? "" : "s"}`);
   if (removedCount) said.push(`${removedCount} taken off`);
   if (report.gone.length) said.push(`${report.gone.length} gone there`);
-  // A change coming in that this store refused names the calendar's event or Notion's page, which may have no record here.
-  if (report.refused.length) said.push(`refused: ${report.refused.map((one) => `${one.resource ? `${notion ? "Notion's page" : "the calendar's"} ${one.id}` : one.localId} (${one.error})`).join(", ")}`);
+  // A change coming in that this store refused names the calendar's event, Notion's page or Todoist's task, which may have no record here.
+  if (report.refused.length) said.push(`refused: ${report.refused.map((one) => `${one.resource ? `${theirs} ${one.id}` : one.localId} (${one.error})`).join(", ")}`);
   if (report.resolved.length) said.push(`${report.resolved.length} conflict${report.resolved.length === 1 ? "" : "s"} settled`);
   if (report.conflicts.length) said.push(`${report.conflicts.length} conflict${report.conflicts.length === 1 ? "" : "s"} held`);
   // What the transport did there, as it said it: "Made 3 properties in Notion: Status, Due and Owner".
@@ -154,7 +158,7 @@ export function sayReport(report: SyncReport): string | undefined {
 }
 
 /** The systems a connection's changes are authored by: a change of theirs landing here starts no pass. */
-const CONNECTION_SYSTEMS = new Set(["google-calendar", "notion"]);
+const CONNECTION_SYSTEMS = new Set(["google-calendar", "notion", "todoist"]);
 
 export function runConnections<S extends AnySchema>(options: RunConnectionsOptions<S>): RunningConnections {
   const say = options.say ?? (() => undefined);
@@ -164,12 +168,58 @@ export function runConnections<S extends AnySchema>(options: RunConnectionsOptio
   const engines: { name: string; every: number; engine: ReturnType<typeof connection<S>>["engine"] }[] = [];
   const links = sharedLinks();
 
+  /*
+   * A TODOIST CONNECTION NOT RUNNING still says which tasks are whose: its
+   * links are kept with the others', so another of the same project deletes
+   * no task with one of its records' under it.
+   */
+  const notRunning = (name: string, declaration: ConnectionDeclaration) => {
+    const held = Object.entries(declaration.system === "todoist" ? (kept[name]?.links ?? {}) : {});
+    if (held.length === 0) return;
+    const byId = new Map(held.map(([localId, link]) => [link.id, localId]));
+    const byLocal = new Map(held.map(([localId, link]) => [localId, link.id]));
+    links.add({ linkOf: (localId) => byLocal.get(localId), linkedTo: (id) => byId.get(id) });
+  };
+
   for (const [name, declaration] of declared) {
     if (options.paused || declaration.paused) {
       say(`${name}: paused${options.paused ? " (--no-sync)" : " (declared)"}; nothing is synced`);
+      notRunning(name, declaration);
       continue;
     }
     const lookup = lookupFor(declaration, env, options.readFile);
+    if (declaration.system === "todoist") {
+      const project = options.project?.({ connection: name, declaration }) ?? (typeof declaration.project === "string" ? declaration.project : lookup(declaration.project.env));
+      if (!project) {
+        say(`${name}: not started: no project in ${typeof declaration.project === "string" ? "the declaration" : declaration.project.env}`);
+        notRunning(name, declaration);
+        continue;
+      }
+      const secretName = `${declaration.auth?.env ?? TODOIST_AUTH_ENV}_TOKEN`;
+      const host = options.token;
+      const value = host ? undefined : lookup(secretName);
+      if (!host && !value) {
+        notRunning(name, declaration);
+        say(`${name}: not started: ${secretName} is not set${declaration.auth?.file ? ` in the environment or ${declaration.auth.file}` : " in the environment"}`);
+        continue;
+      }
+      const made = connection<S>({
+        name,
+        declaration,
+        app: options.app,
+        store: options.store,
+        projectId: project,
+        token: () => (host ? host({ connection: name, declaration }) : value!),
+        ...(host ? {} : { secretName }),
+        ...(options.fetch ? { fetch: options.fetch } : {}),
+        ...(kept[name] ? { state: kept[name] } : {}),
+        say: (line) => say(`${name}: ${line}`),
+        links,
+      });
+      engines.push({ name, every: (declaration.every ?? 30) * 1000, engine: made.engine });
+      say(`${name}: ${declaration.direction === "read" ? "reading" : "keeping in step with"} a Todoist project into ${declaration.kind}, every ${declaration.every ?? 30} s`);
+      continue;
+    }
     if (declaration.system === "notion") {
       const databaseId = options.database?.({ connection: name, declaration }) ?? (typeof declaration.database === "string" ? declaration.database : lookup(declaration.database.env));
       if (!databaseId) {

@@ -118,9 +118,15 @@ Everything a Graview app declares, and the checker that verifies it.
   unshared database said as a sentence; `scriptedNotion()` is a Notion in
   memory to test against, and `scripts/verify-notion.mjs` proves the
   transport against a real workspace (`~/.graview-notion-test.env`;
-  `--stub` against the scripted one). A document declares either as
+  `--stub` against the scripted one). A Todoist project is one as well
+  (`todoist`): its tasks, or one section's or label's, pulled by sync token
+  through Todoist's API v1, written part by part, a task completed there a
+  field set and never a record removed, a repeat Todoist's words say kept
+  and any other left there; `scriptedTodoist()` is a Todoist in memory, and
+  `scripts/verify-todoist.mjs` is for a real account
+  (`~/.graview-todoist-test.env`; `--stub`). A document declares any as
   `connections.<name>` — a calendar, its fields and a color or tag filter,
-  or a database and its properties; `read` or `both`, the conflict policy
+  a database and its properties, or a project and its parts; `read` or `both`, the conflict policy
   — judged by `graview check` and run by `graview serve` and `graview
   preview`; `connection(…)` builds its engine for any host.
 - **A spreadsheet brought in** — `@graview/core/import`: `importRows(store,

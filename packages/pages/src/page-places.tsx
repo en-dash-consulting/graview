@@ -2,7 +2,7 @@ import { counted, isCurrent, offersTouches, labelOf, onePerPicture, placeLabel, 
 import { Link, useNavigate, useParams, useSearchParams } from "react-router";
 import { kindFacts } from "./facts.js";
 import { ViewBoundary } from "@graview/react/drawing";
-import { bleeds, bleedsFull, isDefaultView, listPageViewOf, type ViewProps } from "@graview/react/provider";
+import { PageOfItsOwn, bleeds, bleedsFull, isDefaultView, listPageViewOf, type ViewProps } from "@graview/react/provider";
 import { arrange, arrangeable, formatArrangement, parseArrangement } from "@graview/core/arrange";
 import { useLayoutEffect, useRef, useState, type ComponentType, type RefObject } from "react";
 import { DerivedForm } from "./form.js";
@@ -783,7 +783,9 @@ export function DefaultPlacePage<S extends AnySchema>({ context, asList }: { con
         }}
       >
         <PlacePageHead.Provider value={headline !== undefined ? SAID_ABOVE : UNDER_THE_HEAD}>
-          <LensOnPage context={context} place={place} filter={narrowedTo} bled={full} {...(chosen?.at === placeKey(place) ? { chosen: chosen.ids } : {})} />
+          <PageOfItsOwn.Provider value={`place ${placeKey(place)}`}>
+            <LensOnPage context={context} place={place} filter={narrowedTo} bled={full} {...(chosen?.at === placeKey(place) ? { chosen: chosen.ids } : {})} />
+          </PageOfItsOwn.Provider>
         </PlacePageHead.Provider>
       </div>
       </Bleed>

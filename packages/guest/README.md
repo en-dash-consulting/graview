@@ -61,7 +61,11 @@ guest.autoSize();
 ```
 
 The frame takes each height it asks for, up to `limits.maxHeight` (4,000px
-by default). A page sized by its own frame (`height: 100vh`) asks for a
+by default); a height past it is given that most, and the host's
+`{ onProblem }` is told once (`taller-than-allowed`). Its place flows with
+the page, as tall as the frame, as a worker view's does;
+`guestView({ flows: false })` keeps the place's frame, most of the window
+tall and scrolling inside itself, for a fixed canvas. A page sized by its own frame (`height: 100vh`) asks for a
 little more each time the frame grows. A height that tracks the frame's
 own a few times running is refused for a moment: content that grows asks
 another meanwhile and is taken; otherwise the height is given after all,
@@ -691,6 +695,49 @@ nothing and `onProblem` says why; a headless run says the same among its
 problems, and lists a reel it plays in `videos` with `app: "reel"` in
 place of `record` and `field`.
 
+#### A video on YouTube or Vimeo
+
+A view names the video, by provider and id or by its watch address, and
+the host draws all of it (HQ f-view-video-embeds):
+
+```html
+<graview-video data-provider="youtube" data-video="dQw4w9WgXcQ" data-start="1m30s" title="The keynote" poster="${talk.photo.src}"></graview-video>
+<graview-video data-watch="${talk.link}" title="${talk.label}"></graview-video>
+```
+
+The providers are a closed list (`EMBED_PROVIDERS`: YouTube's no-cookie
+player and Vimeo's). What the view says is read down to a checked id — an
+unlisted Vimeo video's key after a slash — and whole seconds to start at,
+and the host builds the only address the player may have
+(`https://www.youtube-nocookie.com/embed/<id>`,
+`https://player.vimeo.com/video/<id>`); the rest of a watch address is
+dropped. Anything else draws nothing and is said to `onProblem` as
+`embed-refused`, and by a headless run among its problems with the same
+`code`.
+
+A poster and a play button stand first: the host's own ground with the
+`title`, or `poster`, a picture the view may draw already, judged as an
+`<img src>` is. Nothing is asked of the provider until a person presses
+play. Then the player is a sandboxed frame (its scripts and its own
+storage) in the box the poster stood in, `data-shape` `16:9` (a Short
+`9:16`), `4:3`, `1:1` or `9:16`, so nothing moves; it is told the page's
+origin alone, which YouTube's player needs. It plays on across the view's
+redraws, and goes back to its poster when another plays, or when it is
+hidden or off the page. A link out stands below it throughout, and printed
+it is the poster and the address. In the Scene's card it is the poster and
+the link.
+
+A host whose page has a policy allows the two frames (`frame-src
+https://www.youtube-nocookie.com https://player.vimeo.com`,
+`EMBED_ORIGINS`); where it does not, a pressed video says so and keeps its
+link, and `onProblem` hears `embed-not-allowed`. `embeds: { providers:
+["vimeo"] }` on `mountWorkerView`, a registered view's definition or
+`runWorkerViewHeadless` plays from that one alone, and `{ providers: [] }`
+from none: a provider turned off is drawn as its link. A headless run
+lists each in `videos` with `provider` and `link`. A frame guest has no
+`<graview-video>`; what its own document frames is its sandbox's and its
+own policy's to allow.
+
 ### Files a person drops on it
 
 A worker view takes files a person drops on what it drew (FR-193). Its
@@ -875,6 +922,43 @@ timed per push. A view that busies its own worker for just under
 reader's machine for as long as it is shown. That is the worker's thread,
 not the page's; the page stays responsive.
 
+### A page left and gone back to
+
+A view registered with `registerWorkerView`, `workerHome` or `guestView` and
+drawn as a page of its own is kept as its page is left and put back as it
+is gone back to, before the page is painted: no new worker, and nothing
+asked of the host again. What the person typed and where it was scrolled
+are as they were. What changed meanwhile is pushed and drawn in place; a
+press made before that is drawn waits for it, and is applied only where its
+control still asks for the same thing.
+
+The provider keeps at most six, for five minutes after each page was left,
+in memory alone. One is taken back only for the same definition, store and
+seat, and every one is let go as the store, the seat, the registry or being
+signed in changes and as the provider goes. One is let go of by itself
+where it fails and where a record it shows is no longer its seat's to see,
+and a view is drawn anew where anything it stood with would not be handed
+to it now. While its page is away the view is handed nothing (a frame is
+kept up), an act it asks for and a value it would keep are refused, and a navigate of
+its goes nowhere.
+A draft, a preview on the Scene and a view that has not drawn are not kept.
+
+A face says which view is its page's own (`PageOfItsOwn`, the routed face and
+the one face do); a row, a card or a panel is never kept. A frame is kept
+only where its host says it may be (`guestView({ keeps: true })`), since its
+document runs on out of sight and a sound it plays goes on, and where the
+browser can move one without loading it again (`Element.moveBefore`: Chrome
+133, Firefox 144); elsewhere it is loaded again.
+
+A host that mounts views by hand has the same in `rest` and `wake` on what
+`mountWorkerView` and `mountGuestView` answer. A first visit waits for
+the view's code and for what its host keeps for the viewer (`graview.mine`).
+Both are fetched ahead where a person comes to a link or a bar place by a
+pointer, a finger or the keyboard, and the code of the first four places
+once the page is idle: each view once, at most 24 a page, only what the seat
+may go to, and nothing where the browser says to save data. Nothing of the
+view runs ahead of its page.
+
 ### What a view's host says went wrong, by a code
 
 Every problem a view's host reports is a sentence for a person and, beside
@@ -895,6 +979,7 @@ view, the relation and the kind — so a host files a standing fault once. The l
 |------|-----------------|
 | `part-failed` | A part (`graview.part`) threw or took too long; its note is drawn in its place. |
 | `held-by-growth-guard` | A frame guest grew only with its own frame, and is held at a height. |
+| `taller-than-allowed` | A frame guest asked to be taller than its host allows (`limits.maxHeight`), and is drawn at that height. |
 | `far-kind-not-handed` | A relation the view reads joins a kind its manifest never hands it. |
 | `views-stylesheet-draws-nothing` | The app's stylesheet for its views draws nothing in the open kit. |
 | `face-not-lent` | A face the app lends its views is not lent: past the most, a name it may not take, or from nowhere this host serves faces. |
@@ -911,6 +996,8 @@ view, the relation and the kind — so a host files a standing fault once. The l
 | `jump-goes-nowhere` | A jump within the view names no element it drew. |
 | `file-link-goes-nowhere` | A file link is not followed: it is not an `<a>`, names no record the view was shown, or names no field holding a file. |
 | `media-not-drawn` | A record's video or the full-screen viewer is not drawn. |
+| `embed-refused` | A video on a provider the view named is refused: a provider not on the list, or no id of a video. |
+| `embed-not-allowed` | The page's policy allows no frame from the provider's player, so the video's link stands alone. |
 | `drop-not-offered` | A drop target the view drew is not offered. |
 | `gestures-not-declared` | The view listens for a gesture its manifest does not say it hears. |
 | `press-refused` | A press was refused, and the note beside it could not be drawn. |

@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { Store, type AnySchema, type GraviewApp } from "@graview/core";
 import { compileDocument } from "@graview/core/check";
-import { scriptedNotion, type Fetcher } from "@graview/core/sync";
+import { scriptedNotion, scriptedTodoist, type Fetcher } from "@graview/core/sync";
 import { fileConnectionState, readEnvFile, runConnections, sayReport } from "../../src/index.js";
 
 /**
@@ -231,6 +231,83 @@ describe("a served store's declared Notion database", () => {
     await refused.stop();
     expect(said.at(-1)).toMatch(/^board: could not reach Notion \(notion: Notion refused WORK_NOTION_TOKEN \(HTTP 401\).*\); will try again$/);
     expect(said.join("\n")).not.toContain("secret_NotTheOne");
+  });
+});
+
+/* ------------------------------------------- a Todoist project (f-todoist-connection) */
+
+describe("a served store's declared Todoist project", () => {
+  const board = () => ({ ...tasks(), connections: { board: { system: "todoist", project: { env: "HOME_PROJECT" }, kind: "task", fields: { content: "name", completed: "done" }, direction: "both" } } });
+
+  it("runs with the account's token from the environment, credits Todoist, and sends a record made here", async () => {
+    const todoist = scriptedTodoist();
+    const home = todoist.project("Home");
+    todoist.add(home, { content: "Water the plants" });
+    const opened = open(board());
+    const said: string[] = [];
+    const running = runConnections({ ...opened, env: { HOME_PROJECT: "Home", TODOIST_TOKEN: todoist.token }, fetch: todoist.fetch, say: (line) => said.push(line) });
+    await running.firstPass;
+    expect(todoist.commands).toEqual([]);
+    expect(said).toContain("board: took 1 from Todoist");
+    expect(opened.store.log.all().at(-1)!.author).toEqual({ kind: "system", id: "todoist" });
+    opened.store.apply({ name: "add-task", args: { id: "task:feed", name: "Feed the cat" } }, { author: { kind: "human", id: "nick" } });
+    await running.runNow();
+    await running.stop();
+    expect(todoist.tasks(home)).toHaveLength(2);
+    expect(said).toContain("board: sent 1 to Todoist");
+    expect(said.join("\n")).not.toContain(todoist.token);
+  });
+
+  it("asks the host for the token and the project when it keeps them, and says a missing one by its name", async () => {
+    const todoist = scriptedTodoist();
+    const home = todoist.project("Home");
+    const asked: unknown[] = [];
+    const running = runConnections({ ...open(board()), env: {}, fetch: todoist.fetch, project: () => home, token: (request) => (asked.push([request.connection, request.declaration.system]), todoist.token) });
+    expect((await running.runNow())["board"]!.offline).toBe(false);
+    await running.stop();
+    expect(asked[0]).toEqual(["board", "todoist"]);
+
+    const said: string[] = [];
+    expect(runConnections({ ...open(board()), env: { HOME_PROJECT: home }, say: (line) => said.push(line) }).running).toEqual([]);
+    expect(runConnections({ ...open(board()), env: {}, say: (line) => said.push(line) }).running).toEqual([]);
+    expect(said).toEqual(["board: not started: TODOIST_TOKEN is not set in the environment", "board: not started: no project in HOME_PROJECT"]);
+  });
+});
+
+describe("a served store's Todoist connection that is paused", () => {
+  it("still says which tasks are its records', so another of the project deletes none with what was above it", async () => {
+    const todoist = scriptedTodoist();
+    const home = todoist.project("Home");
+    const both = (paused: boolean) => {
+      const raw = tasks() as unknown as { kinds: Record<string, unknown>; acts: Record<string, unknown>; connections: Record<string, unknown> };
+      raw.kinds = { task: { fields: { name: { type: "string", required: true }, done: { type: "boolean" } }, edges: { parent: { to: ["list"], cardinality: "one" } } }, list: { fields: { name: { type: "string", required: true }, done: { type: "boolean" } } } };
+      raw.acts = { "add-task": { creates: "task" }, "add-list": { creates: "list" } };
+      raw.connections = {
+        lists: { system: "todoist", project: home, label: "list", kind: "list", fields: { content: "name", completed: "done" }, direction: "both" },
+        tasks: { system: "todoist", project: home, label: "task", kind: "task", fields: { content: "name", completed: "done", parent: "parent" }, direction: "both", ...(paused ? { paused: true } : {}) },
+      };
+      return raw as never;
+    };
+    const opened = open(both(false));
+    let states = {};
+    const state = { read: () => states, write: (next: object) => void (states = structuredClone(next)) };
+    const env = { TODOIST_TOKEN: todoist.token };
+    const as = { author: { kind: "human" as const, id: "nick" } };
+    const first = runConnections({ ...opened, env, fetch: todoist.fetch, state });
+    await first.firstPass;
+    opened.store.apply({ name: "add-list", args: { id: "list:p", name: "Party" } }, as);
+    opened.store.apply({ name: "add-task", args: { id: "task:c", name: "Cake" } }, as);
+    opened.store.apply({ name: "connect-task-parent", args: { id: "task:c", to: "list:p" } }, as);
+    for (let pass = 0; pass < 3; pass += 1) await first.runNow();
+    await first.stop();
+    const cake = todoist.tasks(home).find((task) => task["content"] === "Cake")!;
+    expect(cake["parent_id"]).toBe(todoist.tasks(home).find((task) => task["content"] === "Party")!["id"]);
+    opened.store.apply({ name: "archive-task", args: { id: "task:c" } }, as);
+    opened.store.apply({ name: "remove-list", args: { id: "list:p" } }, as);
+    const second = runConnections({ ...opened, app: open(both(true)).app, env, fetch: todoist.fetch, state });
+    await second.runNow();
+    await second.stop();
+    expect(todoist.task(String(cake["id"]))!["is_deleted"]).toBe(false);
   });
 });
 

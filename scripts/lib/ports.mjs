@@ -91,6 +91,8 @@ export const OWN = {
   "files-host": 5263,
   /** The host's page `verify-growing` mounts a roadmap grown large into: filters that stay usable, cards read at a glance. */
   "growing-host": 5258,
+  /** The host's page `verify-video-embeds` mounts a view into that plays a YouTube and a Vimeo video, its providers stood in for (HQ f-view-video-embeds). */
+  "embeds-host": 5234,
   /** The host's page `verify-drawn` mounts a roadmap into with a late font, a late image and a view that fails, to hold `data-graview-drawn` to what a person sees (FR-188). */
   "drawn-host": 5259,
   /** The host's page `verify-screen-reader` mounts a roadmap into, in two tabs sat down as two people, to hear what a screen reader is told. */
@@ -111,6 +113,8 @@ export const OWN = {
   "calendar-sync-demo": 5267,
   /** The host's page `verify-frame-lines` draws a roadmap's pages over its city into, with a worker view and a frame guest that mark their records, to hold the lines from them to their buildings. */
   "frame-lines-host": 5244,
+  /** The host's page `verify-view-return` draws a roadmap's pages into, its views' code and a frame arriving late, to see what stands as a person goes back to a page. */
+  "view-return-host": 5246,
   /** The host's page `verify-viewport` mounts the embed into at the screen's height, to turn a phone and back (FR-165). */
   "viewport-host": 5266,
   /** The host's page `verify-a11y` mounts Cloud's two shapes of app into, inside `#graview-app`, for axe. */

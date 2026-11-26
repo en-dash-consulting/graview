@@ -1,4 +1,4 @@
-import { bindSchema, createSchema, defineNode, nodeRef, Store, z, type Policy, type Principal } from "@graview/core";
+import { bindSchema, createSchema, defineNode, nodeRef, Store, z, type AnyMutationDefinition, type Policy, type Principal } from "@graview/core";
 import type { HostMessage } from "../../src/protocol.js";
 
 /**
@@ -46,10 +46,10 @@ const policy: Policy = {
     { roles: ["shopper"], kinds: ["shopper", "enquiry"], own: true },
   ],
 };
-export const showroom = () =>
+export const showroom = (more: readonly AnyMutationDefinition<typeof schema>[] = []) =>
   new Store({
     schema,
-    mutations: [ask, retire],
+    mutations: [ask, retire, ...more],
     policy,
     snapshot: {
       nodes: [

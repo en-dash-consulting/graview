@@ -27,6 +27,9 @@ export type { MenuViewSection, ViewPlaceDraft, ViewPlaceDrawing, ViewPlaceHandle
 export { BesideTheMap } from "./beside-the-map.js";
 // The host's files (FR-163), where a file field's editor finds them.
 export { HostAssetsContext, HostFilesContext, HostReelContext, HostViewerStateContext, useHostAssets, useHostFiles, useHostReel, useHostViewerState } from "./files.js";
+// What a view drew on a page left, kept for the visit so the page stands at once when it is gone back to.
+export { PageOfItsOwn, useKeptDrawings } from "./kept-drawings.js";
+export type { KeptDrawing, KeptDrawings } from "./kept-drawings.js";
 export type { GoTo, GoToAlso, GoToTarget } from "./go.js";
 export type { ActsDoor, AdministeredModule, AwaySummary, DrawnBox, GraviewContextValue, GraviewProviderProps, HostNotification, OnExport, PointerMenu, SceneHandle, Scheme, Seat, ViewMode, WorkflowRuns } from "./context.js";
 // Typing together (Roadmap f-collab-text): the host's `typing`, where an editor of a field typed together finds it.
@@ -43,6 +46,7 @@ export type { ReaderMemory } from "./settings.js";
 export { createViews, layerViews } from "./view-registry.js";
 // The host's views as the place menu tidies them (Roadmap f-place-menu-views).
 export { KeptViewsProvider, useTidiedViews } from "./tidied-views.js";
+export { aheadOf, markAhead, type ViewAhead } from "./view-marks.js";
 export { BLEEDS, bleeds, bleedsFull, DEFAULT_VIEW, isDefaultView, markBleeds, markDefaultView, markPreviews, markReplacesPage, PREVIEWS, previewOf, REPLACES_PAGE, replacesPage, type ScenePreviewing } from "./view-marks.js";
 // Which view a kind's list page draws (FR-238).
 export { listPageViewOf } from "./list-page-view.js";

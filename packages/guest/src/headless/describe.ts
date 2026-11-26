@@ -1,6 +1,7 @@
 import type { DescribedItem, DescribedPart, DescribedProblem, DescribedVideo } from "@graview/core/describe";
 import type { GuestNode, GuestProps } from "../protocol.js";
 import { placeNamed, placesSaid, unsureOfViews, type NamedPlace } from "../host/links-words.js";
+import { embedLink, embedPlays, EMBED_WORDS, embedTitle, namedEmbed, namesEmbed, type EmbedHost } from "../host/embeds.js";
 import { notPressable } from "../host/pressable.js";
 import { TreeElement, type TreeNode, TreeText } from "./tree.js";
 
@@ -31,6 +32,8 @@ export interface DescribeDrawingContext {
   readonly placesUnsure?: boolean;
   /** The fields files dropped on the view go in, as its manifest says them (FR-193): what a `data-drop` may name. */
   readonly accepts?: readonly { readonly kind: string; readonly field: string }[];
+  /** The providers the live host plays a video from (HQ f-view-video-embeds): every one unsaid. */
+  readonly embeds?: EmbedHost;
 }
 
 export interface DescribedDrawing {
@@ -418,6 +421,20 @@ export function describeDrawing(root: TreeElement, context: DescribeDrawingConte
       }
       /* A record's video the host plays (0.1.37): said by what it shows and how long it is, from the record the view was shown. */
       case "graview-video": {
+        /* A video on YouTube or Vimeo (HQ f-view-video-embeds): read as the page reads it, and refused in the same words, with a code. */
+        const saidBy = (name: string) => element.getAttribute(name);
+        if (namesEmbed(saidBy)) {
+          const named = namedEmbed(saidBy);
+          if ("why" in named) {
+            problems.push({ at: "drawing <graview-video>", says: `Not drawn: it ${named.why}.`, code: "embed-refused" });
+            return [];
+          }
+          const text = embedTitle(saidBy, named.embed);
+          const provider = EMBED_WORDS[named.embed.provider];
+          const plays = embedPlays(named.embed.provider, context.embeds);
+          videos.push({ provider: named.embed.provider, link: embedLink(named.embed), text, name: named.embed.id, source: provider, poster: element.getAttribute("poster") !== null, autoplay: false, cover: false, playable: plays, ...(plays ? {} : { why: `this host plays no ${provider} video in a view: its link is drawn alone` }) });
+          return [{ t: "text", text: plays ? `${text}, a ${provider} video, played where it stands once pressed` : `${text}: watch on ${provider}`, tone: "picture" }];
+        }
         /* The app's own video (HQ f-view-names-app-video): said from the facts the view was handed, never a record's. */
         if (element.getAttribute("data-app") !== null) {
           const app = element.getAttribute("data-app") ?? "";

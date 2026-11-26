@@ -1,4 +1,4 @@
-import { existsSync, mkdtempSync, readFileSync, mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, mkdirSync, utimesSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -93,6 +93,28 @@ describe("a harness that fails is looked at again, alone", () => {
     expect(JSON.parse(readFileSync(join(root, "docs/first-look/one-face.json"), "utf8"))).toEqual(firstVerdict);
     expect(readFileSync(join(root, "docs/first-look/one-face/phone-dark.png"), "utf8")).toBe("first look's strip");
     expect(JSON.parse(readFileSync(join(root, "docs/one-face.json"), "utf8"))).toEqual({ ok: true });
+  });
+
+  it("keeps a part's first look, its watch with it, and leaves the first look of a part that failed before it", () => {
+    const root = mkdtempSync(join(tmpdir(), "first-look-parts-"));
+    mkdirSync(join(root, "docs/watch"), { recursive: true });
+    const began = new Date(Date.now() - 1000).toISOString();
+    for (const part of ["desk", "phone"]) {
+      writeFileSync(join(root, `docs/one-face.part-${part}.json`), part);
+      writeFileSync(join(root, `docs/watch/verify-one-face.part-${part}.json`), part);
+    }
+    mkdirSync(join(root, "docs/one-face"));
+    mkdirSync(join(root, "docs/first-look/one-face"), { recursive: true });
+    writeFileSync(join(root, "docs/first-look/one-face/earlier.png"), "an earlier run's");
+    utimesSync(join(root, "docs/first-look/one-face/earlier.png"), 1, 1);
+    // A frame of the desk's part, written before the phone's part began.
+    writeFileSync(join(root, "docs/first-look/one-face/desk.png"), "the desk's first look");
+    const kept = (part: string) => keepFirstLook(root, { name: `one-face.${part}`, file: "verify-one-face.mjs", began }, { since: Date.parse(began) }).sort();
+    expect(kept("desk")).toEqual(["docs/first-look/one-face.part-desk.json", "docs/first-look/watch/verify-one-face.part-desk.json"]);
+    expect(kept("phone")).toEqual(["docs/first-look/one-face.part-phone.json", "docs/first-look/watch/verify-one-face.part-phone.json"]);
+    expect(readFileSync(join(root, "docs/first-look/one-face.part-desk.json"), "utf8")).toBe("desk");
+    expect(existsSync(join(root, "docs/first-look/one-face/desk.png"))).toBe(true);
+    expect(existsSync(join(root, "docs/first-look/one-face/earlier.png"))).toBe(false);
   });
 
   it("keeps the first look of a harness whose verdict is named otherwise than its script (pages writes pages-face)", () => {

@@ -22,7 +22,7 @@ import {
 import { describeSearched, matchNode, parseQuery } from "@graview/core/search";
 import { readableFields } from "@graview/core/words";
 import { fieldSpecOf, firstPicture, withComputed } from "@graview/core/blocks";
-import { bleeds, bleedsFull, isDefaultView, listPageViewOf, useGraviewIfAny, type ViewProps } from "@graview/react/provider";
+import { PageOfItsOwn, bleeds, bleedsFull, isDefaultView, listPageViewOf, useGraviewIfAny, type ViewProps } from "@graview/react/provider";
 import { ViewBoundary } from "@graview/react/drawing";
 import { useCallback, useId, useMemo, useRef, useState, type ComponentType, type ReactNode } from "react";
 import { Link, useParams, useSearchParams } from "react-router";
@@ -174,7 +174,9 @@ function ListOfView<S extends AnySchema>({ context, kind, view: View }: { readon
         <ViewBoundary kind={kind} view={plural} said="">
           {/* Edge to edge on a phone, where the view says `bleed`, as on a record's page and a place. */}
           <Bleed when={bleeds(View)} full={bleedsFull(View)}>
-            <View nodes={members as never} label={plural} fidelity="full" cardinality="many" mode="fullscreen" selected={false} {...(flagged.length > 0 ? { flagged } : {})} />
+            <PageOfItsOwn.Provider value={`list ${kind}`}>
+              <View nodes={members as never} label={plural} fidelity="full" cardinality="many" mode="fullscreen" selected={false} {...(flagged.length > 0 ? { flagged } : {})} />
+            </PageOfItsOwn.Provider>
           </Bleed>
         </ViewBoundary>
       </section>

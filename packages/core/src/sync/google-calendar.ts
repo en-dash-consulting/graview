@@ -40,6 +40,8 @@ export function googleCalendarMapping(options: {
     resources: options.events.map((event) => ({
       kind: event.kind,
       resource: "events",
+      // An event whose record is set aside is left as it is: its guests are sent no cancellation.
+      aside: "keep" as const,
       fields: {
         [event.summary]: "summary",
         [event.start]: "start.dateTime",
@@ -224,22 +226,28 @@ export function googleCalendar(options: GoogleCalendarOptions): RemoteSystem {
   return {
     name: "google-calendar",
 
-    async pull(cursor) {
+    async pull(cursor, back) {
       let result = await list(cursor);
       if (result.expired) {
         // Start again from nothing rather than silently missing a window.
         result = await list(undefined);
         if (result.expired) throw new Error("google-calendar: sync token rejected twice");
       }
-      const changes: RemoteChange[] = result.items.map((item) => ({
+      // Brought back here: read as it stands, since a change Google already told of is not told again.
+      const listed = new Set(result.items.map((item) => String(item["id"])));
+      const reread: Record<string, unknown>[] = [];
+      for (const { id } of back ?? []) if (!listed.has(id)) reread.push(await eventNow(id));
+      const changes: RemoteChange[] = [...result.items, ...reread].map((item) => ({
         resource: "events",
         id: String(item["id"]),
         // The etag is Google's own version of the record, and the reason an
         // echo of our own write is recognizable at all.
         version: String(item["etag"] ?? ""),
-        ...(item["status"] === "cancelled" || (options.keep && !options.keep(item))
+        ...(item["status"] === "cancelled"
           ? { deleted: true }
-          : { fields: flatten(item) }),
+          : options.keep && !options.keep(item)
+            ? { deleted: true, left: true }
+            : { fields: flatten(item) }),
       }));
       return { changes, cursor: String(result.syncToken ?? cursor ?? "") };
     },
@@ -263,6 +271,17 @@ export function googleCalendar(options: GoogleCalendarOptions): RemoteSystem {
       return acks;
     },
   };
+
+  /** An event as it stands; one Google no longer has reads as canceled. */
+  async function eventNow(id: string): Promise<Record<string, unknown>> {
+    try {
+      const answer = await call(`${events}/${encodeURIComponent(id)}`);
+      if (!answer.expired) return answer.body;
+    } catch (error) {
+      if (!(error instanceof Error && error.message.startsWith("google-calendar: HTTP 404"))) throw error;
+    }
+    return { id, status: "cancelled" };
+  }
 
   async function one(write: RemoteWrite): Promise<RemoteAck> {
     if (write.deleted && write.id) {

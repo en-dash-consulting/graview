@@ -21,6 +21,7 @@ import { createRequire } from "node:module";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { engineName, launchEngine } from "./lib/engine.mjs";
+import { chooseSteps, partPath } from "./lib/parts.mjs";
 import { frames, settled } from "./lib/settled.mjs";
 
 const require = createRequire(import.meta.url);
@@ -105,188 +106,185 @@ const QUICK = process.env["GRAVIEW_QUICK"] === "1";
 const WIDTHS = QUICK ? [320, 768, 1440] : ALL_WIDTHS;
 
 const report = { at: new Date().toISOString(), engine: ENGINE, viewports: [], criteria: {} };
-const browser = await launchEngine(ENGINE, { headless: true });
+let browser;
 
-try {
-  for (const sheet of PAGES) {
-  for (const scheme of QUICK && sheet.live === 0 ? ["light"] : ["light", "dark"]) {
-    for (const width of sheet.widths ?? WIDTHS) {
-      const page = await browser.newPage({ viewport: { width, height: 900 }, colorScheme: scheme });
-      const errors = [];
-      page.on("pageerror", (error) => errors.push(String(error).slice(0, 90)));
-      page.on("console", (message) => {
-        if (message.type() === "error") errors.push(`console: ${message.text().slice(0, 90)}`);
-      });
-      await arrive(page, pageAt(sheet.file));
-      await settled(page, { most: 700 });
-      /*
-       * The chapters mount as the reader comes near them. The whole page is
-       * under test, so every one of them is brought near, and the page is
-       * judged with fourteen live Graviews on it — their targets, their text,
-       * their accessibility tree, their console.
-       */
-      const height = sheet.live > 0 ? await page.evaluate(() => document.documentElement.scrollHeight) : 0;
-      const step = Math.max(400, 900 - 100);
-      for (let y = 0; y <= height; y += step) {
-        // One step per call, as a reader scrolls: a whole sweep inside one
-        // script call starves the frames the chapters mount on.
-        await page.evaluate((to) => window.scrollTo(0, to), y);
-        // Measured on purpose: a reader's pace. Two frames a step left two chapters of the long version unmounted at a phone's width.
-        await page.waitForTimeout(150);
-      }
-      await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
-      /*
-       * A chapter mounts on the frame after the scroll that brought it near.
-       * Scrolling away before that frame is what a reader may do, and then
-       * nothing should mount — so the harness stays put at the foot of the
-       * page until everything near it is up, and only then goes back.
-       */
-      if (sheet.live > 0) {
-        await page
-          .waitForFunction(
-            () => [...document.querySelectorAll("[data-graview-chapter], [data-graview-app], [data-graview-recipe]")].every((el) => el.querySelector("[data-graview-embed]") !== null),
-            null,
-            { timeout: 20_000 },
-          )
-          .catch(() => {});
-      }
-      await frames(page, 2);
-      await page.evaluate(() => window.scrollTo(0, 0));
-      /*
-       * WAIT FOR THIS PAGE'S OWN COUNT, which is the thing that was
-       * hardcoded. Seventeen was right when there was one page; after the
-       * split no page has seventeen, so every viewport sat out the whole
-       * thirty-second timeout and a five-minute sweep became seventy. A
-       * harness slow enough that nobody runs it is a harness that is not
-       * checking anything, and this one degraded silently into that — it
-       * still PASSED, it just took an hour to say so.
-       */
-      if (sheet.live > 0) {
-        await page.waitForFunction(
-          (n) => document.querySelectorAll("[data-graview-embed]").length >= n,
-          sheet.live,
-          { timeout: 30_000 },
-        ).catch(() => {});
-      }
-      await settled(page, { most: 900 });
-      await page.addScriptTag({ path: AXE });
-
-      const violations = await page.evaluate(async () => {
-        const run = await window.axe.run(document, { resultTypes: ["violations"] });
-        return run.violations.map((v) => ({ id: v.id, impact: v.impact, nodes: v.nodes.length }));
-      });
-
-      const live = await page.evaluate(() => document.querySelectorAll("[data-graview-embed]").length);
-      const geometry = await page.evaluate(() => {
-        const root = document.documentElement;
-        const scale = (el) => {
-          const host = el.closest("[data-graview-view]");
-          if (!host) return 1;
-          const m = new DOMMatrixReadOnly(getComputedStyle(host).transform);
-          return Math.max(0.05, m.a || 1);
-        };
-        // A control's DESIGNED size: a scaled context is the depth model
-        // working, not a target anyone built too small.
-        const small = [...document.querySelectorAll("a[href], button, [role=button]")]
-          .filter((el) => {
-            const style = getComputedStyle(el);
-            return style.display !== "none" && style.visibility !== "hidden";
-          })
-          /* A picture of a lens on a district's board is drawn from the
-             same components and carries their roles, but it is `inert`:
-             out of the tab order and out of hit-testing. Not a target. */
-          .filter((el) => !el.closest("[inert]"))
-          .map((el) => ({ el, box: el.getBoundingClientRect(), scale: scale(el) }))
-          .filter(({ box, scale: s }) => box.width > 1 && (box.width / s < 23.5 || box.height / s < 23.5))
-          .map(({ el, box }) => `${(el.textContent ?? "").trim().slice(0, 16)} ${Math.round(box.width)}x${Math.round(box.height)}`);
-
-        // Text cut without saying so. An ellipsis with a tooltip is a decision.
-        const cut = [...document.querySelectorAll("*")]
-          .filter((el) => el.children.length === 0)
-          .filter((el) => {
-            const style = getComputedStyle(el);
-            if (style.textOverflow !== "ellipsis") return false;
-            if (el.scrollWidth <= el.clientWidth + 2) return false;
-            return !el.closest("[title]");
-          })
-          .map((el) => (el.textContent ?? "").trim().slice(0, 30));
-
-        /*
-         * Text drawn over text. Two leaf elements with words in them whose
-         * boxes intersect is a layout that has failed, whatever the CSS
-         * meant — the terminal's notes were drawn across its commands for
-         * a week before anyone looked. Siblings only, outside the live
-         * Graviews (a scene's planes overlap on purpose), and only where the
-         * intersection is more than a rounding.
-         */
-        const words = [...document.querySelectorAll("main.col *")]
-          .filter((el) => el.children.length === 0 && (el.textContent ?? "").trim().length > 0)
-          .filter((el) => !el.closest("[data-graview-embed], svg, pre") && getComputedStyle(el).display !== "none")
-          // An inline that wrapped onto two lines has a bounding box that
-          // spans both, and "intersects" the next inline honestly: only
-          // elements drawn as one box are compared.
-          .filter((el) => el.getClientRects().length === 1)
-          .map((el) => ({ el, box: el.getBoundingClientRect() }))
-          .filter(({ box }) => box.width > 0 && box.height > 0);
-        const overlaps = [];
-        for (let i = 0; i < words.length && overlaps.length < 4; i++) {
-          for (let j = i + 1; j < words.length; j++) {
-            const a = words[i], b = words[j];
-            if (a.el.parentElement !== b.el.parentElement) continue;
-            const w = Math.min(a.box.right, b.box.right) - Math.max(a.box.left, b.box.left);
-            const h = Math.min(a.box.bottom, b.box.bottom) - Math.max(a.box.top, b.box.top);
-            if (w > 3 && h > 3) overlaps.push(`${(a.el.textContent ?? "").trim().slice(0, 18)} × ${(b.el.textContent ?? "").trim().slice(0, 18)}`);
-          }
-        }
-        return {
-          sideways: root.scrollWidth > root.clientWidth + 1,
-          small: small.slice(0, 4),
-          cut: cut.slice(0, 4),
-          overlaps,
-        };
-      });
-
-      report.viewports.push({
-        page: sheet.file, scheme, width, violations, ...geometry,
-        live,
-        wanted: sheet.live,
-        errors: errors.slice(0, 2),
-      });
-      await page.close();
-    }
-  }
-  }
-
+/** One page at one width in one scheme, with every chapter on it brought near: axe, the geometry, the Graviews live. */
+async function swept(sheet, scheme, width) {
+  const page = await browser.newPage({ viewport: { width, height: 900 }, colorScheme: scheme });
+  const errors = [];
+  page.on("pageerror", (error) => errors.push(String(error).slice(0, 90)));
+  page.on("console", (message) => {
+    if (message.type() === "error") errors.push(`console: ${message.text().slice(0, 90)}`);
+  });
+  await arrive(page, pageAt(sheet.file));
+  await settled(page, { most: 700 });
   /*
-   * The things axe cannot answer — asked of every page, because a docs page
-   * nobody can tab through is exactly as broken as a landing page nobody
-   * can. The name of the page goes in the criterion, so a failure says which.
+   * The chapters mount as the reader comes near them. The whole page is
+   * under test, so every one of them is brought near, and the page is
+   * judged with fourteen live Graviews on it — their targets, their text,
+   * their accessibility tree, their console.
    */
-  for (const sheet of PAGES) {
-    const one = await browser.newPage({ viewport: { width: 1280, height: 900 } });
-    await arrive(one, pageAt(sheet.file));
-    await settled(one, { most: 600 });
-    await one.keyboard.press("Tab");
-    report.criteria[`theFirstStopIsTheWayPastTheNavigationOn_${sheet.file}`] =
-      (await one.evaluate(() => document.activeElement?.className)) === "skip";
-    await one.keyboard.press("Enter");
-    await settled(one, { most: 300 });
-    report.criteria[`theSkipLinkReachesTheContentOn_${sheet.file}`] =
-      (await one.evaluate(() => location.hash)) === sheet.skip;
-    report.criteria[`focusIsVisibleOn_${sheet.file}`] = await one.evaluate(() => {
-      const link = document.querySelector(".jump a");
-      link.focus();
-      const style = getComputedStyle(link);
-      return style.outlineStyle === "solid" && parseFloat(style.outlineWidth) >= 2;
-    });
-    await one.addStyleTag({ content: "html { font-size: 200% }" });
-    await settled(one, { most: 400 });
-    report.criteria[`textZoomToTwoHundredDoesNotScrollSidewaysOn_${sheet.file}`] = await one.evaluate(
-      () => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1,
-    );
-    await one.close();
+  const height = sheet.live > 0 ? await page.evaluate(() => document.documentElement.scrollHeight) : 0;
+  const step = Math.max(400, 900 - 100);
+  for (let y = 0; y <= height; y += step) {
+    // One step per call, as a reader scrolls: a whole sweep inside one
+    // script call starves the frames the chapters mount on.
+    await page.evaluate((to) => window.scrollTo(0, to), y);
+    // Measured on purpose: a reader's pace. Two frames a step left two chapters of the long version unmounted at a phone's width.
+    await page.waitForTimeout(150);
   }
+  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+  /*
+   * A chapter mounts on the frame after the scroll that brought it near.
+   * Scrolling away before that frame is what a reader may do, and then
+   * nothing should mount — so the harness stays put at the foot of the
+   * page until everything near it is up, and only then goes back.
+   */
+  if (sheet.live > 0) {
+    await page
+      .waitForFunction(
+        () => [...document.querySelectorAll("[data-graview-chapter], [data-graview-app], [data-graview-recipe]")].every((el) => el.querySelector("[data-graview-embed]") !== null),
+        null,
+        { timeout: 20_000 },
+      )
+      .catch(() => {});
+  }
+  await frames(page, 2);
+  await page.evaluate(() => window.scrollTo(0, 0));
+  /*
+   * WAIT FOR THIS PAGE'S OWN COUNT, which is the thing that was
+   * hardcoded. Seventeen was right when there was one page; after the
+   * split no page has seventeen, so every viewport sat out the whole
+   * thirty-second timeout and a five-minute sweep became seventy. A
+   * harness slow enough that nobody runs it is a harness that is not
+   * checking anything, and this one degraded silently into that — it
+   * still PASSED, it just took an hour to say so.
+   */
+  if (sheet.live > 0) {
+    await page.waitForFunction(
+      (n) => document.querySelectorAll("[data-graview-embed]").length >= n,
+      sheet.live,
+      { timeout: 30_000 },
+    ).catch(() => {});
+  }
+  await settled(page, { most: 900 });
+  await page.addScriptTag({ path: AXE });
 
+  const violations = await page.evaluate(async () => {
+    const run = await window.axe.run(document, { resultTypes: ["violations"] });
+    return run.violations.map((v) => ({ id: v.id, impact: v.impact, nodes: v.nodes.length }));
+  });
+
+  const live = await page.evaluate(() => document.querySelectorAll("[data-graview-embed]").length);
+  const geometry = await page.evaluate(() => {
+    const root = document.documentElement;
+    const scale = (el) => {
+      const host = el.closest("[data-graview-view]");
+      if (!host) return 1;
+      const m = new DOMMatrixReadOnly(getComputedStyle(host).transform);
+      return Math.max(0.05, m.a || 1);
+    };
+    // A control's DESIGNED size: a scaled context is the depth model
+    // working, not a target anyone built too small.
+    const small = [...document.querySelectorAll("a[href], button, [role=button]")]
+      .filter((el) => {
+        const style = getComputedStyle(el);
+        return style.display !== "none" && style.visibility !== "hidden";
+      })
+      /* A picture of a lens on a district's board is drawn from the
+         same components and carries their roles, but it is `inert`:
+         out of the tab order and out of hit-testing. Not a target. */
+      .filter((el) => !el.closest("[inert]"))
+      .map((el) => ({ el, box: el.getBoundingClientRect(), scale: scale(el) }))
+      .filter(({ box, scale: s }) => box.width > 1 && (box.width / s < 23.5 || box.height / s < 23.5))
+      .map(({ el, box }) => `${(el.textContent ?? "").trim().slice(0, 16)} ${Math.round(box.width)}x${Math.round(box.height)}`);
+
+    // Text cut without saying so. An ellipsis with a tooltip is a decision.
+    const cut = [...document.querySelectorAll("*")]
+      .filter((el) => el.children.length === 0)
+      .filter((el) => {
+        const style = getComputedStyle(el);
+        if (style.textOverflow !== "ellipsis") return false;
+        if (el.scrollWidth <= el.clientWidth + 2) return false;
+        return !el.closest("[title]");
+      })
+      .map((el) => (el.textContent ?? "").trim().slice(0, 30));
+
+    /*
+     * Text drawn over text. Two leaf elements with words in them whose
+     * boxes intersect is a layout that has failed, whatever the CSS
+     * meant — the terminal's notes were drawn across its commands for
+     * a week before anyone looked. Siblings only, outside the live
+     * Graviews (a scene's planes overlap on purpose), and only where the
+     * intersection is more than a rounding.
+     */
+    const words = [...document.querySelectorAll("main.col *")]
+      .filter((el) => el.children.length === 0 && (el.textContent ?? "").trim().length > 0)
+      .filter((el) => !el.closest("[data-graview-embed], svg, pre") && getComputedStyle(el).display !== "none")
+      // An inline that wrapped onto two lines has a bounding box that
+      // spans both, and "intersects" the next inline honestly: only
+      // elements drawn as one box are compared.
+      .filter((el) => el.getClientRects().length === 1)
+      .map((el) => ({ el, box: el.getBoundingClientRect() }))
+      .filter(({ box }) => box.width > 0 && box.height > 0);
+    const overlaps = [];
+    for (let i = 0; i < words.length && overlaps.length < 4; i++) {
+      for (let j = i + 1; j < words.length; j++) {
+        const a = words[i], b = words[j];
+        if (a.el.parentElement !== b.el.parentElement) continue;
+        const w = Math.min(a.box.right, b.box.right) - Math.max(a.box.left, b.box.left);
+        const h = Math.min(a.box.bottom, b.box.bottom) - Math.max(a.box.top, b.box.top);
+        if (w > 3 && h > 3) overlaps.push(`${(a.el.textContent ?? "").trim().slice(0, 18)} × ${(b.el.textContent ?? "").trim().slice(0, 18)}`);
+      }
+    }
+    return {
+      sideways: root.scrollWidth > root.clientWidth + 1,
+      small: small.slice(0, 4),
+      cut: cut.slice(0, 4),
+      overlaps,
+    };
+  });
+
+  report.viewports.push({
+    page: sheet.file, scheme, width, violations, ...geometry,
+    live,
+    wanted: sheet.live,
+    errors: errors.slice(0, 2),
+  });
+  await page.close();
+}
+
+/*
+ * The things axe cannot answer — asked of every page, because a docs page
+ * nobody can tab through is exactly as broken as a landing page nobody
+ * can. The name of the page goes in the criterion, so a failure says which.
+ */
+async function keyboard(sheet) {
+  const one = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  await arrive(one, pageAt(sheet.file));
+  await settled(one, { most: 600 });
+  await one.keyboard.press("Tab");
+  report.criteria[`theFirstStopIsTheWayPastTheNavigationOn_${sheet.file}`] =
+    (await one.evaluate(() => document.activeElement?.className)) === "skip";
+  await one.keyboard.press("Enter");
+  await settled(one, { most: 300 });
+  report.criteria[`theSkipLinkReachesTheContentOn_${sheet.file}`] =
+    (await one.evaluate(() => location.hash)) === sheet.skip;
+  report.criteria[`focusIsVisibleOn_${sheet.file}`] = await one.evaluate(() => {
+    const link = document.querySelector(".jump a");
+    link.focus();
+    const style = getComputedStyle(link);
+    return style.outlineStyle === "solid" && parseFloat(style.outlineWidth) >= 2;
+  });
+  await one.addStyleTag({ content: "html { font-size: 200% }" });
+  await settled(one, { most: 400 });
+  report.criteria[`textZoomToTwoHundredDoesNotScrollSidewaysOn_${sheet.file}`] = await one.evaluate(
+    () => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1,
+  );
+  await one.close();
+}
+
+async function stepper() {
   /*
    * THE STEPPER, which is the landing page's whole argument: press a step and
    * the application on the right is a DIFFERENT application, mounted at that
@@ -319,7 +317,9 @@ try {
       [...document.querySelectorAll(".step-panel")].filter((p) => !p.hidden).length === 1,
   );
   await stepper.close();
+}
 
+async function hero() {
   /*
    * THE HERO'S TABS, which are the front page's whole argument now: choose
    * another app and the prompt says it, Copy copies it, and the app on the
@@ -349,6 +349,9 @@ try {
   );
   report.criteria.theGardenOpensOnItsOwnPages = await front.evaluate(() => document.querySelector('#stage-garden [data-graview-face="pages"]') !== null);
   await front.close();
+}
+
+async function bare() {
   /* The first frame is finished before anything loads: a picture of the city and the prompt, not a box that says loading. */
   const bare = await browser.newPage({ viewport: { width: 1280, height: 900 }, javaScriptEnabled: false });
   await bare.goto(pageAt("index.html"), { waitUntil: "load" });
@@ -358,7 +361,9 @@ try {
     return !!box && box.width > 200 && box.height > 150 && (document.getElementById("prompt-text")?.textContent ?? "").includes("start.md");
   });
   await bare.close();
+}
 
+async function asks() {
   /*
    * THE INTERFACE IS GENERATED, THEN ASKED FOR. The hero's run does not stop
    * at a working app: it ends on the modules redrawn as a departures board,
@@ -399,7 +404,9 @@ try {
   report.asks = { generatedSays, listSays, paperSays };
   report.criteria.eachAskRedrawsTheSameSeasonWithItsRuleShowing = generatedSays && listSays && paperSays;
   await asked.close();
+}
 
+async function own() {
   /*
    * THE SITE OPENS AS ITS OWN APP, one click from the landing page: the
    * link in its footer lands on the page that mounts the site's declaration
@@ -420,7 +427,9 @@ try {
   report.criteria.theSiteOpensAsItsOwnAppFromTheLandingPage =
     own.url().endsWith("/docs/site.html") && ["kind:package", "kind:skill", "kind:check", "kind:page"].every((kind) => ownDistricts.includes(kind));
   await own.close();
+}
 
+async function chapters() {
   /* The long version is where the chapters and the kit went. */
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
   await arrive(page, pageAt("progression.html"));
@@ -483,7 +492,9 @@ try {
   report.criteria.theKitsVerdictIsTheCheckers = await page.evaluate(() => document.getElementById("kit-verdict")?.textContent?.includes("kit-contrast-below-aa") ?? false);
 
   await page.close();
+}
 
+async function reduced() {
   const reduced = await browser.newPage({ viewport: { width: 1280, height: 900 }, reducedMotion: "reduce" });
   await arrive(reduced, pageAt("index.html"));
   await settled(reduced, { most: 400 });
@@ -499,7 +510,9 @@ try {
     );
   });
   await reduced.close();
+}
 
+async function forced() {
   const forced = await browser.newPage({ viewport: { width: 1280, height: 900 }, forcedColors: "active" });
   await arrive(forced, pageAt("index.html"));
   await settled(forced, { most: 400 });
@@ -511,6 +524,30 @@ try {
     },
   );
   await forced.close();
+}
+
+/*
+ * THE STEPS, each on pages of its own, so the chain runs them in parts
+ * (lib/parts.mjs): `--steps=sweep/tour.html` takes those, `--not=…` the rest.
+ */
+const steps = chooseSteps([
+  ...PAGES.flatMap((sheet) =>
+    (QUICK && sheet.live === 0 ? ["light"] : ["light", "dark"]).flatMap((scheme) => (sheet.widths ?? WIDTHS).map((width) => ({ name: `sweep/${sheet.file}/${scheme}/${width}`, run: () => swept(sheet, scheme, width) }))),
+  ),
+  ...PAGES.map((sheet) => ({ name: `keyboard/${sheet.file}`, run: () => keyboard(sheet) })),
+  { name: "stepper", run: stepper },
+  { name: "hero", run: hero },
+  { name: "bare", run: bare },
+  { name: "asks", run: asks },
+  { name: "own", run: own },
+  { name: "chapters", run: chapters },
+  { name: "reduced", run: reduced },
+  { name: "forced", run: forced },
+]);
+
+browser = await launchEngine(ENGINE, { headless: true });
+try {
+  for (const step of steps) await step.run();
 } catch (error) {
   report.error = String(error).slice(0, 300);
 } finally {
@@ -520,17 +557,20 @@ try {
 const bad = report.viewports.filter(
   (v) => v.violations.length || v.sideways || v.small.length || v.cut.length || v.overlaps.length || v.errors.length,
 );
-report.criteria.everyViewportIsClean = bad.length === 0;
+/* A part with no page swept makes neither of the sweep's claims: the parts that swept do, and the whole verdict asks that one did (lib/parts.mjs). */
+const sweeps = steps.some((step) => step.name.startsWith("sweep/"));
+if (sweeps) report.criteria.everyViewportIsClean = bad.length === 0;
 /*
  * Every live Graview is up, at every width and in both schemes — each page
  * judged with the applications ON it rather than with pictures of them. The
  * landing page carries two (the hero's garden and the stepper's first step);
  * the long version carries fifteen chapters and the kit's garden.
  */
-report.criteria.everyGraviewIsLiveAtEveryWidth = report.viewports.every((v) => v.live === v.wanted);
+if (sweeps) report.criteria.everyGraviewIsLiveAtEveryWidth = report.viewports.every((v) => v.live === v.wanted);
+if (!sweeps) report.unmade = ["everyViewportIsClean", "everyGraviewIsLiveAtEveryWidth"];
 report.passed = Object.values(report.criteria).every(Boolean) && !report.error;
 
-writeFileSync(resolve(repoRoot, "docs/site-check.json"), `${JSON.stringify(report, null, 2)}\n`, "utf8");
+writeFileSync(partPath(resolve(repoRoot, "docs/site-check.json")), `${JSON.stringify(report, null, 2)}\n`, "utf8");
 
 for (const v of report.viewports) {
   const notes = [

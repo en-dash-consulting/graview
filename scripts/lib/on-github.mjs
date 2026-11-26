@@ -17,7 +17,7 @@
  */
 import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
-import { allUnits, unitsOf } from "./parts.mjs";
+import { allUnits, PARTS, splitUnit, unitName, unitsOf } from "./parts.mjs";
 
 /** A harness name as `pnpm verify` takes one, or one part of one (`quiet.webkit`, lib/parts.mjs), and nothing a shell would read as more. */
 export const HARNESS_NAME = /^[a-z][a-z0-9-]*(\.[a-z][a-z0-9-]*)?$/;
@@ -36,8 +36,9 @@ export const NOT_ON_A_RUNNER = ["shrunk", "panning", "scale"];
  * shard): every harness over a minute and a half. quiet took 2,909 s whole,
  * and runs as a part per engine and section (lib/parts.mjs), guessed here
  * from what each part took on a laptop; address, scene-hands and
- * drawn-once a part per engine; journeys took 1,357 s two runs at a time,
- * and runs four. A harness not listed is taken to be a minute. It only has
+ * drawn-once a part per engine; journeys (1,005 s whole), one-face (677 s)
+ * and site (525 s) as their parts took on 2026-11-25. A harness not listed
+ * is taken to be its parts together, or a minute. It only has
  * to be good enough to keep one runner from holding every long harness.
  */
 export const RUNNER_SECONDS = {
@@ -46,12 +47,12 @@ export const RUNNER_SECONDS = {
       Object.entries({ steady: engine === "chromium" ? 250 : 100, standing: 110, picks: 60, boxes: 180, notices: 150, rest: 330 }).map(([section, seconds]) => [`quiet.${engine}-${section}`, seconds]),
     ),
   ),
-  journeys: 750,
-  gauntlet: 732,
-  "one-face": 699,
+  "journeys.todo": 92, "journeys.seedbed": 162, "journeys.rest": 160, "journeys.discography": 205, "journeys.gauntlet-scene": 179, "journeys.gauntlet-pages": 221,
+  gauntlet: 611,
+  "one-face.desk": 145, "one-face.phone": 190, "one-face.rich": 160, "one-face.rest": 265,
   "address.chromium": 260, "address.webkit": 200, "address.firefox": 200,
   "scene-hands.chromium": 320, "scene-hands.webkit": 300,
-  site: 611,
+  "site.page": 82, "site.tour": 112, "site.progression-light": 85, "site.progression-dark": 81, "site.rest": 135,
   guest: 459,
   "drawn-once.chromium": 140, "drawn-once.webkit": 130, "drawn-once.firefox": 130,
   a11y: 362,
@@ -78,7 +79,7 @@ export const RUNNER_SECONDS = {
   "screen-reader": 95,
   watch: 93,
 };
-const secondsOf = (name) => RUNNER_SECONDS[name] ?? 60;
+const secondsOf = (name) => RUNNER_SECONDS[name] ?? (PARTS[name] ? PARTS[name].parts.reduce((sum, { part }) => sum + (RUNNER_SECONDS[unitName(name, part)] ?? 60), 0) : 60);
 
 /**
  * The names split across at most `shards` runners, longest first onto the
@@ -195,16 +196,19 @@ export function copyInto(root, files, into) {
  * they would overwrite each other and the checkout's own `--failed`.
  */
 /** The harnesses whose verdict is named otherwise than the script (verify-pages.mjs writes docs/pages-face.json). */
-export const VERDICT_NAMES = { pages: ["pages-face"], lines: ["lines-check"], shrunk: ["shrunk-interface"], watch: ["watch-check"], site: ["site-check"], notion: ["notion-stub"] };
+export const VERDICT_NAMES = { pages: ["pages-face"], lines: ["lines-check"], shrunk: ["shrunk-interface"], watch: ["watch-check"], site: ["site-check"], notion: ["notion-stub"], todoist: ["todoist-stub"] };
+
+/** The harness a watch report is of, whichever engine and part wrote it (docs/watch/verify-<name>[.<engine>][.part-<part>].json), or null. */
+const watchedBy = (path) => /^docs\/watch\/verify-([^./]+)(\.(webkit|firefox))?(\.part-[^./]+)?\.json$/.exec(path)?.[1] ?? null;
 
 /** Whether a path under docs/ is harness `name`'s own: docs/<name>.*, docs/<name>/…, its watch; never docs/<name>-* by itself, which is another harness's (chrome-quiet beside chrome). */
 export const ownedBy = (name, path) =>
-  path === `docs/watch/verify-${name}.json` || (!path.startsWith("docs/watch/") && [name, ...(VERDICT_NAMES[name] ?? [])].some((one) => [".", "/"].some((after) => path.startsWith(`docs/${one}${after}`))));
+  watchedBy(path) === name || (!path.startsWith("docs/watch/") && [name, ...(VERDICT_NAMES[name] ?? [])].some((one) => [".", "/"].some((after) => path.startsWith(`docs/${one}${after}`))));
 
 /** The harness a first look's copy (docs/first-look/…) was kept for, or null. */
 const firstLookOf = (path) => {
   const original = `docs/${path.slice("docs/first-look/".length)}`;
-  const script = /^docs\/watch\/verify-(.+)\.json$/.exec(original)?.[1];
+  const script = watchedBy(original);
   if (script) return script;
   const head = original.slice("docs/".length).split(/[./]/)[0];
   return Object.entries(VERDICT_NAMES).find(([, names]) => names.includes(head))?.[0] ?? head;
@@ -223,7 +227,9 @@ export function summarizeShard({ root, since, asked, lastRun, written }) {
   // No moment the harnesses began (the shard stopped before them) is no harness run, whatever the checkout's last run says.
   const ran = since > 0 && lastRun && Date.parse(lastRun.at) >= since ? lastRun.results : [];
   const starts = ran.map((one) => (one.began ? Date.parse(one.began) : null)).filter((at) => at !== null);
-  const harnesses = asked.map((name) => {
+  // A harness made of its parts here that the whole failed (verify-all.mjs) is named by itself, not by a part.
+  const wholes = ran.filter((one) => !asked.includes(one.name) && asked.some((unit) => splitUnit(unit).name === one.name));
+  const harnesses = [...asked, ...wholes.map((one) => one.name)].map((name) => {
     const result = ran.find((one) => one.name === name);
     if (!result) return { name, verdict: "no verdict", took: null, claims: ["wrote no verdict: the shard stopped before it ran or finished"], files: [] };
     const began = result.began ? Date.parse(result.began) : null;

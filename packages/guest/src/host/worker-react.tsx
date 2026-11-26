@@ -1,8 +1,9 @@
 import type { ViewProblemSaid } from "./problems.js";
-import type { AnySchema, KindOfSchema, PagesArrangement, Principal, Store } from "@graview/core";
-import { DefaultDrawnElsewhere, HomeFallsBack, isDefaultView, markBleeds, markPreviews, markReplacesPage, useGoTo, useGraviewIfAny, useHostAssets, useHostFiles, useHostReel, useHostViewerState, usePlayback, ViewContentHeight, type GoTo, type ReactViewRegistry, type ViewComponent, type ViewProps } from "@graview/react/provider";
+import type { AnySchema, KindOfSchema, PagesArrangement, Principal, SignIn, Store } from "@graview/core";
+import { DefaultDrawnElsewhere, HomeFallsBack, isDefaultView, markAhead, markBleeds, markPreviews, markReplacesPage, PageOfItsOwn, useGoTo, useGraviewIfAny, useKeptDrawings, useHostAssets, useHostFiles, useHostReel, useHostViewerState, usePlayback, ViewContentHeight, type GoTo, type KeptDrawing, type ReactViewRegistry, type ViewComponent, type ViewProps } from "@graview/react/provider";
 import { setViewPlace } from "@graview/react/drawing";
-import { useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ComponentType, type ReactNode } from "react";
+import { useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type ComponentType, type ContextType, type ReactNode } from "react";
+import type { EmbedHost } from "./embeds.js";
 import type { GuestPlace } from "../protocol.js";
 import type { WorkerViewManifest } from "./manifest.js";
 import type { GuestViewInput } from "./session.js";
@@ -50,6 +51,8 @@ export interface WorkerViewDefinition {
   readonly fonts?: { readonly origins: readonly string[] };
   /** `false`: none of the view's own faces is drawn, each said as refused, while the faces the app lends still draw (WorkerViewOptions.ownFaces). `true` by default. */
   readonly ownFaces?: boolean;
+  /** The providers it may play a video from (WorkerViewOptions.embeds): YouTube and Vimeo unsaid, none for `{ providers: [] }`. */
+  readonly embeds?: EmbedHost;
   /** The `https:` origins its links may go to beyond what it was handed (WorkerViewOptions.links): none by default. */
   readonly links?: { readonly origins: readonly string[] };
   /**
@@ -111,6 +114,32 @@ interface MountProps {
   readonly drawsItsOwn?: boolean;
   /** Changes when what the view is drawn over does. */
   readonly tick?: unknown;
+  /** Where it is drawn, when that is a page of its own to be gone back to: its drawing is kept as the page is left, and stands at once when it is returned to. */
+  readonly keptAs?: string | undefined;
+}
+
+/** What a mounted view reads of the component it is drawn by: the one that drew it, then the one that took it back. */
+interface Reads {
+  input: MountProps["input"];
+  goTo: MountProps["goTo"];
+  places: MountProps["places"];
+  arrangement: MountProps["arrangement"];
+  onFailure: MountProps["onFailure"];
+  brand: GuestBrand | undefined;
+  reel: ReturnType<typeof useHostReel>;
+  hostFiles: ReturnType<typeof useHostFiles>;
+  hostAssets: ReturnType<typeof useHostAssets>;
+  viewerState: ReturnType<typeof useHostViewerState>;
+  told: ContextType<typeof ViewContentHeight>;
+  signIn: SignIn | undefined;
+}
+
+/** A worker view off its page, kept to be gone back to (Graview HQ f-custom-pages-do-not-flash). */
+interface KeptView extends KeptDrawing {
+  readonly view: WorkerView;
+  /** Puts what its place lends its revision on the element it is drawn in now. */
+  readonly lend: (element: HTMLElement) => void;
+  readonly box: { reads: { current: Reads }; away: boolean; gone: () => void };
 }
 
 /**
@@ -148,7 +177,7 @@ function drawInstead(definition: WorkerViewDefinition, source: string | undefine
 }
 
 /** The region a worker view is drawn in, mounted when it is drawn; the host's half is fetched then. */
-function WorkerViewMount({ definition: given, store, principal, input, goTo, places, arrangement, scheme, brand, onFailure, drawsItsOwn, tick }: MountProps) {
+function WorkerViewMount({ definition: given, store, principal, input, goTo, places, arrangement, scheme, brand, onFailure, drawsItsOwn, tick, keptAs }: MountProps) {
   /* A revision kept in this page is drawn in the view's own place, from its code. */
   const instead = useSyncExternalStore(hearDrawnInstead, () => DRAWN_INSTEAD.get(given), () => undefined);
   const definition = useMemo<WorkerViewDefinition>(() => (instead === undefined ? given : { ...given, worker: { source: instead } }), [given, instead]);
@@ -166,13 +195,78 @@ function WorkerViewMount({ definition: given, store, principal, input, goTo, pla
   const served = useMemo(() => brandUnder(brand, hostAssets), [brand, hostAssets]);
   /* The host's way in for a visitor (FR-183): drawn in the view's place where everything it reads is kept from the seat. */
   const signIn = useGraviewIfAny<AnySchema>()?.signIn;
-  const latest = useRef({ input, goTo, places, arrangement, onFailure, brand: served, reel, hostFiles, hostAssets, viewerState, told, signIn });
+  const latest = useRef<Reads>({ input, goTo, places, arrangement, onFailure, brand: served, reel, hostFiles, hostAssets, viewerState, told, signIn });
   latest.current = { input, goTo, places, arrangement, onFailure, brand: served, reel, hostFiles, hostAssets, viewerState, told, signIn };
+  /*
+   * THE PAGE IS LEFT, AND GONE BACK TO (Graview HQ
+   * f-custom-pages-do-not-flash). The view is put by as it stands when the
+   * page goes, and taken back, as the page comes, before it is painted: no
+   * worker to start and no host to ask, so nothing stands empty. Only a page
+   * of its own is (`keptAs`), never a draft, and only for exactly this view,
+   * this store, this seat and where its viewer's values are kept; anything
+   * else that changes disposes of it, as ever.
+   */
+  const keeping = useKeptDrawings();
+  const held = useRef<KeptView | undefined>(undefined);
+  const now = useRef<{ readonly keep: typeof keeping; readonly as: string; readonly of: readonly unknown[] }>(undefined);
+  now.current = { keep: keptAs !== undefined && !definition.draft && !definition.keepsNothing ? keeping : null, as: keptAs ?? "", of: [given, instead, store, principal, viewerState] };
+  const putBack = useRef<(() => void) | undefined>(undefined);
+  /* Mounted by the effect below, and put by since (a page hidden while a part of it is fetched): drawn anew where it was let go of meanwhile. */
+  const stood = useRef(false);
+  const [anew, setAnew] = useState(0);
+  useLayoutEffect(() => {
+    const element = holder.current;
+    const { keep, as, of } = now.current!;
+    const back = held.current ? undefined : keep?.take<KeptView>(as, of);
+    if (element && back) {
+      back.box.reads = latest;
+      back.box.away = false;
+      const refocus = back.view.wake(element);
+      if (refocus) {
+        held.current = back;
+        mounted.current = back.view;
+        putBack.current = refocus;
+        back.lend(element);
+      } else back.dispose();
+    }
+    if (stood.current && !held.current) setAnew((was) => was + 1);
+    return () => {
+      const one = held.current;
+      const { keep, as } = now.current!;
+      if (!one || !keep) return;
+      one.box.gone = () => keep.forget(one);
+      if (!one.view.rest(() => one.box.gone())) return;
+      one.box.away = true;
+      held.current = undefined;
+      mounted.current = null;
+      if (element) setViewPlace(element, null);
+      keep.keep(as, one);
+    };
+  }, []);
+  /* After the page it is on has put the keyboard on its heading. */
+  useEffect(() => {
+    putBack.current?.();
+    putBack.current = undefined;
+  });
   useEffect(() => {
     const element = holder.current;
     if (!element) return;
+    const dispose = () => {
+      setViewPlace(element, null);
+      held.current?.dispose();
+      held.current = undefined;
+      mounted.current = null;
+      stood.current = false;
+    };
+    /* Taken back as the page came. */
+    if (held.current) {
+      stood.current = true;
+      return dispose;
+    }
+    const { of } = now.current!;
+    const box: KeptView["box"] = { reads: latest, away: false, gone: () => undefined };
     /* Where a record's file is fetched: the definition's word, else where the page's host serves its files (0.1.36). */
-    const file = definition.file ?? (latest.current.hostFiles?.src ? (href: string) => latest.current.hostFiles?.src?.(href) ?? href : undefined);
+    const file = definition.file ?? (latest.current.hostFiles?.src ? (href: string) => box.reads.current.hostFiles?.src?.(href) ?? href : undefined);
     /* Code fetched when drawn: asked now, beside the worker's host, not after it (the host judges what arrives, and says so where it does not). */
     if (typeof definition.worker === "function") void codeOf(definition.worker).catch(() => undefined);
     type Chunk = Awaited<ReturnType<typeof workerChunk>>;
@@ -181,43 +275,51 @@ function WorkerViewMount({ definition: given, store, principal, input, goTo, pla
         worker,
         store,
         principal,
-        input: () => latest.current.input?.() ?? {},
+        input: () => box.reads.current.input?.() ?? {},
         /* Links stay in the app (FR-93): a record, a place or a kind's list — narrowed and to a section — on whichever face the view is drawn. */
-        goTo: () => latest.current.goTo,
-        places: () => latest.current.places?.() ?? [],
-        arrangement: () => latest.current.arrangement?.(),
-        brand: () => latest.current.brand,
-        reel: () => latest.current.reel,
-        onFailure: (reason, detail) => latest.current.onFailure(reason, detail),
+        goTo: () => box.reads.current.goTo,
+        places: () => box.reads.current.places?.() ?? [],
+        arrangement: () => box.reads.current.arrangement?.(),
+        brand: () => box.reads.current.brand,
+        reel: () => box.reads.current.reel,
+        /* Off its page, a view that fails is let go, and judged afresh where its page is gone back to. */
+        onFailure: (reason, detail) => (box.away ? box.gone() : box.reads.current.onFailure(reason, detail)),
         ...(drawsItsOwn ? { fallback: false as const } : {}),
         ...(definition.limits ? { limits: definition.limits } : {}),
         ...(definition.author ? { author: definition.author } : {}),
         ...(definition.onProblem ? { onProblem: definition.onProblem } : {}),
-        ...(definition.asset ? { asset: definition.asset } : latest.current.hostAssets ? { asset: (path: string) => latest.current.hostAssets?.(path) ?? path } : {}),
+        ...(definition.asset ? { asset: definition.asset } : latest.current.hostAssets ? { asset: (path: string) => box.reads.current.hostAssets?.(path) ?? path } : {}),
         ...(file ? { file } : {}),
         ...(definition.images ? { images: definition.images } : {}),
         ...(definition.fonts ? { fonts: definition.fonts } : {}),
         ...(definition.ownFaces === false ? { ownFaces: false } : {}),
         ...(definition.links ? { links: definition.links } : {}),
+        ...(definition.embeds ? { embeds: definition.embeds } : {}),
         /* What a file dropped on what the view drew is stored through (FR-193): the page's host's files, as they are now. */
-        files: () => latest.current.hostFiles,
+        files: () => box.reads.current.hostFiles,
         /* What it keeps for its viewer (`graview.mine`). A draft, proposed and not kept, keeps nothing of anybody's. */
-        ...(definition.draft || definition.keepsNothing ? { draft: true } : { viewerState: () => latest.current.viewerState }),
-        onContentHeight: (height) => latest.current.told?.(height),
-        signIn: () => latest.current.signIn,
+        ...(definition.draft || definition.keepsNothing ? { draft: true } : { viewerState: () => box.reads.current.viewerState }),
+        onContentHeight: (height) => box.reads.current.told?.(height),
+        signIn: () => box.reads.current.signIn,
       });
     const stop = untilItArrives(workerChunk, (module) => {
-      mounted.current = module.mountWorkerView(element, optionsFor(definition.worker));
+      const view = module.mountWorkerView(element, optionsFor(definition.worker));
+      /* What was read for this seat is forgotten with its drawings. */
+      const state = latest.current.viewerState;
+      if (state) keeping?.onClear(state, () => module.forgetRead(state));
+      mounted.current = view;
+      stood.current = true;
       /* What the view's place lends its revision (Roadmap f-make-this-section-better), made with the worker's host. */
-      setViewPlace(element, module.viewPlaceHandle({ element, definition, mounted: () => mounted.current, optionsFor, draw: (source) => drawInstead(given, source), mount: module.mountWorkerView, pressing: viewPressing }));
+      const lend = (onto: HTMLElement) => setViewPlace(onto, module.viewPlaceHandle({ element: onto, definition, mounted: () => view, optionsFor, draw: (source) => drawInstead(given, source), mount: module.mountWorkerView, pressing: viewPressing }));
+      held.current = { of, view, lend, box, dispose: () => view.dispose() };
+      lend(element);
     });
     return () => {
       stop();
-      setViewPlace(element, null);
-      mounted.current?.dispose();
-      mounted.current = null;
+      dispose();
     };
-  }, [definition, store, principal]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [definition, store, principal, anew]);
   /* The reel by what it says, so a host that hands a new object each render with the same facts pushes nothing. */
   const reelSaid = reel ? JSON.stringify(reel) : "";
   useEffect(() => mounted.current?.update(), [scheme, served, reelSaid, tick]);
@@ -288,6 +390,8 @@ export function workerView(definition: WorkerViewDefinition, options: { readonly
     const graview = useGraviewIfAny<AnySchema>();
     const goTo = useGoTo();
     const elsewhere = useContext(DefaultDrawnElsewhere);
+    /* The page it is drawn as, where the face says it is one: kept to be gone back to. */
+    const page = useContext(PageOfItsOwn);
     /* The home's view with no home of the app's to stand in for it: the face that draws the home draws its built-in one instead, where it offers to (Roadmap f-view-budget-fair-to-visitors). */
     const homeFallsBack = useContext(HomeFallsBack);
     const fallsBack = options.home && !Fallback ? homeFallsBack : null;
@@ -320,6 +424,7 @@ export function workerView(definition: WorkerViewDefinition, options: { readonly
         scheme={graview.scheme}
         brand={graview.brand}
         tick={props}
+        keptAs={page !== null && props.mode === "fullscreen" && props.fidelity === "full" ? `${page} ${definition.manifest.name} ${props.node?.id ?? ""}` : undefined}
         drawsItsOwn={Fallback !== undefined || fallsBack !== null}
         onFailure={(reason, detail) => {
           setFailed(reason);
@@ -344,6 +449,16 @@ export function workerView(definition: WorkerViewDefinition, options: { readonly
     );
   }
   WorkerViewOfKind.displayName = `WorkerView(${definition.manifest.name})`;
+  /* Fetched ahead of its page by a face that knows a person is on their way; a draft is drawn where it is proposed. */
+  if (!definition.draft && !definition.keepsNothing) markAhead(WorkerViewOfKind, (asked) =>
+    void workerChunk().then(
+      (module) => {
+        const state = asked.viewerState as ReturnType<typeof useHostViewerState>;
+        if (asked.intent && state) asked.kept?.onClear(state, () => module.forgetRead(state));
+        module.viewAhead(definition, asked as never);
+      },
+      () => undefined,
+    ));
   return WorkerViewOfKind;
 }
 
@@ -465,6 +580,7 @@ export function workerHome(definition: WorkerViewDefinition, options: { readonly
         goTo={goTo}
         {...(graview ? { places: () => graview.views.places(), arrangement: () => graview.views.arrangement?.(), scheme: graview.scheme, brand: graview.brand } : {})}
         drawsItsOwn={Fallback !== undefined}
+        keptAs={`home ${definition.manifest.name}`}
         onFailure={(reason, detail) => {
           setFailed(reason);
           definition.onFailure?.(reason, detail);

@@ -1,0 +1,366 @@
+{
+  "at": "2026-11-25T21:58:55.483Z",
+  "engines": [
+    "chromium",
+    "webkit",
+    "firefox"
+  ],
+  "checks": {
+    "on the routed pages, a video is a poster and a play button, with its link, and nothing is asked of a provider before the press": {
+      "ok": true,
+      "engines": {
+        "chromium": {
+          "ok": true
+        },
+        "webkit": {
+          "ok": true
+        },
+        "firefox": {
+          "ok": true
+        }
+      }
+    },
+    "on the routed pages, an address outside the list is refused, said with its code, and drawn as nothing": {
+      "ok": true,
+      "engines": {
+        "chromium": {
+          "ok": true
+        },
+        "webkit": {
+          "ok": true
+        },
+        "firefox": {
+          "ok": true
+        }
+      }
+    },
+    "on the routed pages, a press plays it where it stood, in the same box, with nothing below it moved and the card around it not opened": {
+      "ok": true,
+      "engines": {
+        "chromium": {
+          "ok": true
+        },
+        "webkit": {
+          "ok": true
+        },
+        "firefox": {
+          "ok": true
+        }
+      }
+    },
+    "on the routed pages, the player is told this page's origin alone, and only the provider pressed is asked": {
+      "ok": true,
+      "engines": {
+        "chromium": {
+          "ok": true
+        },
+        "webkit": {
+          "ok": true
+        },
+        "firefox": {
+          "ok": true
+        }
+      }
+    },
+    "on the routed pages, the keyboard is in the player, its frame says what it is, and the link stays": {
+      "ok": true,
+      "engines": {
+        "chromium": {
+          "ok": true
+        },
+        "webkit": {
+          "ok": true
+        },
+        "firefox": {
+          "ok": true
+        }
+      }
+    },
+    "on the routed pages, a playing video plays on as the view draws again around it": {
+      "ok": true,
+      "engines": {
+        "chromium": {
+          "ok": true
+        },
+        "webkit": {
+          "ok": true
+        },
+        "firefox": {
+          "ok": true
+        }
+      }
+    },
+    "on the routed pages, another one pressed plays from Vimeo, and the first goes back to its poster": {
+      "ok": true,
+      "engines": {
+        "chromium": {
+          "ok": true
+        },
+        "webkit": {
+          "ok": true
+        },
+        "firefox": {
+          "ok": true
+        }
+      }
+    },
+    "on the routed pages, a player does not go on once the place is left": {
+      "ok": true,
+      "engines": {
+        "chromium": {
+          "ok": true
+        },
+        "webkit": {
+          "ok": true
+        },
+        "firefox": {
+          "ok": true
+        }
+      }
+    },
+    "on the one face, a video is a poster and a play button, with its link, and nothing is asked of a provider before the press": {
+      "ok": true,
+      "engines": {
+        "chromium": {
+          "ok": true
+        },
+        "webkit": {
+          "ok": true
+        },
+        "firefox": {
+          "ok": true
+        }
+      }
+    },
+    "on the one face, an address outside the list is refused, said with its code, and drawn as nothing": {
+      "ok": true,
+      "engines": {
+        "chromium": {
+          "ok": true
+        },
+        "webkit": {
+          "ok": true
+        },
+        "firefox": {
+          "ok": true
+        }
+      }
+    },
+    "on the one face, a press plays it where it stood, in the same box, with nothing below it moved and the card around it not opened": {
+      "ok": true,
+      "engines": {
+        "chromium": {
+          "ok": true
+        },
+        "webkit": {
+          "ok": true
+        },
+        "firefox": {
+          "ok": true
+        }
+      }
+    },
+    "on the one face, the player is told this page's origin alone, and only the provider pressed is asked": {
+      "ok": true,
+      "engines": {
+        "chromium": {
+          "ok": true
+        },
+        "webkit": {
+          "ok": true
+        },
+        "firefox": {
+          "ok": true
+        }
+      }
+    },
+    "on the one face, the keyboard is in the player, its frame says what it is, and the link stays": {
+      "ok": true,
+      "engines": {
+        "chromium": {
+          "ok": true
+        },
+        "webkit": {
+          "ok": true
+        },
+        "firefox": {
+          "ok": true
+        }
+      }
+    },
+    "on the one face, a playing video plays on as the view draws again around it": {
+      "ok": true,
+      "engines": {
+        "chromium": {
+          "ok": true
+        },
+        "webkit": {
+          "ok": true
+        },
+        "firefox": {
+          "ok": true
+        }
+      }
+    },
+    "on the one face, another one pressed plays from Vimeo, and the first goes back to its poster": {
+      "ok": true,
+      "engines": {
+        "chromium": {
+          "ok": true
+        },
+        "webkit": {
+          "ok": true
+        },
+        "firefox": {
+          "ok": true
+        }
+      }
+    },
+    "on the one face, a player does not go on once the place is left": {
+      "ok": true,
+      "engines": {
+        "chromium": {
+          "ok": true
+        },
+        "webkit": {
+          "ok": true
+        },
+        "firefox": {
+          "ok": true
+        }
+      }
+    },
+    "the keyboard reaches the play button, Enter plays, and the keyboard is in the player and not lost": {
+      "ok": true,
+      "engines": {
+        "chromium": {
+          "ok": true
+        },
+        "webkit": {
+          "ok": true
+        },
+        "firefox": {
+          "ok": true
+        }
+      }
+    },
+    "and the link out is a stop of its own after it": {
+      "ok": true,
+      "engines": {
+        "chromium": {
+          "ok": true
+        },
+        "webkit": {
+          "ok": true
+        },
+        "firefox": {
+          "ok": true
+        }
+      }
+    },
+    "printed, the player is not drawn and the address is, and it plays on": {
+      "ok": true,
+      "engines": {
+        "chromium": {
+          "ok": true
+        },
+        "webkit": {
+          "ok": true
+        },
+        "firefox": {
+          "ok": true
+        }
+      }
+    },
+    "a provider its host turned off is its link alone, and the other still plays": {
+      "ok": true,
+      "engines": {
+        "chromium": {
+          "ok": true
+        },
+        "webkit": {
+          "ok": true
+        },
+        "firefox": {
+          "ok": true
+        }
+      }
+    },
+    "where the page's policy allows no frame from it, it says so, keeps its link and the keyboard, and the host is told": {
+      "ok": true,
+      "engines": {
+        "chromium": {
+          "ok": true
+        },
+        "webkit": {
+          "ok": true
+        },
+        "firefox": {
+          "ok": true
+        }
+      }
+    },
+    "and the one it allows plays": {
+      "ok": true,
+      "engines": {
+        "chromium": {
+          "ok": true
+        },
+        "webkit": {
+          "ok": true
+        },
+        "firefox": {
+          "ok": true
+        }
+      }
+    },
+    "on a phone it is within the page, its box and its link big enough to press": {
+      "ok": true,
+      "engines": {
+        "chromium": {
+          "ok": true
+        },
+        "webkit": {
+          "ok": true
+        },
+        "firefox": {
+          "ok": true
+        }
+      }
+    },
+    "and plays there": {
+      "ok": true,
+      "engines": {
+        "chromium": {
+          "ok": true
+        },
+        "webkit": {
+          "ok": true
+        },
+        "firefox": {
+          "ok": true
+        }
+      }
+    },
+    "in the Scene's card it is a poster and a link, with nothing to play and nothing asked": {
+      "ok": true,
+      "engines": {
+        "chromium": {
+          "ok": true
+        },
+        "webkit": {
+          "ok": true
+        },
+        "firefox": {
+          "ok": true
+        }
+      }
+    },
+    "no page threw": {
+      "ok": true,
+      "saw": []
+    }
+  },
+  "pageErrors": [],
+  "ok": true
+}

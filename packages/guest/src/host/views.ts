@@ -21,6 +21,8 @@ export type { GuestDroppedFile, GuestFile, GuestPlace, GuestTheme } from "../pro
 export type { GuestPictureLimits, GuestPictures } from "./pictures.js";
 export type { ThumbShape } from "./picture-thumb.js";
 export type { GuestBrand } from "./theme.js";
+export { EMBED_ORIGINS, EMBED_PROVIDERS } from "./embeds.js";
+export type { EmbedHost, EmbedProvider } from "./embeds.js";
 /* What a view's host says went wrong, by a code that stays when the words change (HQ f-view-problem-codes). */
 export { VIEW_PROBLEM_CODES } from "./problems.js";
 export type { ViewProblem, ViewProblemCode, ViewProblemSaid } from "./problems.js";

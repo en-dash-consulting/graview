@@ -2,6 +2,8 @@ import type { ViewProblemSaid } from "./problems.js";
 import { isFileValue, isImage, isVideo, previewOf, videoWords, type AppVideo, type FileValue } from "@graview/core";
 import { videoClock } from "@graview/core/blocks";
 import type { GuestNode, GuestProps } from "../protocol.js";
+import { createEmbedPlayers } from "./embed-player.js";
+import { namesEmbed, type EmbedHost } from "./embeds.js";
 import { reelAddressOk, reelFacts, reelType } from "./theme.js";
 
 /*
@@ -43,6 +45,13 @@ import { reelAddressOk, reelFacts, reelType } from "./theme.js";
  *       view is handed its facts (`props.theme.reel`) and never its
  *       address. With no reel handed, it draws nothing and says why.
  *
+ *   <graview-video data-provider="youtube" data-video="dQw4w9WgXcQ">
+ *       a video on YouTube or Vimeo (HQ f-view-video-embeds), by provider
+ *       and id or by its watch address (`data-watch`): a poster and a play
+ *       button the host draws, its player only once it is pressed, and a
+ *       link out throughout (embed-player.ts). It is nobody's record, so a
+ *       view that asks for no pictures places it too.
+ *
  * `data-index` picks one file of a list (0 by default). Both are for a view
  * whose manifest asks for `pictures`; the file comes from where the host
  * serves it (`file`, else the href against the page). A record the view was
@@ -64,6 +73,8 @@ export interface GuestMediaOptions {
   readonly file?: (href: string) => string | undefined;
   /** The app's own video (HQ f-view-names-app-video), where the host keeps one: what `data-app="reel"` plays. */
   readonly reel?: () => AppVideo | undefined;
+  /** The providers this host plays a video from (HQ f-view-video-embeds): every one unsaid, none for an empty list. */
+  readonly embeds?: EmbedHost;
   /** Something asked for was not drawn, and why, said once. */
   readonly onProblem?: ViewProblemSaid;
 }
@@ -230,6 +241,15 @@ export function createGuestMedia(window: Window & typeof globalThis, options: Gu
   };
 
   const refused = (what: string, why: string) => say(`The ${what} in the view ${options.view} was not drawn: it ${why}.`);
+  const sayEmbed = (said: string, code: "embed-refused" | "embed-not-allowed") => {
+    if (told.has(said)) return;
+    told.add(said);
+    options.onProblem?.(said, { code });
+  };
+  const embeds = createEmbedPlayers(window, {
+    ...(options.embeds ? { embeds: options.embeds } : {}),
+    onRefused: (why) => sayEmbed(`A video in the view ${options.view} was not played: it ${why}.`, "embed-not-allowed"),
+  });
   /**
    * Where the app's reel is fetched: the host handed the address, so an
    * `https:` one on another origin is played as given; a path is fetched
@@ -245,6 +265,14 @@ export function createGuestMedia(window: Window & typeof globalThis, options: Gu
       const shown = options.shown();
       for (const element of Array.from(root.querySelectorAll("graview-video"))) {
         const shadow = element.shadowRoot ?? element.attachShadow({ mode: "open" });
+        if (namesEmbed((name) => element.getAttribute(name))) {
+          drawn.delete(element);
+          const why = embeds.draw(element, shadow);
+          if (why !== undefined) sayEmbed(`A video in the view ${options.view} was not drawn: it ${why}.`, "embed-refused");
+          continue;
+        }
+        embeds.forget(element);
+        if (element.hasAttribute("poster")) refused("poster", "is given beside a video that is no provider's, which stands at its own");
         const app = element.hasAttribute("data-app");
         if (!app && !options.pictures) {
           drawn.delete(element);
@@ -336,6 +364,7 @@ export function createGuestMedia(window: Window & typeof globalThis, options: Gu
       if (dialog) shut(dialog);
       dialog?.remove();
       dialog = undefined;
+      embeds.dispose();
       lessMotion?.removeEventListener?.("change", onMotionChange);
       backgrounds.clear();
     },

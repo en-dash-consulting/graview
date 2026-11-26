@@ -172,11 +172,18 @@ describe("a frame whose guest is sized by its own frame", () => {
     const problems: string[] = [];
     const codes: unknown[] = [];
     const { iframe, ask } = mounted(problems, codes);
-    /* A page as tall as its frame and a margin: it asks again whenever its frame moves. */
-    for (let round = 0; round < 200 && !iframe.hasAttribute("data-guest-view-held"); round += 1) {
-      ask(height(iframe) + 16);
-      await tick(20);
-    }
+    /*
+     * A page as tall as its frame and a margin: it asks again as soon as its
+     * frame moves, as a ResizeObserver does — not on a clock of the test's,
+     * which on a loaded runner once slept past the guard's quiet moment
+     * between its frame moving and its asking, so the guard rightly started
+     * over and held it four rounds later (304px).
+     */
+    const answer = new MutationObserver(() => ask(height(iframe) + 16));
+    answer.observe(iframe, { attributes: true, attributeFilter: ["style"] });
+    ask(height(iframe) + 16);
+    for (let waited = 0; waited < 200 && !iframe.hasAttribute("data-guest-view-held"); waited += 1) await tick(20);
+    answer.disconnect();
     expect(height(iframe)).toBeLessThan(300);
     expect(problems).toHaveLength(1);
     expect(iframe.getAttribute("data-guest-view-held")).toBe(iframe.style.height);
@@ -209,6 +216,7 @@ describe("a frame whose guest is sized by its own frame", () => {
     await tick(2 * GROWTH_QUIET_MS + 200);
     expect(height(iframe)).toBe(CAP);
     expect(iframe.hasAttribute("data-guest-view-held")).toBe(false);
-    expect(problems).toEqual([]);
+    /* Past the cap is not held by the guard; it is said, once, as what it is. */
+    expect(codes).toEqual([{ code: "taller-than-allowed" }]);
   });
 });

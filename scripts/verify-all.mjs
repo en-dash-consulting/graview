@@ -48,7 +48,7 @@ import { changedFiles, currentBranch, forkPoint, headSha, mentionsIn, movedBetwe
 import { COVERAGE_ENV, COVERAGE_NO_FS_ENV, mergeCoverage, readCoverage, readRecorded, withHook, withoutHook, writeCoverage } from "./lib/coverage.mjs";
 import { updateLedger } from "./lib/ledger.mjs";
 import { ownedBy, writtenSince } from "./lib/on-github.mjs";
-import { allUnits, PART_ENV, partOf, partPath, PARTS, splitUnit, unitsOf, writeMerged } from "./lib/parts.mjs";
+import { allUnits, missedByTheWhole, PART_ENV, partOf, partPath, PARTS, splitUnit, unitsOf, writeMerged } from "./lib/parts.mjs";
 import { claimBlocks, defaultJobs, lockBlock, longestFirst, POOL_BASES, runPool } from "./lib/pool.mjs";
 import { judge, keepFirstLook, missedClaims, recordFlakes } from "./lib/second-look.mjs";
 import { described, holders, listeners, serving } from "./lib/serve.mjs";
@@ -135,6 +135,8 @@ const CHAIN = [
   ["growing", "verify-growing.mjs"],
   // A picture or a document put on a record from the page — picked, pasted, a PDF inline, full size, refused in words, taken back — on both faces, in three engines (FR-162, FR-163).
   ["files", "verify-files.mjs"],
+  // A view's YouTube and Vimeo videos play in place against stand-in providers: nothing asked before the press, the same box, on through a redraw, refused off the list, its link alone where a host or its policy says no — the pages, the one face and the Scene's card, in three engines (HQ f-view-video-embeds).
+  ["video-embeds", "verify-video-embeds.mjs"],
   // The app as it was: from a row of Activity, a timeline with a tick per change, scrubbed from the start to now on the scene and the routed face, each stop exactly as `store.at` says, nothing to change in the past (Roadmap f-playback).
   ["playback", "verify-playback.mjs"],
   // A record that links another app drawn as the app its host names, refused as no access, plainly without a resolver, on both faces at desk width, in three engines (FR-171).
@@ -163,6 +165,8 @@ const CHAIN = [
   ["embed-one-face", "verify-embed-one-face.mjs"],
   // A view drawn where the page cannot read has its lines to the city: a worker view's cards and a frame guest's rows each a line within 2 px of its box at Nearby, kept on them every frame as the page or the frame scrolls, a record page drawn by a view that names no record still its one line, and Connected not repeating what a frame shows.
   ["frame-lines", "verify-frame-lines.mjs"],
+  // A custom page gone back to: page A to B and back, frame by frame on the routed face and the one face, in three engines — no blank frame and nothing in its stead, what was typed, the scroll and the keyboard as they were, what changed drawn in place, a press made before that waiting for it, and a drawing kept for no other seat.
+  ["view-return", "verify-view-return.mjs"],
   // The studio's whole path, on a scratch copy of seedbed: said, rewritten, written, compiled, migrated.
   ["rehearsal", "rehearse-studio.mjs"],
   ["remember", "verify-remember.mjs"],
@@ -277,7 +281,8 @@ const inChainOrder = (wanted) => {
 };
 const quickRun = argv.includes("--quick");
 const units = inChainOrder(
-  unitsOf(asked.length > 0 ? asked : lastFailed ? lastFailed.filter((unit) => KNOWN.includes(unit)) : selection ? selection.names : CHAIN.map(([name]) => name)),
+  // An app of one's own is one run of it: the parts are of the checkout's apps (lib/parts.mjs).
+  (asked.length > 0 ? asked : lastFailed ? lastFailed.filter((unit) => KNOWN.includes(unit)) : selection ? selection.names : CHAIN.map(([name]) => name)).flatMap((unit) => (appPaths.length > 0 && TAKES_AN_APP.has(unit) ? [unit] : unitsOf([unit]))),
 )
   .filter((unit) => !except.includes(unit) && !except.includes(splitUnit(unit).name))
   // --quick is Chromium alone where a harness sweeps engines: so are its parts, unless a part was named.
@@ -647,7 +652,7 @@ if (missed.length > 0) say(`\nsecond look, ${lookWidth === 1 ? "alone" : `${look
 const seconds = new Map();
 for (const one of missed) {
   // The first look's verdict and frames, kept under docs/first-look/ before the second writes over them (lib/second-look.mjs).
-  const kept = keepFirstLook(repoRoot, one);
+  const kept = keepFirstLook(repoRoot, one, { since: started });
   if (kept.length > 0) say(`first look of ${one.name} kept: ${kept.join(", ")}\n`);
 }
 const looksAgain = missed.map((one) => one.name);
@@ -665,19 +670,24 @@ for (const unit of units) {
  * written from theirs (lib/parts.mjs), with what each part cost. A run that
  * took only some parts leaves them for whoever runs the rest.
  */
+const failedWhole = [];
 for (const name of Object.keys(PARTS)) {
-  const ran = results.filter((one) => one.harness === name);
+  const ran = results.filter((one) => one.harness === name && splitUnit(one.name).part);
   if (ran.length === 0) continue;
   const whole = PARTS[name].parts.every(({ part }) => units.includes(`${name}.${part}`));
   // --quick took one engine's parts on purpose: its verdict is made from those, so docs/<name>.json says what this run held.
   const byDesign = quick && !asked.some((one) => splitUnit(one).part);
   const path = writeMerged(repoRoot, name, { whole: whole || byDesign, since: started, only: byDesign ? ran.map((one) => splitUnit(one.name).part) : null });
+  // Every part held and the whole does not: a claim no part made, or one only the whole can judge. It fails by the harness's own name.
+  const missed = path && ran.every((one) => one.verdict !== "failed") ? missedByTheWhole(repoRoot, name) : [];
+  if (missed.length > 0)
+    failedWhole.push({ name, harness: name, file: ran[0].file, code: 1, took: 0, began: ran[0].began, verdict: "failed", missed, gist: `made of its parts: ${missed.join(", ")}`, output: missed.map((claim) => `FAIL ${claim}`).join("\n") });
   if (path) stampVerdicts(repoRoot, [path], { wall: ran.reduce((sum, one) => sum + (one.timing?.wall ?? 0), 0), cpu: ran.reduce((sum, one) => sum + (one.timing?.cpu ?? 0), 0), parts: Object.fromEntries(ran.map((one) => [splitUnit(one.name).part, one.timing])) });
 }
 for (const servers of warm) for (const server of servers.values()) server?.stop();
 const wall = Math.round((Date.now() - started) / 1000);
 
-const broken = results.filter((one) => one.verdict === "failed");
+const broken = [...results.filter((one) => one.verdict === "failed"), ...failedWhole];
 const flakes = recordFlakes(repoRoot, results.filter((one) => one.verdict === "flaky"));
 for (const flake of flakes) {
   const claims = flake.missed.length > 0 ? flake.missed.join(", ") : "no claim named";
@@ -709,7 +719,9 @@ if (broken.length > 0) {
  * says what is wrong — each problem once however many screens showed it,
  * and whether it is new, still there, or fixed since the last run.
  */
-const ledger = updateLedger(repoRoot, { since: started, ran: new Set(results.map((one) => scriptName(one.file))) });
+// A harness that ran only some of its parts looked at only some of its screens: a problem it did not see there is not one it fixed.
+const inFull = results.filter((one) => !PARTS[one.harness] || !splitUnit(one.name).part || PARTS[one.harness].parts.every(({ part }) => units.includes(`${one.harness}.${part}`)));
+const ledger = updateLedger(repoRoot, { since: started, ran: new Set(inFull.map((one) => scriptName(one.file))) });
 const line = (entry) => `  ${entry.rule.padEnd(22)} ${entry.detail.slice(0, 150)}  (${entry.harnesses.join(", ")})\n`;
 if (ledger.fresh.length + ledger.still.length + ledger.fixed.length + ledger.flapping.length > 0) {
   say(`\nproblems: ${ledger.fresh.length} new, ${ledger.still.length} still open, ${ledger.fixed.length} fixed, ${ledger.flapping.length} back after a fix\n`);
@@ -783,7 +795,7 @@ writeFileSync(
     {
       at: new Date().toISOString(),
       run: { wall, harnessTime: spent, workers: bases.length, quick, ...(selection ? { changed: { from: selection.from, files: selection.changes, ran: chain.length, of: CHAIN.length } } : {}), servers: serverTimes.map(({ worker, app, ms }) => ({ worker, app, ms })), slowest },
-      results: results.map(({ name, file, code, took, began, verdict, gist: said, missed, output, timing, firstTiming }) => ({
+      results: [...results, ...failedWhole].map(({ name, file, code, took, began, verdict, gist: said, missed, output, timing, firstTiming }) => ({
         name,
         file,
         code,
@@ -803,6 +815,6 @@ for (const release of releases) release();
 rmSync(scratch, { recursive: true, force: true });
 say(`\nslowest: ${slowest.slice(0, 6).map((one) => `${one.name} ${one.wall}s`).join(", ")}\n`);
 say(
-  `\n${results.length - broken.length} of ${results.length} harnesses hold${flakes.length > 0 ? `, ${flakes.length} on a second look` : ""} (${Math.floor(wall / 60)}m${String(wall % 60).padStart(2, "0")}s, ${Math.round(spent / 60)}m of harness time, ${bases.length} at a time)\n`,
+  `\n${results.length - broken.length + failedWhole.length} of ${results.length} harnesses hold${failedWhole.length > 0 ? `, and ${failedWhole.map((one) => one.name).join(", ")} made of its parts does not` : ""}${flakes.length > 0 ? `, ${flakes.length} on a second look` : ""} (${Math.floor(wall / 60)}m${String(wall % 60).padStart(2, "0")}s, ${Math.round(spent / 60)}m of harness time, ${bases.length} at a time)\n`,
 );
 process.exit(broken.length > 0 ? 1 : 0);

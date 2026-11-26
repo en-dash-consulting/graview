@@ -5,7 +5,7 @@
  * `import()` whose specifier is computed at run time.
  */
 let loading: Promise<typeof import("./view-runtime.generated.js")> | undefined;
-const viewRuntime = () =>
+export const viewRuntime = () =>
   (loading ??= import("./view-runtime.generated.js").catch((error: unknown) => {
     loading = undefined;
     throw error;

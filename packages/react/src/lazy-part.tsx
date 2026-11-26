@@ -24,7 +24,8 @@ import { createContext, createElement, lazy, useContext, useEffect, useLayoutEff
  *   const Menu = panes.part((module, props: MenuProps) => <module.Menu {...props} />, { what: "Your menu" });
  *
  * Drawn before its first attempt has settled, a part suspends, so the
- * nearest `<Suspense>` says what stands in for it meanwhile; drawn once the
+ * nearest `<Suspense>` says what stands in for it meanwhile — unless it
+ * says itself (`meanwhile`), and then it never suspends; drawn once the
  * module is here, it draws in that same commit, and stays the element it
  * was (a change of element would draw it again from nothing).
  */
@@ -52,6 +53,15 @@ export interface LazyPartOptions {
   readonly quiet?: boolean;
   /** The line's element, where the part's place wants one: `li` inside a list. A paragraph by default. */
   readonly as?: "p" | "li" | "div";
+  /**
+   * What stands in its place until it first arrives (`null`: nothing). A
+   * part that says so never suspends: it is drawn the moment its module is
+   * here. One that suspends is revealed by React in a commit it holds back
+   * for up to 300 ms after the last fallback it showed, and the pages'
+   * bell, whose module had long arrived, came to a bar a person was already
+   * reading, and moved what stood beside it.
+   */
+  readonly meanwhile?: ReactNode;
 }
 
 /** Every module whose last attempt failed: asked for again together. */
@@ -66,22 +76,32 @@ const failing = new Set<() => void>();
  * (a prefetch, the other face fetched while idle).
  */
 let onTheirWay = 0;
+/*
+ * And how many of them the page is whole without: what stands under it (the
+ * one face, its city), drawn where the reader does not yet look. A place has
+ * not drawn until they have (`data-graview-drawn`, which a picture of it
+ * waits for); a person may be shown the page before
+ * (`data-graview-painted`, which its opening screen lifts on).
+ */
+let underOnTheirWay = 0;
 
-/** The loader of something drawn as it is first needed, counted while it is on its way (`partsArriving`). */
-export function partArriving<T>(load: () => Promise<T>): () => Promise<T> {
+/** The loader of something drawn as it is first needed, counted while it is on its way (`partsArriving`); `under`, one the page is whole without. */
+export function partArriving<T>(load: () => Promise<T>, under = false): () => Promise<T> {
   return () => {
-    onTheirWay += 1;
+    const count = (by: number) => {
+      onTheirWay += by;
+      if (under) underOnTheirWay += by;
+    };
+    count(1);
     const going = load();
-    going.then(
-      () => void (onTheirWay -= 1),
-      () => void (onTheirWay -= 1),
-    );
+    const settled = () => count(-1);
+    going.then(settled, settled);
     return going;
   };
 }
 
-/** How many parts are drawn and still on their way: none once every drawn part has arrived, or said it did not. */
-export const partsArriving = (): number => onTheirWay;
+/** How many parts are drawn and still on their way: none once every drawn part has arrived, or said it did not. `over`, only those the page is not whole without. */
+export const partsArriving = (over = false): number => onTheirWay - (over ? underOnTheirWay : 0);
 
 /*
  * A PART IS ON ITS WAY UNTIL IT HAS DRAWN, NOT UNTIL ITS MODULE ARRIVED.
@@ -122,8 +142,13 @@ export function partsWatchMoved(watch: PartsWatch): void {
   watch.at += 1;
 }
 
-/** How many parts drawn under `watch` suspended and have not drawn since. */
-export const partsWaiting = (watch: PartsWatch | null | undefined): number => watch?.waiting.size ?? 0;
+/** A part, as a watch waits for it; `under`, one the page is whole without. */
+interface Part {
+  readonly under?: boolean;
+}
+
+/** How many parts drawn under `watch` suspended and have not drawn since. `over`, only those the page is not whole without. */
+export const partsWaiting = (watch: PartsWatch | null | undefined, over = false): number => (over ? [...(watch?.waiting.keys() ?? [])].filter((part: Part) => !part.under).length : (watch?.waiting.size ?? 0));
 
 /** Said as a part suspends under a watch. */
 function waitingFor(watch: PartsWatch | null, part: object): void {
@@ -142,11 +167,12 @@ function useDrawnPart(part: object): void {
  * `React.lazy` over a component's module, waited for by the watch it is
  * drawn under until it has drawn (`PartsWatch`), as a lazy module's part
  * is. Its failure is React.lazy's — thrown to the nearest error boundary —
- * and is then waited for no longer.
+ * and is then waited for no longer. `under` says the page is whole without
+ * it: the opening screen lifts before it has come.
  */
-export function lazyPart<C extends (props: never) => ReactNode>(load: () => Promise<{ readonly default: C }>): C {
+export function lazyPart<C extends (props: never) => ReactNode>(load: () => Promise<{ readonly default: C }>, { under = false }: { readonly under?: boolean } = {}): C {
   type P = object;
-  const part = {};
+  const part: Part = { under };
   let here = false;
   const watches = new Set<PartsWatch>();
   const Lazy = lazy(
@@ -166,6 +192,7 @@ export function lazyPart<C extends (props: never) => ReactNode>(load: () => Prom
           throw error;
         },
       ),
+      under,
     ),
   ) as unknown as ComponentType<P>;
   function Part(props: P) {
@@ -284,6 +311,9 @@ export function lazyModule<M>(load: () => Promise<M>): LazyModule<M> {
       const what = options.what ?? "This part";
       // This part, as the watch of the place it is drawn on waits for it.
       const part = {};
+      const stands = options.meanwhile !== undefined;
+      // Asked for as it is first drawn and counted on its way (`partsArriving`), once, as React.lazy asks.
+      let asked: Promise<M> | undefined;
       function Settled(props: P) {
         useSyncExternalStore(subscribe, snapshot, snapshot);
         // Drawn, or its line drawn in its place: the place waits for it no longer.
@@ -321,6 +351,8 @@ export function lazyModule<M>(load: () => Promise<M>): LazyModule<M> {
             </>
           );
         }
+        // On its way for the first time: what stands in meanwhile (a part that suspends is never drawn here before its first attempt settled).
+        if (stands && !failed) return options.meanwhile;
         return options.quiet ? null : <PartMissing what={what} button={button} {...(options.as ? { as: options.as } : {})} />;
       }
       // The first attempt suspends; it never rejects into React, so nothing is thrown at the page.
@@ -331,9 +363,12 @@ export function lazyModule<M>(load: () => Promise<M>): LazyModule<M> {
       function Part(props: P) {
         const watch = useContext(PartsWatchContext);
         const [settled] = useState(() => arrived || failed);
-        // Suspending: waited for until it draws here, in a commit React may hold back.
-        if (!arrived && !failed) waitingFor(watch, part);
-        return createElement(settled ? Settled : (First as unknown as ComponentType<P>), props);
+        if (!arrived && !failed) {
+          // One that stands meanwhile draws as its module arrives, so its fetch is all there is to wait for; suspending, it is waited for until it draws here, in a commit React may hold back.
+          if (stands) asked ??= partArriving(attempt)();
+          else waitingFor(watch, part);
+        }
+        return createElement(settled || stands ? Settled : (First as unknown as ComponentType<P>), props);
       }
       return Part;
     },

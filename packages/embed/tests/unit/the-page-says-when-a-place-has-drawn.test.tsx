@@ -2,9 +2,10 @@
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 import { createSchema, defineApp, defineNode, z, type AnySchema } from "@graview/core";
 import type { ReactViewRegistry } from "@graview/react";
-import { act, useLayoutEffect, useRef } from "react";
+import { lazyPart } from "@graview/react";
+import { act, Suspense, useLayoutEffect, useRef, type ReactNode } from "react";
 import { afterEach, describe, expect, it } from "vitest";
-import { DRAWN_ATTRIBUTE, mount, type EmbedHandle, type EmbedOptions, type EmbedWhere } from "../../src/index.js";
+import { DRAWN_ATTRIBUTE, PAINTED_ATTRIBUTE, mount, type EmbedHandle, type EmbedOptions, type EmbedWhere } from "../../src/index.js";
 
 /**
  * THE PAGE SAYS WHEN A PLACE HAS DRAWN AND SETTLED (FR-188). Graview
@@ -145,6 +146,100 @@ describe("the page says when a place has drawn", () => {
       holders.length = 0;
     }
   });
+});
+
+describe("the page says when it is painted, what stands under it still to come", () => {
+  /* A home with a worker view, and a part under the page that arrives when the test says. */
+  const homeOver = () => {
+    let arrive!: (module: { readonly default: () => ReactNode }) => void;
+    const Under = lazyPart(() => new Promise<{ readonly default: () => ReactNode }>((resolve) => (arrive = resolve)), { under: true });
+    function Home() {
+      return (
+        <>
+          <FakeWorkerHome />
+          <Suspense fallback={null}>
+            <Under />
+          </Suspense>
+        </>
+      );
+    }
+    const views = (_schema: AnySchema, registry: ReactViewRegistry<AnySchema>) => {
+      registry.home?.(Home as never);
+      return registry;
+    };
+    return { views, arrive: (draw: () => ReactNode) => act(async () => arrive({ default: draw })) };
+  };
+
+  it("says painted once its view has drawn, and drawn only once the part under it has come", async () => {
+    regions.length = 0;
+    const { views, arrive } = homeOver();
+    const { root } = await mounted({ views: views as never });
+    expect(await until(() => regions.length > 0)).toBe(true);
+    await wait(800);
+    expect(root().hasAttribute(PAINTED_ATTRIBUTE), "not before the view has drawn").toBe(false);
+    regions.at(-1)!.setAttribute("data-worker-view-drawn", "");
+    expect(await until(() => root().getAttribute(PAINTED_ATTRIBUTE) === "/")).toBe(true);
+    await wait(800);
+    expect(root().hasAttribute(DRAWN_ATTRIBUTE), "the part under it has not come").toBe(false);
+    await arrive(() => <p>The city</p>);
+    expect(await until(() => root().getAttribute(DRAWN_ATTRIBUTE) === "/")).toBe(true);
+  });
+
+  it("waits for the part under the page where the page is out of the window, over the city", async () => {
+    const { views, arrive } = homeOver();
+    regions.length = 0;
+    const { root } = await mounted({ views: views as never });
+    expect(await until(() => regions.length > 0)).toBe(true);
+    regions.at(-1)!.parentElement!.setAttribute("data-graview-away", "");
+    regions.at(-1)!.setAttribute("data-worker-view-drawn", "");
+    await wait(800);
+    expect(root().hasAttribute(PAINTED_ATTRIBUTE)).toBe(false);
+    await arrive(() => <p>The city</p>);
+    expect(await until(() => root().hasAttribute(PAINTED_ATTRIBUTE))).toBe(true);
+  });
+
+  it("takes an attribute written again as it was for no change, as a city's frame loop writes its own", async () => {
+    const { root } = await mounted({ views: withWorkerHome as never });
+    expect(await until(() => regions.length > 0)).toBe(true);
+    const region = regions.at(-1)!;
+    region.setAttribute("data-worker-view-drawn", "");
+    const loop = setInterval(() => region.setAttribute("data-camera", "1.0000"), 16);
+    expect(await until(() => root().hasAttribute(PAINTED_ATTRIBUTE), 2500)).toBe(true);
+    expect(root().hasAttribute(DRAWN_ATTRIBUTE), "which the drawn mark still waits out").toBe(false);
+    clearInterval(loop);
+    expect(await until(() => root().hasAttribute(DRAWN_ATTRIBUTE))).toBe(true);
+  });
+
+  it("waits for an attribute that changes", async () => {
+    const { root } = await mounted({ views: withWorkerHome as never });
+    expect(await until(() => regions.length > 0)).toBe(true);
+    const region = regions.at(-1)!;
+    region.setAttribute("data-worker-view-drawn", "");
+    let n = 0;
+    const loop = setInterval(() => region.setAttribute("data-camera", `${n++}`), 16);
+    await wait(1200);
+    expect(root().hasAttribute(PAINTED_ATTRIBUTE)).toBe(false);
+    clearInterval(loop);
+    expect(await until(() => root().hasAttribute(PAINTED_ATTRIBUTE))).toBe(true);
+  });
+
+  it("takes both off in the commit that moves", async () => {
+    const { root, handle } = await mounted({});
+    expect(await until(() => root().hasAttribute(DRAWN_ATTRIBUTE))).toBe(true);
+    expect(root().getAttribute(PAINTED_ATTRIBUTE)).toBe("/");
+    await act(async () => handle.setPath("/tasks"));
+    expect(root().hasAttribute(PAINTED_ATTRIBUTE)).toBe(false);
+    expect(await until(() => root().getAttribute(PAINTED_ATTRIBUTE) === "/tasks")).toBe(true);
+  });
+
+  it("never says painted for time alone", async () => {
+    regions.length = 0;
+    const { root } = await mounted({ views: withWorkerHome as never });
+    expect(await until(() => regions.length > 0)).toBe(true);
+    // A view that never draws: drawn is said after ten seconds all the same.
+    expect(await until(() => root().hasAttribute(DRAWN_ATTRIBUTE), 14_000)).toBe(true);
+    expect(root().hasAttribute(PAINTED_ATTRIBUTE)).toBe(false);
+  }, 20_000);
 });
 
 /* A frame guest's holder as guestView draws one: busy until the frame's host has drawn its frame in it, the frame busy until the guest has drawn. */

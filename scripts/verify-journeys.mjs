@@ -33,6 +33,8 @@
  *
  *   node scripts/verify-journeys.mjs                 every app
  *   node scripts/verify-journeys.mjs todo rota       only these
+ *   node scripts/verify-journeys.mjs --steps=gauntlet/pages
+ *                                                    one app's face, as the chain's parts take them (lib/parts.mjs)
  *   GRAVIEW_PORT_BASE=5600 node scripts/verify-journeys.mjs
  *                                                    every port moved onto the base, as every
  *                                                    harness's is (scripts/lib/ports.mjs), so
@@ -47,10 +49,11 @@
 import { execFileSync, spawn } from "node:child_process";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, join, resolve } from "node:path";
+import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { engineName, launchEngine } from "./lib/engine.mjs";
-import { appsNamed, DeadEnd, frictionOf, inStore, JOBS, keyboardChecks, Person, planJobs, readDeclaration, regressionsOf, storeHookInPage, VARIANTS, variantKey } from "./lib/journeys.mjs";
+import { appsNamed, DeadEnd, drivenOnly, frictionOf, inStore, JOBS, keyboardChecks, Person, planJobs, readDeclaration, regressionsOf, storeHookInPage, VARIANTS, variantKey } from "./lib/journeys.mjs";
+import { chooseSteps, partPath } from "./lib/parts.mjs";
 import { portFor } from "./lib/ports.mjs";
 import { serving } from "./lib/serve.mjs";
 import { takeViolations } from "./lib/watch.mjs";
@@ -59,6 +62,7 @@ import { settled } from "./lib/settled.mjs";
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const ENGINE = engineName();
 const OUT = resolve(repoRoot, "docs/journeys.json");
+const FACES = [...new Set(VARIANTS.map(({ face }) => face))];
 
 /**
  * The apps, and what each needs said in its address. Seedbed opens on the
@@ -320,7 +324,10 @@ async function setUp(browser, entry, declaration) {
 
 async function main() {
   const began = Date.now();
-  const entries = appsNamed(process.argv.slice(2), APPS);
+  const named = appsNamed(process.argv.slice(2), APPS);
+  // An app on a face is a step, so the chain runs them in parts (lib/parts.mjs): `--steps=gauntlet/pages`.
+  const steps = chooseSteps(named.flatMap((entry) => FACES.map((face) => ({ name: `${entry.name ?? entry.dir}/${face}`, entry, face }))));
+  const entries = named.filter((entry) => steps.some((step) => step.entry === entry));
   const scratch = mkdtempSync(join(tmpdir(), "journeys-"));
   const browser = await launchEngine(ENGINE, { headless: true });
   const report = { at: new Date().toISOString(), engine: ENGINE, apps: {} };
@@ -352,8 +359,9 @@ async function main() {
           port: Number(new URL(setup.base).port),
           jobs: Object.fromEntries(setup.plan.jobs.map((job) => [job.id, { says: job.says, ...(job.act ? { act: job.act } : {}), runs: {} }])),
         };
-        for (const variant of VARIANTS) runs.push({ app: key, setupFile, variant, out: join(scratch, `${key}-${variantKey(variant).replace(/\//g, "-")}.json`) });
-        process.stdout.write(`ready ${key} on ${setup.base}: ${setup.plan.jobs.length} jobs × ${VARIANTS.length} ways\n`);
+        const ways = VARIANTS.filter(({ face }) => steps.some((step) => step.entry === entry && step.face === face));
+        for (const variant of ways) runs.push({ app: key, setupFile, variant, out: join(scratch, `${key}-${variantKey(variant).replace(/\//g, "-")}.json`) });
+        process.stdout.write(`ready ${key} on ${setup.base}: ${setup.plan.jobs.length} jobs × ${ways.length} ways\n`);
       } catch (error) {
         const key = entry.name ?? entry.dir;
         report.apps[key] = { failed: `could not set up: ${String(error?.message ?? error).split("\n")[0]}` };
@@ -388,12 +396,7 @@ async function main() {
   for (const served of servers) served.stop();
 
   /* The verdict: the friction, and what got worse since the last one committed. */
-  const counted = structuredClone(report);
-  for (const result of Object.values(counted.apps)) {
-    for (const job of Object.values(result.jobs ?? {})) {
-      for (const [key, run] of Object.entries(job.runs)) if (run.harness) delete job.runs[key];
-    }
-  }
+  const counted = drivenOnly(report);
   report.friction = frictionOf(counted);
   let previous = null;
   try {
@@ -405,10 +408,15 @@ async function main() {
   report.regressions = regressionsOf(previous, counted);
   // The keyboard's claims: at most twice the pointer, or named why not; and a long list skipped into.
   report.checks = keyboardChecks(counted);
+  // A part whose app is not built here walked nothing, so it has no keyboard to judge: the parts that walked do, and the whole is judged on theirs.
+  if (process.argv.some((arg) => arg.startsWith("--steps=")) && Object.values(report.apps).every((app) => app.skipped)) report.checks = {};
   const missed = Object.entries(report.checks).filter(([, check]) => !check.ok);
   report.took = Math.round((Date.now() - began) / 1000);
-  mkdirSync(dirname(OUT), { recursive: true });
-  writeFileSync(OUT, `${JSON.stringify(report, null, 2)}\n`);
+  report.passed = report.regressions.length === 0 && unbuilt.length === 0 && missed.length === 0;
+  // A part writes beside the whole verdict, which the chain makes from the parts (mergeJourneys).
+  const out = partPath(OUT);
+  mkdirSync(dirname(out), { recursive: true });
+  writeFileSync(out, `${JSON.stringify(report, null, 2)}\n`);
 
   /* Said: per app, how many runs got done; the harness's own failures; the friction's head; the regressions. */
   process.stdout.write("\n");
@@ -444,12 +452,12 @@ async function main() {
   /* The claims, said the way every harness says one: `"name": true`, and what broke it. */
   process.stdout.write("\n");
   for (const [name, check] of Object.entries(report.checks)) process.stdout.write(`  "${name}": ${check.ok},\n`);
-  for (const line of report.checks.theKeyboardCostsAtMostTwiceThePointer.unnamed.slice(0, 10)) process.stdout.write(`  ✗ more than twice the pointer, and nothing says why: ${line}\n`);
-  for (const one of report.checks.theKeyboardSkipsIntoALongList.lists.filter((list) => list.firstBox?.skip !== "records" || list.firstBox.presses > 5)) {
+  for (const line of (report.checks.theKeyboardCostsAtMostTwiceThePointer?.unnamed ?? []).slice(0, 10)) process.stdout.write(`  ✗ more than twice the pointer, and nothing says why: ${line}\n`);
+  for (const one of (report.checks.theKeyboardSkipsIntoALongList?.lists ?? []).filter((list) => list.firstBox?.skip !== "records" || list.firstBox.presses > 5)) {
     process.stdout.write(`  ✗ ${one.app} at ${one.width}: the first box took ${one.firstBox?.presses ?? "?"} presses${one.firstBox?.skip === "records" ? "" : ", not by the list's skip"}\n`);
   }
-  process.stdout.write(`\n${report.regressions.length === 0 ? "no regressions" : "regressed"}${missed.length > 0 ? `, ${missed.length} claim${missed.length === 1 ? "" : "s"} missed` : ""} — docs/journeys.json (${report.took}s)\n`);
-  process.exit(report.regressions.length > 0 || unbuilt.length > 0 || missed.length > 0 ? 1 : 0);
+  process.stdout.write(`\n${report.regressions.length === 0 ? "no regressions" : "regressed"}${missed.length > 0 ? `, ${missed.length} claim${missed.length === 1 ? "" : "s"} missed` : ""} — ${relative(repoRoot, out)} (${report.took}s)\n`);
+  process.exit(report.passed ? 0 : 1);
 }
 
 const runAt = process.argv.indexOf("--run");

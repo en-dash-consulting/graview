@@ -1,3 +1,4 @@
+import type { ArchivedOption } from "../graph/archived.js";
 import type { LinkResolver } from "./types.js";
 
 /*
@@ -57,7 +58,7 @@ export function addressesOfAttendees(value: unknown): string[] {
 /** The graph a guest book reads: a record by id, and every record. */
 export interface GuestGraph {
   getNode(id: string): unknown;
-  allNodes(): readonly unknown[];
+  allNodes(options?: ArchivedOption): readonly unknown[];
 }
 
 export interface GuestBookOptions {
@@ -77,11 +78,41 @@ export interface GuestBookOptions {
  * who holds any address of it, with Invite me on. Read live, so a toggle
  * turned on links an attendee held since before it was.
  */
-export function guestBook(options: GuestBookOptions): LinkResolver {
+export interface GuestBook extends LinkResolver {
+  /** What the relation holds for an event's addresses: each guest's key, and an address nobody here is known by as it is. */
+  keysOf(addresses: readonly string[]): string[];
+}
+
+export function guestBook(options: GuestBookOptions): GuestBook {
   const kinds = new Set(options.kinds);
   const invited = (node: Record<string, unknown>): boolean => kinds.has(String(node["kind"])) && (options.invite === false || node[options.invite] === true);
   const keyOf = (node: Record<string, unknown>): string | undefined => (invited(node) ? guestKey(addressesOf(node[options.emails])) : undefined);
+  const holders = (archived: boolean) => (options.graph?.allNodes({ archived }) ?? []).filter((raw) => invited(raw as Record<string, unknown>)) as readonly Record<string, unknown>[];
+  /** A live person holding any of them. */
+  const live = (wanted: readonly string[]) => holders(false).find((node) => addressesOf(node[options.emails]).some((one) => wanted.includes(one)));
+  /*
+   * ONE SET ASIDE IS STILL THE GUEST THEY WERE, and nobody new: known by
+   * every address of theirs and no other, where one is no live person's.
+   */
+  const aside = (key: string) => (addressesOfKey(key).every((one) => live([one])) ? undefined : holders(true).find((node) => keyOf(node) === key));
   return {
+    keysOf(addresses) {
+      const all = addressesOf(addresses);
+      const taken = new Map<string, string>();
+      for (const one of all) {
+        const person = live([one]);
+        const key = person && keyOf(person);
+        if (key) taken.set(one, key);
+      }
+      for (const node of holders(true)) {
+        const key = keyOf(node);
+        if (!key) continue;
+        const theirs = addressesOfKey(key);
+        // An address a live person holds is theirs; the rest say the one set aside.
+        if (theirs.every((one) => all.includes(one)) && aside(key) === node) for (const one of theirs) if (!taken.has(one)) taken.set(one, key);
+      }
+      return all.map((one) => taken.get(one) ?? one);
+    },
     remoteId(localId) {
       const node = options.graph?.getNode(localId) as Record<string, unknown> | undefined;
       return node ? keyOf(node) : undefined;
@@ -89,13 +120,9 @@ export function guestBook(options: GuestBookOptions): LinkResolver {
     localId(key) {
       const wanted = addressesOfKey(key);
       if (wanted.length === 0 || !options.graph) return undefined;
-      for (const raw of options.graph.allNodes()) {
-        const node = raw as Record<string, unknown>;
-        if (!invited(node)) continue;
-        const held = addressesOf(node[options.emails]);
-        if (held.some((one) => wanted.includes(one))) return String(node["id"]);
-      }
-      return undefined;
+      const whole = wanted.join(",");
+      const found = holders(false).find((node) => keyOf(node) === whole) ?? aside(whole) ?? live(wanted);
+      return found ? String(found["id"]) : undefined;
     },
   };
 }

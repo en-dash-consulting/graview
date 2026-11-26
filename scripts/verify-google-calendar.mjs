@@ -14,7 +14,11 @@
  * people an event reaches invited as its guests (two emails, two
  * attendees; taken off when unlinked; an attendee added there linking the
  * person who holds it; a stranger kept through a round trip; nobody
- * mailed), and everything the run made removed again.
+ * mailed), a record set aside here keeping its event (nothing sent, what
+ * changes there landing, the same event's when brought back, made again
+ * once when the event was deleted meanwhile, and only a removal deleting:
+ * scripts/lib/calendar-set-aside.mjs), and everything the run made removed
+ * again.
  *
  * It needs credentials, so it is NOT in `pnpm verify` or CI. They are read
  * from ~/.graview-google-test.env (or GRAVIEW_GOOGLE_ENV) through
@@ -22,6 +26,9 @@
  * with scripts/google-calendar-once.mjs. Needs `pnpm build`.
  *
  *   node scripts/verify-google-calendar.mjs
+ *   node scripts/verify-google-calendar.mjs --stub   the set-aside claims alone, against a
+ *                                                    calendar in memory (no credentials,
+ *                                                    nothing reached): docs/google-calendar-stub.json
  *
  * Every event it makes carries the run's id in its title, and only those are
  * touched: another person's events on the same calendar (the demo, say) are
@@ -34,6 +41,7 @@ import { fileURLToPath } from "node:url";
 import { bindSchema, createSchema, defineNode, nodeRef, Store, z } from "../packages/core/dist/index.js";
 import { compileDocument } from "../packages/core/dist/check.js";
 import { SyncEngine, connection, googleCalendar, googleCalendarMapping } from "../packages/core/dist/sync/index.js";
+import { scriptedCalendar, setAsideClaims } from "./lib/calendar-set-aside.mjs";
 import { googleAccessToken, requireGoogleEnv } from "./lib/google-test-env.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -43,6 +51,21 @@ const claim = (name, ok, said = {}) => {
   report.checks[name] = { ...said, ok: Boolean(ok) };
   process.stdout.write(`${ok ? "ok  " : "FAIL"}  ${name}\n`);
 };
+
+if (process.argv.includes("--stub")) {
+  report.mode = "stub";
+  const { fetch, google } = scriptedCalendar();
+  try {
+    await setAsideClaims({ run, claim, google, calendarId: "scripted", token: () => "scripted", fetch });
+    report.passed = Object.values(report.checks).every((check) => check.ok);
+  } catch (error) {
+    report.error = error instanceof Error ? error.message : String(error);
+    report.passed = false;
+  }
+  writeFileSync(resolve(repoRoot, "docs/google-calendar-stub.json"), `${JSON.stringify(report, null, 2)}\n`);
+  process.stdout.write(`\n${report.passed ? "passed" : `failed${report.error ? `: ${report.error}` : ""}`} (run ${run}, stub); wrote docs/google-calendar-stub.json\n`);
+  process.exit(report.passed ? 0 : 1);
+}
 
 const env = requireGoogleEnv(["GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "GOOGLE_TEST_CALENDAR_ID", "GOOGLE_REFRESH_TOKEN"]);
 
@@ -526,6 +549,9 @@ try {
     afterwards: { pushed: guestsAfterwards.pushed, applied: guestsAfterwards.applied },
     sendUpdates: [...new Set(sendUpdates)],
   });
+
+  /* --------------------------------------------- a record set aside here */
+  await setAsideClaims({ run, claim, google, calendarId: env.GOOGLE_TEST_CALENDAR_ID, token, fetch: (url, init) => fetch(url, init) });
 
   /* ---------------------------------------- everything it made, removed */
   // What each app made here goes by its own deletes; what was made in Google as somebody else, by Google's.

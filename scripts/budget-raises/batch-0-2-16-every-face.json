@@ -1,0 +1,6 @@
+{
+  "budget": "every face",
+  "minified": 40334,
+  "gzipped": 17049,
+  "note": "Raised when the 0.2.16 batch's branches were merged (a Todoist project kept in step as a connection, archiving that keeps a synced record's Notion page and calendar event, a view playing a YouTube or Vimeo video in a player the host draws, a custom page kept as it is left and fetched ahead of its first visit, the opening screen lifting once the page is painted, the pages face's bell coming with its bar, and a frame view's place as tall as it draws): together they come to 40,234 bytes minified and 16,549 gzipped over the budget, raised by 100 more minified and 500 more gzipped for the spread CI measures from build to build. Measured at 3,502,268 / 1,276,131 B against 3,462,034 / 1,259,582 B."
+}

@@ -74,6 +74,8 @@ export interface DescribedProblem {
   /** Where: the block's path in the declaration (`views.home.3`, `lenses.1.options.blocks.0`, `views.offer.card.5`), with the record it was about. */
   readonly at: string;
   readonly says: string;
+  /** What kind of fault it is, where it has a code: one of the codes a view's host says the same fault with on a page (`VIEW_PROBLEM_CODES`, @graview/guest). `embed-refused`: a video on a provider that is not on the list, or no id of one. */
+  readonly code?: string;
   /** What names this one fault, the same in every version of the app and whatever `says` says, where it has one: a host files it once by this. A worker view's relation read without its far kind (`far-kind-not-handed:<view>:<relation>:<kinds joined by |>`). */
   readonly key?: string;
 }
@@ -153,6 +155,10 @@ export interface DescribedVideo {
   readonly field?: string;
   /** The app's own video it names (`<graview-video data-app="reel">`, HQ f-view-names-app-video): `"reel"`. */
   readonly app?: "reel";
+  /** The provider it is played from (`<graview-video data-provider data-video>` or `data-watch`, HQ f-view-video-embeds): `name` is its id there, `source` the provider's name. */
+  readonly provider?: "youtube" | "vimeo";
+  /** Where it is watched on the provider's own site. */
+  readonly link?: string;
   /** What it shows: its caption, else its name. */
   readonly text: string;
   readonly name: string;

@@ -1,9 +1,9 @@
 import type { AnySchema } from "@graview/core";
 import { retryingImport } from "@graview/core/retry";
 import { isTakeBackKey, lastChangeOf, takeBackLast, takeBackWords, type LastChange } from "@graview/primitives/pages";
-import { Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
 import { useLocation } from "react-router";
-import { lazyPart } from "@graview/react/provider";
+import { lazyModule } from "@graview/react/provider";
 import { createPortal } from "react-dom";
 import { useBarFind } from "@graview/primitives/pages";
 import { PagesInbox } from "./pages-activity.js";
@@ -40,8 +40,9 @@ export type { FaceControl } from "./face-placed.js";
 /* What can be taken back, and its words: judged and said alike on the scene (`@graview/primitives`, FR-152). */
 export { lastChangeOf, takeBackWords, type LastChange };
 
-/** The way back, behind its door (take-back.tsx). */
-const TakeBack = lazyPart(retryingImport(() => import("./take-back.js").then((module) => ({ default: module.TakeBack }))));
+/** The way back, behind its door (take-back.tsx): drawn the moment it is here, never held back after a change as a part that suspends is. */
+type TakeBackProps = Parameters<typeof import("./take-back.js").TakeBack<AnySchema>>[0];
+const TakeBack = lazyModule(retryingImport(() => import("./take-back.js"))).part((module, props: TakeBackProps) => <module.TakeBack {...props} />, { quiet: true, meanwhile: null });
 
 /**
  * THE WAY BACK, on the routed face: one control that says what it takes
@@ -103,10 +104,8 @@ function WayBack<S extends AnySchema>({ context, docked, at, ...look }: { readon
   // Docked, a change since the face was first drawn is wanted though this drawing has seen no tick: it came while the face was drawn the first time.
   wanted.current ||= tick > 0 || (!docked && since > 0) || (docked && store.batches().length > since);
   return wanted.current ? (
-    <Suspense fallback={null}>
-      {/* The door's component is not generic: the context is the face's own. */}
-      <TakeBack context={context as unknown as PageContext<AnySchema>} docked={docked} at={at} since={since} {...look} />
-    </Suspense>
+    // The door's component is not generic: the context is the face's own.
+    <TakeBack context={context as unknown as PageContext<AnySchema>} docked={docked} at={at} since={since} {...look} />
   ) : null;
 }
 

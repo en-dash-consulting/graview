@@ -128,9 +128,26 @@ export interface GuestFrame {
   readonly iframe: HTMLIFrameElement;
   /** Push again: the view's input moved. */
   update(): void;
+  /**
+   * OFF THE PAGE, TO BE GONE BACK TO (Graview HQ f-custom-pages-do-not-flash):
+   * the frame is moved out of sight with its document as it is, still handed
+   * what changes, an act it asks for refused, a navigate and a height
+   * dropped. False where it has not drawn, or the browser cannot move a frame
+   * without loading it again (`Element.moveBefore`): the host disposes of it
+   * as ever. `gone` is called where it was handed a record its seat may no
+   * longer see: the host disposes of it then.
+   */
+  rest(gone: () => void): boolean;
+  /** Back on the page, in this element, as it stood. False where it cannot be: the host disposes of it and draws it anew. */
+  wake(onto: HTMLElement): boolean;
   /** What this frame has been refused or had dropped, across every document it has loaded. */
   readonly stats: Readonly<GuestStats>;
   dispose(): void;
+}
+
+/** An element that can be moved to without what is moved being taken down (Chrome 133, Firefox 144). */
+interface Moves {
+  moveBefore?(node: Node, child: Node | null): void;
 }
 
 /**
@@ -162,6 +179,11 @@ export function mountGuestView<S extends AnySchema>(element: HTMLElement, option
   iframe.style.display = "block";
   iframe.src = options.url;
 
+  /* The element it is drawn in: where its look is read. */
+  let holder = element;
+  /* Off the page, out of sight, with the look it was last pushed. */
+  let reloaded = false;
+  let resting: { readonly shelf: HTMLElement; readonly theme: GuestTheme } | undefined;
   const stats: GuestStats = { applied: 0, refused: 0, dropped: 0 };
   /* The frame's, not a session's: saying "ready" again buys a new nonce, never a new allowance. */
   const limiter = createGuestLimiter(options.limits);
@@ -179,7 +201,7 @@ export function mountGuestView<S extends AnySchema>(element: HTMLElement, option
 
   /* The app's look, kept up (FR-86): pushed again when what the frame would be handed has changed. */
   const logo = createGuestLogo(window as Window & typeof globalThis, () => push(), "data");
-  const theme = () => themeWithBrand(() => options.theme?.() ?? readTheme(element), options.brand, logo, options.reel);
+  const theme = () => resting?.theme ?? themeWithBrand(() => options.theme?.() ?? readTheme(holder), options.brand, logo, options.reel);
   /*
    * THE FACES THE APP LENDS ITS VIEWS, LENT TO THE FRAME (Roadmap
    * f-faces-lent-to-frames): read by the host as the brand lends them, once a
@@ -249,7 +271,7 @@ export function mountGuestView<S extends AnySchema>(element: HTMLElement, option
     session.push();
   };
   const unwatch = watchTheme(document, () => {
-    if (session && JSON.stringify(theme()) !== pushed) push();
+    if (session && !resting && JSON.stringify(theme()) !== pushed) push();
   });
 
   /*
@@ -329,8 +351,8 @@ export function mountGuestView<S extends AnySchema>(element: HTMLElement, option
     }
   };
   holdRecordBoxes(iframe, {
-    boxes: () => (saidBoxes.length === 0 ? [] : judgeRecordBoxes(saidBoxes, { width: iframe.clientWidth, height: iframe.clientHeight, sees: mayName() })),
-    shows: () => (saidShows.length === 0 ? [] : judgeRecordIds(saidShows, mayName())),
+    boxes: () => (resting || saidBoxes.length === 0 ? [] : judgeRecordBoxes(saidBoxes, { width: iframe.clientWidth, height: iframe.clientHeight, sees: mayName() })),
+    shows: () => (resting || saidShows.length === 0 ? [] : judgeRecordIds(saidShows, mayName())),
   });
 
   const end = () => {
@@ -363,6 +385,11 @@ export function mountGuestView<S extends AnySchema>(element: HTMLElement, option
 
   /* Answer the guest's ready: a fresh nonce and port, the one before closed. */
   const greet = () => {
+    /* Off the page it answers nobody new: a document it loaded meanwhile waits, unanswered, and is drawn anew. */
+    if (resting) {
+      reloaded = true;
+      return;
+    }
     waiting = false;
     end();
     const nonce = mintNonce();
@@ -403,6 +430,8 @@ export function mountGuestView<S extends AnySchema>(element: HTMLElement, option
         options.onProblem?.(said, problem);
         drew();
       },
+      /* Taller than it may be (`limits.maxHeight`): given that height, and said. */
+      ...(options.onProblem ? { onProblem: options.onProblem } : {}),
       ...(options.limits ? { limits: options.limits } : {}),
       limiter,
     });
@@ -432,6 +461,55 @@ export function mountGuestView<S extends AnySchema>(element: HTMLElement, option
   return {
     iframe,
     update: push,
+    rest(gone) {
+      const live = session;
+      const body = document.body as (HTMLElement & Moves) | null;
+      if (resting || !live || !body || typeof body.moveBefore !== "function" || !iframe.isConnected || !iframe.hasAttribute("data-guest-view-drawn") || iframe.hasAttribute("data-guest-view-held") || pictures?.waiting()) return false;
+      const shelf = document.createElement("div") as HTMLDivElement & Moves;
+      shelf.setAttribute("data-guest-view-kept", "");
+      shelf.setAttribute("aria-hidden", "true");
+      shelf.inert = true;
+      /* As wide as it stood, so nothing in it lays out again; in sight of nobody, and nothing of the page's to press or scroll to. */
+      shelf.style.cssText = `position:fixed;left:-100000px;top:0;width:${iframe.clientWidth}px;visibility:hidden;pointer-events:none`;
+      const look = theme();
+      body.appendChild(shelf);
+      try {
+        shelf.moveBefore!(iframe, null);
+      } catch {
+        shelf.remove();
+        return false;
+      }
+      resting = { shelf, theme: look };
+      /* Nothing of it is in sight; what it said of its records stands for when it is. */
+      recordBoxesMoved(iframe);
+      live.rest({
+        push: true,
+        moved: () => {
+          const sees = options.store.seenBy(options.principal).graph;
+          if (session === live && [...live.handed].every((id) => sees.has(id))) return true;
+          gone();
+          return false;
+        },
+      });
+      return true;
+    },
+    wake(onto) {
+      const was = resting;
+      if (!was || !session || reloaded) return false;
+      try {
+        (onto as HTMLElement & Moves).moveBefore!(iframe, null);
+      } catch {
+        return false;
+      }
+      holder = onto;
+      resting = undefined;
+      was.shelf.remove();
+      onto.removeAttribute("aria-busy");
+      session.rest(undefined);
+      recordBoxesMoved(iframe);
+      push();
+      return true;
+    },
     get stats() {
       tally();
       return stats;
@@ -449,6 +527,7 @@ export function mountGuestView<S extends AnySchema>(element: HTMLElement, option
       window.removeEventListener("message", onMessage);
       holdRecordBoxes(iframe, undefined);
       iframe.remove();
+      resting?.shelf.remove();
     },
   };
 }

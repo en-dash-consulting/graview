@@ -153,11 +153,7 @@ export function Inbox({ calls = NO_CALLS, seat, remembers = false }: InboxProps)
   return (
     <div className="graview-bar-inbox" style={{ position: "relative" }}>
       <style>{BELL_CSS}</style>
-      {tray ? (
-        <Suspense fallback={null}>
-          <SuggestedCount onCount={counted} />
-        </Suspense>
-      ) : null}
+      {tray ? <SuggestedCount onCount={counted} /> : null}
       <button
         type="button"
         className="graview-bar-tool"

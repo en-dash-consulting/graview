@@ -25,6 +25,7 @@ describe("the codes a view's problems are said with", () => {
     expect(VIEW_PROBLEM_CODES).toEqual([
       "part-failed",
       "held-by-growth-guard",
+      "taller-than-allowed",
       "far-kind-not-handed",
       "views-stylesheet-draws-nothing",
       "face-not-lent",
@@ -41,6 +42,8 @@ describe("the codes a view's problems are said with", () => {
       "jump-goes-nowhere",
       "file-link-goes-nowhere",
       "media-not-drawn",
+      "embed-refused",
+      "embed-not-allowed",
       "drop-not-offered",
       "gestures-not-declared",
       "press-refused",

@@ -166,8 +166,14 @@ export const HTML_ELEMENTS: Readonly<Record<string, OpenElement>> = {
    * plays, so the one word means all of it — held still at its poster under
    * `prefers-reduced-motion`; `cover` fills the box the view sized. The
    * poster is the value's: a view names no address.
+   *
+   * Or a video on YouTube or Vimeo (HQ f-view-video-embeds), by provider
+   * and id or by its watch address: `data-provider` and `data-video`, or
+   * `data-watch`, read down to a checked id the host makes the one address
+   * from (host/embeds.ts). `poster` is a picture the view may draw already,
+   * judged as an image's `src` is.
    */
-  "graview-video": { empty: true, attributes: { autoplay: "boolean", cover: "boolean" } },
+  "graview-video": { empty: true, attributes: { autoplay: "boolean", cover: "boolean", poster: "image" } },
 };
 
 /** SVG's presentation attributes: CSS properties, sanitized as a stylesheet's are. */
@@ -262,7 +268,7 @@ export const SVG_ELEMENTS: Readonly<Record<string, OpenElement>> = {
 export const NEVER_DRAWN = {
   html: ["script", "iframe", "frame", "frameset", "object", "embed", "applet", "portal", "link", "meta", "base", "style", "form", "template", "slot", "noscript", "audio", "video", "source", "track", "picture", "canvas", "dialog", "datalist", "main", "html", "head", "body", "title"],
   svg: ["image", "feImage", "foreignObject", "script", "style", "animate", "animateMotion", "animateTransform", "set", "discard", "view", "switch", "cursor", "font-face"],
-  attributes: ["src (outside img)", "href (outside a, on SVG's a, and on a any address the view was not handed)", "target", "rel", "download", "xlink:href (outside a #fragment)", "srcset", "sizes", "action", "formaction", "ping", "poster", "background", "on*", "popover", "popovertarget", "autofocus", "accesskey", "contenteditable", "is", "nonce", "autocomplete", "form", "list"],
+  attributes: ["src (outside img)", "href (outside a, on SVG's a, and on a any address the view was not handed)", "target", "rel", "download", "xlink:href (outside a #fragment)", "srcset", "sizes", "action", "formaction", "ping", "poster (outside graview-video)", "background", "on*", "popover", "popovertarget", "autofocus", "accesskey", "contenteditable", "is", "nonce", "autocomplete", "form", "list"],
 } as const;
 
 /** Roles that would make a view speak as the app's own chrome or notices. */

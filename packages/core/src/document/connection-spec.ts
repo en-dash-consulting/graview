@@ -151,19 +151,68 @@ function build() {
     paused: z.optional(z.boolean()),
   });
 
-  return z.discriminatedUnion("system", [GoogleCalendar, Notion], 'a connection\'s system is "google-calendar" or "notion"');
+  /**
+   * A TODOIST PROJECT: one project, or one section or label of it, each of
+   * its tasks a record of one kind. The project is named by its id or its
+   * name, or by an environment variable; the account's personal API token is
+   * read from `<env>_TOKEN` (TODOIST_TOKEN by default) or handed by the
+   * host, never written here.
+   *
+   * `fields` is Todoist's side → this kind's: the task's `content` and
+   * `description`; its `due` (a `date` field holds the day, a `datetime` one
+   * the moment, and one that repeats the repeat beside it, where Todoist's
+   * words for it can be said back); its `deadline` (a `date`); its
+   * `priority` as people see it, 1 to 4, or an enum naming the four; its
+   * `labels`; its `section` by name; its `assignee` by name, or email in an
+   * email field; its `parent`, one of the kind's RELATIONS, to a kind a
+   * Todoist connection keeps; and `completed`, a yes or no. A task
+   * completed in Todoist sets that field and is never removed here.
+   */
+  const Todoist = z.strictObject({
+    system: z.literal("todoist"),
+    description: z.optional(sentence),
+    /* The project's id (the letters and digits at the end of its link) or its name, or the environment variable that holds one. */
+    project: z.union([str(1, 200), z.strictObject({ env: envName })]),
+    /* Only the tasks of one section of it, by its name or id. */
+    section: z.optional(str(1, 200)),
+    /* Only the tasks that carry one label: put on every task made here, and left out of what the labels field holds. */
+    label: z.optional(str(1, 60)),
+    auth,
+    kind: kindName,
+    fields: z.strictObject({
+      content: fieldName,
+      description: z.optional(fieldName),
+      due: z.optional(fieldName),
+      deadline: z.optional(fieldName),
+      priority: z.optional(fieldName),
+      labels: z.optional(fieldName),
+      section: z.optional(fieldName),
+      assignee: z.optional(fieldName),
+      parent: z.optional(edgeName),
+      completed: z.optional(fieldName),
+    }),
+    /* Whether the records here before the connection's first pass are made in Todoist (false unless said): without it, one goes when it changes, as one made after does. */
+    sendExisting: z.optional(z.boolean()),
+    direction,
+    conflicts,
+    every,
+    paused: z.optional(z.boolean()),
+  });
+
+  return z.discriminatedUnion("system", [GoogleCalendar, Notion, Todoist], 'a connection\'s system is "google-calendar", "notion" or "todoist"');
 }
 let built: ReturnType<typeof build> | undefined;
 
 /**
  * A CONNECTION: the app kept in step with another system, declared rather
- * than wired in code (`connections.<name>`) — a Google calendar or a Notion
- * database. It never holds a secret.
+ * than wired in code (`connections.<name>`) — a Google calendar, a Notion
+ * database or a Todoist project. It never holds a secret.
  */
 export const ConnectionSpec = z.lazy(() => (built ??= build()));
 export type ConnectionSpec = z.infer<typeof ConnectionSpec>;
 export type GoogleCalendarConnectionSpec = Extract<ConnectionSpec, { system: "google-calendar" }>;
 export type NotionConnectionSpec = Extract<ConnectionSpec, { system: "notion" }>;
+export type TodoistConnectionSpec = Extract<ConnectionSpec, { system: "todoist" }>;
 
 /** A Google calendar connection's guests, in any of their forms. */
 export type GuestsSpec = NonNullable<GoogleCalendarConnectionSpec["fields"]["guests"]>;
@@ -212,7 +261,7 @@ export function notionSourcesOf(connection: Pick<NotionConnectionSpec, "source" 
   return [{ ...(connection.source ? { source: connection.source } : {}), kind: connection.kind, ...(connection.properties ? { properties: connection.properties } : {}), resource: "pages" }];
 }
 
-/** The kinds a connection keeps: a calendar's one, or each of a Notion connection's sources'. */
+/** The kinds a connection keeps: a calendar's or a Todoist project's one, or each of a Notion connection's sources'. */
 export function connectionKinds(connection: ConnectionSpec): readonly string[] {
   return connection.system === "notion" ? notionSourcesOf(connection).map((one) => one.kind) : [connection.kind];
 }
