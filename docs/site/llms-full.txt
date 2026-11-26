@@ -2575,7 +2575,7 @@ handle.setPath("/places/overview"); // the Map over the home
 handle.unmount();
 ```
 
-An embed draws the one face: each page over the app's own city, and one control at the box's bottom left moving it from Page to Nearby to Map (see [Pages and the Scene as one face](https://graview.dev/docs/packages/embed.html#pages-and-the-scene-as-one-face)). `face: "picture"` is one named lens, no chrome (`stop: "#view=<place>"`). `sceneUnderPages: false` draws the routed face alone instead, with the scene and the Graview as faces of their own, a Scene/Pages switch on the bar (`switch: "words" | "icons"`) and `stop` as the scene's view state:
+An embed draws the one face: each page over the app's own city, and one control at the box's bottom left moving it from Page to Nearby to Map (see "Pages and the Scene as one face", below). `face: "picture"` is one named lens, no chrome (`stop: "#view=<place>"`). `sceneUnderPages: false` draws the routed face alone instead, with the scene and the Graview as faces of their own, a Scene/Pages switch on the bar (`switch: "words" | "icons"`) and `stop` as the scene's view state:
 
 ```ts
 mount(stage, { app, seed, sceneUnderPages: false, face: "graview", stop: "#focus=plot-1" });

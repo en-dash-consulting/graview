@@ -23,7 +23,7 @@ handle.unmount();
 
 An embed draws the one face: each page over the app's own city, and one
 control at the box's bottom left moving it from Page to Nearby to Map (see
-[Pages and the Scene as one face](#pages-and-the-scene-as-one-face)).
+"Pages and the Scene as one face", below).
 `face: "picture"` is one named lens, no chrome (`stop: "#view=<place>"`).
 `sceneUnderPages: false` draws the routed face alone instead, with the
 scene and the Graview as faces of their own, a Scene/Pages switch on the
