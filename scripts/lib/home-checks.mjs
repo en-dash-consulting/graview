@@ -8,7 +8,9 @@
  *
  * - the story is told in three engines at a phone's width and a desk's, its
  *   six captions in the page whether the engine drew the map or the plain
- *   page (an engine with no WebGL gets the plain page, and that is said);
+ *   page (an engine with no WebGL gets the plain page, and that is said; but
+ *   Chromium has WebGL here, so in Chromium the map must be drawn);
+ * - no page reaches another site while it runs, the live frames included;
  * - the story's place is the scroll's, exactly, on the frame that drew it;
  * - the opening hole is two thirds of the prototype's (13% of the short side
  *   on a desk, 13.5% on a phone);
@@ -83,7 +85,8 @@ export async function homeInEngines(report, pageAt) {
         (await storyInPage(page)) &&
         (drawn ? seen.join(",") === "sheet,1,2,3,4,5,6" : await storyShown(page)) &&
         (await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1)) &&
-        errors.length === 0;
+        errors.length === 0 &&
+        (engine !== "chromium" || drawn);
       engines[`${engine}/${width}`] = { drawn, seen, errors, ok };
       await page.close();
     }
@@ -98,22 +101,33 @@ export async function homeMap(report, browser, pageAt) {
   await page.goto(pageAt("index.html"), { waitUntil: "load" });
   await drawnOrPlain(page);
   if (!(await page.evaluate(() => document.documentElement.classList.contains("drawn")))) {
-    report.home = { ...(report.home ?? {}), map: "this engine drew the plain page; the map's claims are unmade" };
-    report.unmade = [...(report.unmade ?? []), "theStoryFollowsTheScrollExactly", "theOpeningHoleIsTwoThirdsOfThePrototypes", "aRecordIsHoveredAndPressedOnTheMap", "aPressThroughTheHoleTakesTheReaderToTheSceneThatFits", "theKeyboardSelectsARecordFromTheList", "theMapStopsDrawingWhenNothingChanges"];
+    /* This engine has WebGL; a map that is not drawn here is a fault, and every claim of it fails. */
+    report.home = { ...(report.home ?? {}), map: "the map was not drawn" };
+    for (const claim of ["theStoryFollowsTheScrollExactly", "theOpeningHoleIsTwoThirdsOfThePrototypes", "aRecordIsHoveredAndPressedOnTheMap", "aPressThroughTheHoleTakesTheReaderToTheSceneThatFits", "theKeyboardSelectsARecordFromTheList", "theMapStopsDrawingWhenNothingChanges"]) report.criteria[claim] = false;
     await page.close();
     return;
   }
   const said = {};
-  said.hole = (await state(page)).hole;
-  report.criteria.theOpeningHoleIsTwoThirdsOfThePrototypes = said.hole >= 0.12 && said.hole <= 0.14;
+  /* Two thirds of the prototype's .19 on a desk and .2 on a phone, measured at each. */
+  said.hole = { desk: (await state(page)).hole };
+  const phone = await browser.newPage({ viewport: { width: 390, height: 844 }, hasTouch: true });
+  await phone.goto(pageAt("index.html"), { waitUntil: "load" });
+  await drawnOrPlain(phone);
+  await frame(phone);
+  said.hole.phone = (await state(phone))?.hole ?? 0;
+  await phone.close();
+  report.criteria.theOpeningHoleIsTwoThirdsOfThePrototypes = Math.abs(said.hole.desk - 0.19 * 2 / 3) < 0.01 && Math.abs(said.hole.phone - 0.2 * 2 / 3) < 0.01;
 
   /* The page's own scrolling, read on the frame it drew. */
   const follows = [];
   for (const dy of [333, 517, 1201, -640]) {
     await page.mouse.wheel(0, dy);
     await frame(page);
+    /* The t the frame drew with against the scroll it read on that frame, and that scroll against the page's now. */
     const s = await state(page);
-    follows.push(Math.abs(s.t - s.scrolled));
+    const now = await page.evaluate(() => window.scrollY);
+    const drew = s.drew;
+    follows.push(drew ? Math.abs(drew.t - Math.min(1, Math.max(0, drew.scrollY / drew.span)) * 6) + Math.abs(drew.scrollY - now) : Infinity);
   }
   said.follow = follows;
   report.criteria.theStoryFollowsTheScrollExactly = follows.every((d) => d < 1e-9);
@@ -183,8 +197,17 @@ export async function homePlain(report, browser, pageAt) {
   });
   await nogl.goto(pageAt("index.html"), { waitUntil: "load" });
   await drawnOrPlain(nogl);
-  report.criteria.theStoryReadsWholeWithoutWebGL = !(await nogl.evaluate(() => document.documentElement.classList.contains("gl"))) && (await storyInPage(nogl)) && (await storyShown(nogl));
-  await nogl.screenshot({ path: "/dev/null" }).catch(() => {});
+  /* Read whole, then scrolled and tabbed through: nothing of the story moves the plain page. */
+  const plainWhole = !(await nogl.evaluate(() => document.documentElement.classList.contains("gl"))) && (await storyInPage(nogl)) && (await storyShown(nogl));
+  await nogl.evaluate(() => window.scrollTo({ top: document.documentElement.scrollHeight / 2, behavior: "instant" }));
+  await frame(nogl);
+  await nogl.focus('.cap[data-beat="6"] .copy');
+  await nogl.waitForTimeout(400);
+  const plainStill = await nogl.evaluate(() => {
+    const box = document.activeElement.getBoundingClientRect();
+    return (document.getElementById("story").getAttribute("style") ?? "") === "" && box.top >= 0 && box.bottom <= innerHeight && document.activeElement.classList.contains("copy");
+  });
+  report.criteria.theStoryReadsWholeWithoutWebGL = plainWhole && plainStill;
   await nogl.close();
 
   const bare = await browser.newPage({ viewport: { width: 1280, height: 900 }, javaScriptEnabled: false });
@@ -241,4 +264,22 @@ export async function homeFrames(report, browser, pageAt) {
   }
   report.home = { ...(report.home ?? {}), frames: runs };
   report.criteria.frameTimesAreRecordedOnADeskAndAThrottledPhone = Object.values(runs).every((r) => r.plain || r.frames > 60);
+}
+
+/** Every request a page makes while it runs, its live frames mounted: none leaves the site (the analytics runs only on graview.dev). */
+export async function homeHosts(report, browser, pageAt) {
+  const reached = {};
+  for (const file of ["index.html", "tour.html", "progression.html", "docs/demos.html", "docs/recipes/docs.html"]) {
+    const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+    const hosts = new Set();
+    page.on("request", (r) => { const u = new URL(r.url()); if (/^https?:$/.test(u.protocol)) hosts.add(u.hostname); });
+    await page.goto(pageAt(file), { waitUntil: "load" });
+    const height = await page.evaluate(() => document.documentElement.scrollHeight);
+    for (let y = 0; y < height; y += 800) { await page.evaluate((to) => window.scrollTo({ top: to, behavior: "instant" }), y); await page.waitForTimeout(120); }
+    await page.waitForTimeout(1500);
+    reached[file] = [...hosts];
+    await page.close();
+  }
+  report.home = { ...(report.home ?? {}), hosts: reached };
+  report.criteria.noPageReachesAnotherSite = Object.values(reached).every((hosts) => hosts.length === 0);
 }

@@ -23,7 +23,7 @@ import { fileURLToPath } from "node:url";
 import { engineName, launchEngine } from "./lib/engine.mjs";
 import { chooseSteps, partPath } from "./lib/parts.mjs";
 import { frames, settled } from "./lib/settled.mjs";
-import { homeFrames, homeInEngines, homeMap, homePlain } from "./lib/home-checks.mjs";
+import { homeFrames, homeHosts, homeInEngines, homeMap, homePlain } from "./lib/home-checks.mjs";
 
 const require = createRequire(import.meta.url);
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -425,6 +425,7 @@ const steps = chooseSteps([
   { name: "home/engines", run: () => homeInEngines(report, pageAt) },
   { name: "home/map", run: () => homeMap(report, browser, pageAt) },
   { name: "home/plain", run: () => homePlain(report, browser, pageAt) },
+  { name: "home/hosts", run: () => homeHosts(report, browser, pageAt) },
   { name: "home/frames", run: () => (ENGINE === "chromium" ? homeFrames(report, browser, pageAt) : undefined) },
 ]);
 
@@ -450,7 +451,7 @@ if (sweeps) report.criteria.everyViewportIsClean = bad.length === 0;
  * the long version carries fifteen chapters and the kit's garden.
  */
 if (sweeps) report.criteria.everyGraviewIsLiveAtEveryWidth = report.viewports.every((v) => v.live === v.wanted);
-if (!sweeps) report.unmade = ["everyViewportIsClean", "everyGraviewIsLiveAtEveryWidth"];
+if (!sweeps) report.unmade = [...(report.unmade ?? []), "everyViewportIsClean", "everyGraviewIsLiveAtEveryWidth"];
 report.passed = Object.values(report.criteria).every(Boolean) && !report.error;
 
 writeFileSync(partPath(resolve(repoRoot, "docs/site-check.json")), `${JSON.stringify(report, null, 2)}\n`, "utf8");

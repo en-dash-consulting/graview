@@ -100,9 +100,11 @@
   });
 
   /* ── the story's length, and where the reader is in it ──────────────── */
-  var W = 1, H = 1, span = 1, trackH = 1, tTarget = 0, tNow = 0, port = false, short = false;
+  var W = 1, H = 1, span = 1, trackH = 1, tTarget = 0, tNow = 0, port = false, short = false, dead = false;
+  /* The phone layout is the stylesheet's own breakpoint, asked of the same media query, so the two never disagree. */
+  var mPhone = mq("(max-width: 820px)");
   function measure() {
-    W = canvas.clientWidth || window.innerWidth; H = canvas.clientHeight || window.innerHeight; port = W < 820;
+    W = canvas.clientWidth || window.innerWidth; H = canvas.clientHeight || window.innerHeight; port = mPhone ? mPhone.matches : W <= 820;
     /* A short desk screen hangs the sheet under the header rather than centering it into the header. */
     short = !port && H < 720; root.classList.toggle("short", short);
     trackH = Math.round(H * (1 + (NB - 1) * 1.2));
@@ -112,7 +114,7 @@
   }
   function read() { tTarget = clamp(window.scrollY / span) * (NB - 1); }
   /* A dot, a record pressed at the opening: the reader asked to be taken there, so they are, smoothly unless they asked for less motion. */
-  function goBeat(n) { window.scrollTo({ top: Math.round(span * n / (NB - 1)), behavior: reduce ? "auto" : "smooth" }); }
+  function goBeat(n) { if (dead) return; window.scrollTo({ top: Math.round(span * n / (NB - 1)), behavior: reduce ? "auto" : "smooth" }); }
   measure(); read(); tNow = tTarget;
 
   /* ── the words over the canvas: which caption, which dot, which label ── */
@@ -121,8 +123,9 @@
     var so = (1 - sm(t, .05, .45)).toFixed(3);
     if (so !== lastSheet) {
       lastSheet = so;
+      /* Gone from sight, never from the keyboard: a press on its prompt brings the opening back. */
       sheet.style.opacity = so;
-      sheet.style.visibility = +so < .01 ? "hidden" : "visible";
+      sheet.style.pointerEvents = +so < .01 ? "none" : "";
       sheet.style.transform = port || short ? "translateY(" + ((1 - so) * -40).toFixed(1) + "px)" : "translateY(calc(-50% + " + ((1 - so) * -40).toFixed(1) + "px))";
     }
     var inside = t > .55;
@@ -140,12 +143,14 @@
   /* ── the loop, which runs only while something moves ────────────────── */
   var raf = 0, lastTs = 0, time = 0, ambientUntil = 0, amb = reduce ? 0 : 1, frameFn = null, dirty = true;
   function wake(ms) {
+    if (dead) return;
     dirty = true;
     if (!reduce && ms !== 0) ambientUntil = Math.max(ambientUntil, now() + (ms || 6000));
     if (!raf && !document.hidden) { lastTs = 0; raf = requestAnimationFrame(tick); }
   }
   function tick(ts) {
     raf = 0;
+    if (dead) return;
     var dt = lastTs ? Math.min((ts - lastTs) / 1000, 0.05) : 1 / 60;
     lastTs = ts;
     time += dt;
@@ -163,34 +168,56 @@
   }
 
   /* The drift belongs to the opening: in the map, what moves on its own settles a few seconds after the scroll does. */
-  window.addEventListener("scroll", function () { read(); if (tTarget > 1) ambientUntil = Math.min(ambientUntil, now() + 4000); wake(4000); }, { passive: true });
+  var onScroll = null;
+  /* Once the questions come up over the map, the map's words and controls leave the page, the keyboard's order too: nothing stays focusable under them. */
+  var wasUnder = null;
+  function under() { var u = window.scrollY > span + 2; if (u !== wasUnder) { wasUnder = u; root.classList.toggle("under", u); } }
+  under();
+  window.addEventListener("scroll", function () {
+    if (dead) return;
+    read();
+    if (tTarget > 1) ambientUntil = Math.min(ambientUntil, now() + 4000);
+    if (onScroll) onScroll();
+    under();
+    /* Under the questions the canvas is covered: nothing to draw until it shows again. */
+    if (window.scrollY < trackH) wake(4000);
+  }, { passive: true });
   on(mReduce, function () { reduce = !!(mReduce && mReduce.matches); if (reduce) { amb = 0; ambientUntil = 0; } wake(); });
   document.addEventListener("visibilitychange", function () { if (!document.hidden) wake(); });
 
   /* The keyboard takes the story with it: a control in a scene brings that scene up. */
   ui.addEventListener("focusin", function (e) {
+    if (dead) return;
     var cap = e.target.closest && e.target.closest(".cap");
     if (cap) { var n = +cap.getAttribute("data-beat"); if (Math.round(tTarget) !== n) goBeat(n); }
-    else if (sheet.contains(e.target) && tTarget > .5) goBeat(0);
+    else if (sheet.contains(e.target)) { if (tTarget > .5) goBeat(0); }
+    /* The dots, the card and the list live over the map: under the questions they would be covered, so the keyboard brings the map back. */
+    else if (window.scrollY > span + 1) goBeat(NB - 1);
   });
 
   var started = false;
-  function plain() {
+  /* The plain page: the same words, and nothing of the story's left running on it. */
+  function plain(why) {
+    if (why && window.console) console.error("graview.dev: the map could not be drawn:", why);
     started = true;
+    dead = true;
     frameFn = null;
-    root.classList.remove("gl", "drawn");
+    if (raf) { cancelAnimationFrame(raf); raf = 0; }
+    root.classList.remove("gl", "drawn", "short", "under");
     head.classList.remove("inside");
+    ui.classList.remove("inside");
     sheet.removeAttribute("style");
+    caps.forEach(function (c) { c.classList.remove("on"); });
   }
 
   /* ── three.js, loaded after the page has drawn ───────────────────────── */
   /* Where three.js is already on the page (the artifact the export makes inlines it), it starts at once. */
-  if (window.THREE) setTimeout(function () { try { boot(); } catch (e) { plain(); } }, 0);
+  if (window.THREE) setTimeout(function () { try { boot(); } catch (e) { plain(e); } }, 0);
   else {
     var lib = document.createElement("script");
     lib.src = "vendor/three-r128.min.js";
-    lib.onload = function () { try { boot(); } catch (e) { plain(); } };
-    lib.onerror = plain;
+    lib.onload = function () { try { boot(); } catch (e) { plain(e); } };
+    lib.onerror = function () { plain("three.js did not load"); };
     setTimeout(function () { if (!started) plain(); }, 20000);
     document.body.appendChild(lib);
   }
@@ -203,7 +230,7 @@
     var renderer;
     try { renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, powerPreference: "high-performance" }); } catch (e) { plain(); return; }
     if (!renderer.getContext()) { plain(); return; }
-    canvas.addEventListener("webglcontextlost", function (e) { e.preventDefault(); plain(); });
+    canvas.addEventListener("webglcontextlost", function () { plain(); });
     var V = function (x, y, z) { return new THREE.Vector3(x, y, z); };
     var deriv = renderer.capabilities.isWebGL2 || renderer.extensions.has("OES_standard_derivatives");
     var aniso = Math.min(8, renderer.capabilities.getMaxAnisotropy());
@@ -224,7 +251,6 @@
     function drawApp(c, W, H, dpr) {
       c.width = Math.round(W * dpr); c.height = Math.round(H * dpr);
       var g = c.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0);
-      var port = W < 820;
       g.fillStyle = "#EEF0F6"; g.fillRect(0, 0, W, H);
       g.fillStyle = "#FFFFFF"; g.fillRect(0, 0, W, 64); g.fillStyle = "#E1E4EE"; g.fillRect(0, 64, W, 1);
       var x0 = port ? 16 : Math.max(620, W * 0.46), top = port ? 96 : 116, w = W - x0 - (port ? 16 : 56);
@@ -436,11 +462,12 @@
     var vP = V(0, 0, 0), vT = V(0, 0, 0), vA = V(0, 0, 0), vB = V(0, 0, 0);
 
     /* ── size, the pointer, the fonts ── */
+    var lastPtr = null, tapHole = null;
     var mx = port ? .5 : .74, my = port ? .25 : .56, mxS = mx, myS = my, ptrAt = -1e9, sizedW = 0, sizedH = 0;
     function layout(force) {
       var oldSpan = span, wasIn = window.scrollY <= oldSpan + 1, oldT = tTarget;
       measure();
-      if (wasIn && Math.abs(span - oldSpan) > 1) { window.scrollTo(0, Math.round(oldT / (NB - 1) * span)); }
+      if (wasIn && Math.abs(span - oldSpan) > 1) { window.scrollTo({ top: Math.round(oldT / (NB - 1) * span), behavior: "instant" }); }
       read();
       if (!force && W === sizedW && H === sizedH) return;
       sizedW = W; sizedH = H;
@@ -450,7 +477,8 @@
     }
     var resizing = 0;
     window.addEventListener("resize", function () { if (resizing) cancelAnimationFrame(resizing); resizing = requestAnimationFrame(function () { resizing = 0; layout(false); wake(); }); });
-    window.addEventListener("pointermove", function (e) { mx = e.clientX / W; my = e.clientY / H; ptrAt = now(); wake(8000); }, { passive: true });
+    window.addEventListener("pointermove", function (e) { mx = e.clientX / W; my = e.clientY / H; ptrAt = now(); lastPtr = [e.clientX, e.clientY]; wake(8000); }, { passive: true });
+    canvas.addEventListener("pointerdown", function (e) { if (e.pointerType !== "touch") return; tapHole = Math.hypot(e.clientX - mxS * W, e.clientY - myS * H) <= holeR; mx = e.clientX / W; my = e.clientY / H; ptrAt = now(); wake(8000); }, { passive: true });
     function redrawText() {
       pills.forEach(function (p) { p.reset(); });
       screens.forEach(function (s) { var fixedNow = s.mat.map === s.tx[1]; s.tx.forEach(function (t) { t.dispose(); }); s.tx = [faces[s.kind](false), faces[s.kind](true)]; s.mat.map = s.tx[fixedNow ? 1 : 0]; s.mat.needsUpdate = true; });
@@ -466,9 +494,10 @@
     }
 
     /* ── a frame ── */
-    var lastFixed = null;
+    var lastFixed = null, drewAt = null;
     frameFn = function (dt, changed) {
       var t = reduce ? Math.round(tNow) : tNow, a = amb, busy = false;
+      drewAt = { t: tNow, scrollY: window.scrollY, span: span };
       /* Left alone, the hole drifts; with the drift spent it comes to rest. */
       if (now() - ptrAt > 3500) { var ax = port ? .5 : .74, ay = port ? .25 : .56; mx = ax + Math.cos(time * .5) * (port ? .22 : .13) * a; my = ay + Math.sin(time * .8) * (port ? .08 : .2) * a; }
       var ke = reduce ? 1 : 1 - Math.exp(-dt * 9); mxS += (mx - mxS) * ke; myS += (my - myS) * ke;
@@ -486,7 +515,7 @@
       var par = 1 - sm(t, .9, 1.4) * .55; vA.set(1, 0, 1).normalize(); vP.addScaledVector(vA, (mxS - .5) * 2.2 * par); vP.y -= (myS - .5) * 1.4 * par;
       cam.position.copy(vP); cam.lookAt(vT);
 
-      var fixed = t > 4.62; if (fixed !== lastFixed) { lastFixed = fixed; fixedNow = fixed; screens.forEach(function (s) { s.mat.map = s.tx[fixed ? 1 : 0]; s.mat.needsUpdate = true; }); if (shown) showCard(shown, false); }
+      var fixed = t > 4.62; if (fixed !== lastFixed) { lastFixed = fixed; fixedNow = fixed; screens.forEach(function (s) { s.mat.map = s.tx[fixed ? 1 : 0]; s.mat.needsUpdate = true; }); if (shown && shown.fresh && !fixed) choose(null); else if (shown) showCard(shown, false, true); }
       /* What is wrong shows when the story comes to it, and goes when the press fixes it. */
       var warnIn = sm(t, 1.35, 1.8);
       var fx = sm(t, 4.5, 4.95), flash = Math.max(0, 1 - Math.abs(t - 4.72) / .3);
@@ -608,7 +637,8 @@
     var cardBody = document.getElementById("card-body"), said = document.getElementById("record-said"), toggle = document.getElementById("records-toggle"), listEl = document.getElementById("records-list");
     function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; }
     function recButton(r, cls) { var b = el("button", cls, r.name); b.type = "button"; b.addEventListener("click", function () { choose(r, "keyboard"); }); return b; }
-    function showCard(r, focus) {
+    function showCard(r, focus, quiet) {
+      var held = card.contains(document.activeElement) && document.activeElement !== cardName;
       shown = r;
       cardBody.textContent = "";
       if (r.plot) {
@@ -619,7 +649,7 @@
         var row = el("div", "card-ties");
         all.forEach(function (x) { row.appendChild(recButton(x, "tie")); });
         cardBody.appendChild(row);
-        said.textContent = "The " + PLURAL[r.kind].toLowerCase() + " plot: " + all.length + " records.";
+        if (!quiet) said.textContent = "The " + PLURAL[r.kind].toLowerCase() + " plot: " + all.length + " records.";
       } else {
         cardKind.textContent = NOUN[r.kind];
         cardName.textContent = r.name;
@@ -633,11 +663,11 @@
           if (!groups[t[0]]) { cardBody.appendChild(el("p", "card-label", t[0])); groups[t[0]] = cardBody.appendChild(el("div", "card-ties")); }
           groups[t[0]].appendChild(recButton(t[1], "tie"));
         });
-        said.textContent = NOUN[r.kind] + " " + r.name + " selected. " + facts.map(function (f) { return f[0] + ": " + f[1]; }).join(". ") + "." + (problem ? " " + problem : "");
+        if (!quiet) said.textContent = NOUN[r.kind] + " " + r.name + " selected. " + facts.map(function (f) { return f[0] + ": " + f[1]; }).join(". ") + "." + (problem ? " " + problem : "");
       }
       card.hidden = false;
       placeCard();
-      if (focus) cardName.focus();
+      if (focus || held) cardName.focus();
     }
     function hideCard() {
       var had = card.contains(document.activeElement);
@@ -663,7 +693,11 @@
       wake(0);
     }
     document.getElementById("card-close").addEventListener("click", function () { choose(null); });
-    document.addEventListener("keydown", function (e) { if (e.key === "Escape" && (picked || shown)) choose(null); });
+    document.addEventListener("keydown", function (e) {
+      if (e.key !== "Escape") return;
+      if (!listEl.hidden) { var inList = listEl.contains(document.activeElement); openList(false); if (inList) toggle.focus(); return; }
+      if (picked || shown) choose(null);
+    });
 
     /* ── every record, as a list a keyboard and a screen reader can reach ── */
     ["modules", "docs", "people", "decisions"].forEach(function (kind) {
@@ -679,6 +713,7 @@
     listEl.addEventListener("click", function (e) { if (e.target.closest && e.target.closest("button")) openList(false); });
 
     /* ── pointing at the map ── */
+    onScroll = function () { if (lastPtr) pending = lastPtr; };
     var ray = new THREE.Raycaster(), ndc = new THREE.Vector2(), hovered = null, pending = null, lifted = false;
     var pickable = allBlocks.map(function (b) { return b.m; });
     var plotPills = ["people", "docs", "modules", "decisions"].map(function (k) { plots[k].pill.userData.kind = k; return plots[k].pill; });
@@ -686,6 +721,7 @@
     function hitAt(x, y) {
       var t = tNow, glassUp = t < .95;
       if (glassUp && Math.hypot(x - mxS * W, y - myS * H) > holeR) {
+        var z = glass.uniforms.zoom.value, hx = mxS * W, hy = myS * H; x = hx + (x - hx) / z; y = hy + (y - hy) / z;
         for (var i = 0; i < appRows.length; i++) { var row = appRows[i]; if (x >= row.x && x <= row.x + row.w && y >= row.y && y <= row.y + row.h) return { b: MB[row.mi] }; }
         return null;
       }
@@ -706,6 +742,8 @@
     canvas.addEventListener("pointerleave", function () { pending = null; hovered = null; canvas.style.cursor = ""; wake(0); });
     /* A tap or a click selects; a drag is the page's, and scrolls it. */
     canvas.addEventListener("click", function (e) {
+      if (tapHole === false && tNow < .95) { tapHole = null; return; }
+      tapHole = null;
       var h = hitAt(e.clientX, e.clientY);
       if (h && h.kind) choose({ plot: true, kind: h.kind }, "map");
       else if (h && h.b) choose(h.b.rec, "map");
@@ -719,7 +757,7 @@
       state: function () {
         return {
           t: tNow, scrolled: clamp(window.scrollY / span) * (NB - 1), running: raf !== 0, dpr: dpr, webgl2: renderer.capabilities.isWebGL2, derivatives: deriv,
-          hole: holeR / Math.min(W, H), picked: picked ? picked.id : null, hovered: hovered ? hovered.rec.id : null, cursor: canvas.style.cursor || "",
+          hole: holeR / Math.min(W, H), drew: drewAt, picked: picked ? picked.id : null, hovered: hovered ? hovered.rec.id : null, cursor: canvas.style.cursor || "",
         };
       },
       /* Where a record's block is on the screen now, in CSS pixels. */
