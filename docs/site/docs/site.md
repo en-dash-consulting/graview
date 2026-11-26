@@ -4,7 +4,7 @@ graview.dev is a Graview app: one declaration, [`apps/site/app.json`](https://gi
 
 ## The site, running
 
-This is that declaration, compiled in your browser by the same compiler `graview check` uses, over the same records the pages are rendered from: the city of its packages, skills, check findings and pages. Press a district; come down to a record; switch to its pages.
+This is that declaration, compiled in your browser by the same compiler `graview check` uses, over the same records the pages are rendered from: the city of its packages, skills, check findings and pages. Read its home; rise to its map and press a district; come down to a record's page.
 
 *graview.dev as a Graview app, live: a live demo, on the HTML page.*
 

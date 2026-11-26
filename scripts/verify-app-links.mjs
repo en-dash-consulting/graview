@@ -129,6 +129,8 @@ async function buildHost() {
         } else {
           const guest = query.get("as") === "guest";
           window.__handle = mount(document.getElementById("app"), {
+            // The routed face and its scene, which this harness holds: an embed draws the one face unless told otherwise.
+            sceneUnderPages: false,
             app: compiled.app,
             seed,
             face: query.get("face") === "graview" ? "graview" : "pages",

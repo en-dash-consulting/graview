@@ -74,6 +74,8 @@ async function serveToldHost() {
         const compiled = compileDocumentWithoutCheck(document0, { today: () => "2026-09-01" });
         if (!compiled.ok) throw new Error("the document did not compile");
         window.__handle = mount(document.getElementById("app"), {
+          // The routed face and its scene, which this harness holds: an embed draws the one face unless told otherwise.
+          sceneUnderPages: false,
           app: compiled.app,
           seed: { nodes: [{ id: "t1", kind: "task", label: "Write the brief", status: "todo" }, { id: "t2", kind: "task", label: "Book the hall", status: "todo" }, { id: "p-nick", kind: "person", label: "Nick" }], edges: [] },
           principal: { kind: "human", id: "m1", roles: ["viewer"] },

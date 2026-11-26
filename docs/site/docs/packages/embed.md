@@ -18,21 +18,25 @@ import { mount } from "@graview/embed";
 const handle = mount(document.querySelector("#garden")!, {
   app,                        // defineApp(...)
   seed,                       // the graph to open with, or nothing
-  face: "graview",            // "scene" | "graview" | "pages" | "picture" — one named lens, no chrome: stop "#view=<place>"; leave it out and the app opens on its home view, else the scene
-  stop: "#focus=plot-1",      // the scene's view state, as its URL fragment; none, and the scene opens on the overview
-  path: "/plots",             // the routed face's page; on the scene, nothing or "/places/overview" — everything from above
+  path: "/plots",             // the page it opens at; none, and a `stop` names it, else the home
   principal: { kind: "human", id: "june", roles: ["coordinator"] },
-  bar: true,                  // the app bar over every face (the default); { faces: false, name: false } under a host's own bar
-  switch: "words",            // the bar's Scene/Pages switch: its words where they fit (the default), or "icons" for its marks alone
+  height: 560,                // the box the one face is held to; the element's own height by default
+  bar: true,                  // the app bar (the default); { name: false } under a host's own bar
 });
 
 handle.setPath("/plots");     // a place: the plots' list, at the element's width
-handle.setPath("/places/overview"); // the scene, at its own address
-handle.setStop("#overview=1&expand=kind:plot");
+handle.setPath("/places/overview"); // the Map over the home
 handle.unmount();
 ```
 
-A scene with nowhere to be — no `stop`, no `path` but the overview's, no first place in the declaration — opens on the overview, everything from above, as `graview preview` at `/places/overview` does: `mount(stage, { face: "scene" })` under either routing, and `routing: "address"` at a bare base. A `stop` set then or later goes down to it.
+An embed draws the one face: each page over the app's own city, and one control at the box's bottom left moving it from Page to Nearby to Map (see "Pages and the Scene as one face", below). `face: "picture"` is one named lens, no chrome (`stop: "#view=<place>"`). `sceneUnderPages: false` draws the routed face alone instead, with the scene and the Graview as faces of their own, a Scene/Pages switch on the bar (`switch: "words" | "icons"`) and `stop` as the scene's view state:
+
+```ts
+mount(stage, { app, seed, sceneUnderPages: false, face: "graview", stop: "#focus=plot-1" });
+handle.setStop("#overview=1&expand=kind:plot");
+```
+
+There, a scene with nowhere to be — no `stop`, no `path` but the overview's, no first place in the declaration — opens on the overview, everything from above, as `graview preview` at `/places/overview` does: `mount(stage, { face: "scene", sceneUnderPages: false })` under either routing, and `routing: "address"` at a bare base. A `stop` set then or later goes down to it.
 
 `<Embed {...options} />` is the same thing as a React component.
 
@@ -122,18 +126,17 @@ Each page the routed face opens is pushed, and Back returns. The scene keeps its
 
 ### Pages and the Scene as one face
 
-A host whose page is the app may draw Pages and the Scene as one face (FR-239), as `PagesApp` does by default wherever it owns its page: the routed page over the Scene's own city, drawn with the `views` the embed already has, and one control at the window's bottom left that moves the same page from Page to Nearby (the page beside its place on the map) to Map (every page and view of the app standing on its district). The keys 1, 2 and 3 go to a level, `[` and `]` down and up one.
+`mount` and `<Embed>` draw Pages and the Scene as one face (FR-239) unless the host says `sceneUnderPages: false`, as `PagesApp` does: the routed page over the Scene's own city, drawn with the `views` the embed already has, and one control at the bottom left that moves the same page from Page to Nearby (the page beside its place on the map) to Map (every page and view of the app standing on its district). The keys 1, 2 and 3 go to a level, `[` and `]` down and up one. `@graview/embed/pages`, the routed face alone, draws it only with `sceneUnderPages: true`.
+
+There is no scene face: the bar offers no Scene or Pages, a `face` other than a picture is drawn as the pages, the overview's address is the Map over the home, and a `stop` with no `path` opens the page it names — `#overview=1` the Map, a record's `#focus=<id>` its page, a kind's group its list, `#view=<place>` that place. The bar stands in the one face's bar slot, `[data-graview-one-face-bar]`, above every layer of the face, so the app's name, its places, Find, the inbox, a host's Share and the person are there at every level. A host that lays something of its own along the bar reads the slot's box.
+
+**Where it stands is said by `routing`.** A host whose page is the app and hands it the address bar (`routing: "address"`: Graview Cloud, a hosted app, `graview preview`) gets the one face against the window: the bar fixed at the window's top, the page in the window's flow and the window scrolling it, the embed as tall as its page and at least its `height`.
 
 ```ts
-const handle = mount(root, {
-  app, store,
-  face: "pages",
-  routing: "address",
-  sceneUnderPages: true,
-});
+mount(root, { app, store, routing: "address", height: "100dvh", heading: 1 });
 ```
 
-`mount`, `<Embed>` and `@graview/embed/pages` take it. There is then no scene face: the bar offers no Scene or Pages, a `face` other than a picture is drawn as the pages, and the overview's address is the Map over the home. The bar stands in the one face's bar slot, `[data-graview-one-face-bar]`, fixed at the window's top above every layer of the face, so the app's name, its places, Find, the inbox, a host's Share and the person are there at every level. The page is in the window's flow and the window scrolls it, so the embed is as tall as its page and at least its `height`; the root is still its own stacking context. A host that lays something of its own along the bar reads the slot's box. Without the option every face draws as before: the one face stands against the window, so an embed in a box of somebody else's page draws the Scene and the Pages, each in the box, and the one face in a box is not built yet.
+Anywhere else — a docs chapter, a demo in an article — the one face is held to the embed's own box, `height` tall (`"auto"` holds it at `AUTO_SCENE_HEIGHT`): the bar stands at the box's top, Page, Nearby and Map and the panel are the box's rect, the page scrolls inside the box, and nothing of the face is drawn over the host's page, which scrolls on when the pointer is outside the box. The root is the containing block of every layer (`contain: layout paint`, `data-graview-one-face-box`), and the level keys move the face only while the keyboard is in it.
 
 `panel` (a share, `0.55` unsaid, held to 0.25–0.75) is how wide a desk's panel opens beside the city at Nearby, never wider than 1192 px or than leaves the city 480; a width the person drags it to is kept for that app in that browser and wins. While the page is in the panel it and each worker view's root carry `data-graview-in-panel`, and the one face sets `--graview-gutter` (20px on a full page, 16 in the panel; elsewhere it is unset, so read it as `var(--graview-gutter, 20px)`).
 

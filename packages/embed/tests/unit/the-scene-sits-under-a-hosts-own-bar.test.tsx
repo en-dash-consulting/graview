@@ -46,7 +46,7 @@ async function drawn(element: (host: HTMLElement) => React.ReactElement) {
   return said;
 }
 
-const embed = (face: "scene" | "graview" | "pages", bar: boolean | EmbedBar) => () => <Embed app={app} seed={seed} face={face} fonts={false} bar={bar} />;
+const embed = (face: "scene" | "graview" | "pages", bar: boolean | EmbedBar) => () => <Embed sceneUnderPages={false} app={app} seed={seed} face={face} fonts={false} bar={bar} />;
 
 describe("a host's own bar over the scene", () => {
   it("draws the bar without the scene and pages or the app's name when the host says so, its places, Find and the person kept", async () => {

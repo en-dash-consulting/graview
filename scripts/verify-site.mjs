@@ -16,7 +16,7 @@
  *
  * Writes docs/site-check.json.
  */
-import { writeFileSync } from "node:fs";
+import { readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -419,6 +419,10 @@ async function own() {
   await own.click('footer a[href="docs/site.html"]');
   await own.waitForLoadState("load");
   await own.locator('[data-graview-document="site-app"]').scrollIntoViewIfNeeded();
+  // It opens on the site's home; its city is the Map, a level's key pressed in its box away.
+  await own.waitForSelector('[data-graview-document="site-app"] [data-testid="altitude"] button', { timeout: 30_000 }).catch(() => {});
+  await own.evaluate(() => document.querySelector('[data-graview-document="site-app"] [data-testid="altitude"] button')?.focus({ preventScroll: true }));
+  await own.keyboard.press("3");
   await own
     .waitForFunction(() => document.querySelectorAll('[data-graview-document="site-app"] [data-graview-view^="kind:"]').length >= 4, null, { timeout: 30_000 })
     .catch(() => {});
@@ -434,62 +438,78 @@ async function chapters() {
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
   await arrive(page, pageAt("progression.html"));
   await settled(page, { most: 600 });
-  /* A chapter goes from its overview to a page on the page itself: the picture is the app, its home one press away on the bar (FR-132). */
-  await page.locator('#chapter-1 [data-graview-chapter="1"]').scrollIntoViewIfNeeded();
-  await page.waitForFunction(() => document.querySelector('#chapter-1 [data-graview-chapter="1"] [data-graview-embed]') !== null, null, { timeout: 20_000 }).catch(() => {});
-  const faceBefore = await page.locator('#chapter-1 [data-graview-chapter="1"] [data-graview-embed]').getAttribute("data-graview-embed").catch(() => null);
-  await page.locator('#chapter-1 [data-graview-chapter="1"] [data-testid="app-home"]').click().catch(() => {});
+  /* A chapter opens on its home page — graview.dev opens a frame on its page — and rises to its Map with its level's key pressed in its box: one face (FR-239). */
+  const one = '#chapter-1 [data-graview-chapter="1"]';
+  await page.locator(one).scrollIntoViewIfNeeded();
+  await page.waitForFunction((one) => document.querySelector(`${one} [data-graview-one-place]`) !== null, one, { timeout: 20_000 }).catch(() => {});
+  const levelAt = () => page.evaluate((one) => document.querySelector(`${one} [data-graview-one-place]`)?.getAttribute("data-graview-one-place") ?? null, one);
   await settled(page, { most: 500 });
-  const faceAfter = await page.locator('#chapter-1 [data-graview-chapter="1"] [data-graview-embed]').getAttribute("data-graview-embed").catch(() => null);
-  report.criteria.aChapterSwitchesFaceOnThePage = faceBefore !== null && faceBefore !== "pages" && faceAfter === "pages";
+  const levelBefore = await levelAt();
+  await page.evaluate((one) => document.querySelector(`${one} [data-testid="altitude"] button`)?.focus({ preventScroll: true }), one);
+  await page.keyboard.press("3");
+  await page.waitForFunction((one) => document.querySelector(`${one} [data-graview-one-place]`)?.getAttribute("data-graview-one-place") === "2", one, { timeout: 20_000 }).catch(() => {});
+  const levelAfter = await levelAt();
+  report.criteria.aChapterRisesFromItsHomeToItsMapOnThePage = levelBefore === "0" && levelAfter === "2";
 
-  /* The kit re-dresses the live garden: a right-angled route draws elbows, a kind kept quiet is not drawn. */
-  await page.locator('#kit [data-graview-chapter="8"]').scrollIntoViewIfNeeded();
-  const kitPath = () => page.evaluate(() => document.querySelector('#kit [data-graview-chapter="8"] [data-graview-connector="tended-by"]')?.getAttribute("d") ?? null);
   /*
-   * A LINE IS READ ONCE THE SCENE HAS SETTLED. Lines are not drawn while the
-   * scene moves (they are measured once a transition lands), and a chapter
-   * arrives with a transition: the line shows on the first frame, is gone
-   * for the half second the scene moves, and comes back. Reading the first
-   * appearance read the gap. So: the same path on two reads 300 ms apart,
-   * and, after a change, a path that differs from the one before it.
+   * THE KIT RE-DRESSES THE LIVE GARDEN'S ONE FACE: its page takes the
+   * typeface, the accent, the corners and the room the form declares, read
+   * off the embed before and after; at the Map the road from a plot to who
+   * tends it is drawn, and gone once the form keeps it quiet; and the
+   * declaration beside it says so.
    */
-  const settledPath = (unlike) =>
-    page
-      .waitForFunction(
-        ({ unlike }) => {
-          const d = document.querySelector('#kit [data-graview-chapter="8"] [data-graview-connector="tended-by"]')?.getAttribute("d") ?? null;
-          const seen = (window.__kitSeen ??= { d: undefined, since: 0 });
-          if (d !== seen.d) Object.assign(seen, { d, since: performance.now() });
-          return d !== null && d !== unlike && performance.now() - seen.since >= 300;
-        },
-        { unlike },
-        { timeout: 20_000, polling: 100 },
-      )
-      .catch(() => {});
-  await settledPath(null);
-  const curved = await kitPath();
-  await page.locator('#kit-form input[name="route"][value="orthogonal"]').check().catch(() => {});
-  await settledPath(curved);
-  const elbowed = await kitPath();
+  const kit = '#kit [data-graview-chapter="8"]';
+  await page.locator(kit).scrollIntoViewIfNeeded();
+  await page.waitForFunction((kit) => document.querySelector(`${kit} [data-graview-one-place]`) !== null, kit, { timeout: 20_000 }).catch(() => {});
+  await settled(page, { most: 500 });
+  const looks = () =>
+    page.evaluate((kit) => {
+      const root = document.querySelector(`${kit} [data-graview-embed]`);
+      const title = document.querySelector(`${kit} [data-graview-one-place] h1, ${kit} [data-graview-one-place] h2`);
+      const style = root ? getComputedStyle(root) : null;
+      return {
+        font: title ? getComputedStyle(title).fontFamily : null,
+        accent: style?.getPropertyValue("--graview-accent").trim() ?? null,
+        radius: style?.getPropertyValue("--graview-radius").trim() ?? null,
+        pad: style?.getPropertyValue("--graview-pad").trim() ?? null,
+      };
+    }, kit);
+  const before = await looks();
+  await page.locator('#kit-form select[name="typeface"]').selectOption("serif").catch(() => {});
+  await page.locator('#kit-form input[name="accent"]').fill("#7a3e9d").catch(() => {});
+  await page.locator('#kit-form input[name="accent-on"]').check().catch(() => {});
+  await page.locator('#kit-form input[name="radius"]').fill("0").catch(() => {});
+  await page.locator('#kit-form input[name="density"]').fill("1.4").catch(() => {});
+  await settled(page, { most: 400 });
+  const after = await looks();
+  const roads = () => page.evaluate((kit) => document.querySelectorAll(`${kit} [data-graview-ribbon="tended-by"]`).length, kit);
+  await page.evaluate((kit) => document.querySelector(`${kit} [data-testid="altitude"] button`)?.focus({ preventScroll: true }), kit);
+  await page.keyboard.press("3");
+  await page.waitForFunction((kit) => document.querySelector(`${kit} [data-graview-one-place]`)?.getAttribute("data-graview-one-place") === "2", kit, { timeout: 20_000 }).catch(() => {});
+  await settled(page, { most: 600 });
+  const drawn = await roads();
   await page.locator('#kit-form input[name="tended-visible"]').uncheck().catch(() => {});
   await settled(page, { most: 400 });
-  const quiet = await kitPath();
+  const quiet = await roads();
   const declared = await page.evaluate(() => document.getElementById("kit-decl")?.textContent ?? "");
-  /* Each half of the claim on its own, so a failure says which half. */
+  /* Each part of the claim on its own, so a failure says which. */
   report.kit = {
-    connectorFound: curved !== null,
-    curvedAtFirst: curved?.includes(" Q ") ?? false,
-    elbowedAfter: elbowed !== null && elbowed.includes(" L ") && !elbowed.includes(" Q "),
-    goneWhenQuiet: quiet === null,
-    declarationSaysSo: declared.includes("visible: false"),
+    before,
+    after,
+    typefaceTaken: before.font !== null && after.font !== before.font && /georgia|serif/i.test(after.font ?? ""),
+    accentTaken: Boolean(after.accent) && after.accent !== before.accent,
+    cornersTaken: after.radius === "0px" && after.radius !== before.radius,
+    roomTaken: Boolean(after.pad) && after.pad !== before.pad,
+    roadDrawnAtTheMap: drawn > 0,
+    roadGoneWhenQuiet: quiet === 0,
+    declarationSaysSo: declared.includes("visible: false") && declared.includes("radius: 0"),
   };
-  report.criteria.theKitRedressesTheLiveGarden = Object.values(report.kit).every(Boolean);
+  report.criteria.theKitRedressesTheLiveGarden = Object.entries(report.kit).every(([key, value]) => key === "before" || key === "after" || value === true);
   await page.locator('#kit-form input[name="tended-visible"]').check().catch(() => {});
-  await page.locator('#kit-form input[name="tended-painted"]').check().catch(() => {});
-  await page.locator('#kit-form input[name="tended-color"]').fill("#f4f4f4").catch(() => {});
+  // An accent no page can read is refused in the checker's own words.
+  await page.locator('#kit-form input[name="accent"]').fill("#f4f4f4").catch(() => {});
   await settled(page, { most: 300 });
-  report.criteria.theKitsVerdictIsTheCheckers = await page.evaluate(() => document.getElementById("kit-verdict")?.textContent?.includes("kit-contrast-below-aa") ?? false);
+  report.criteria.theKitsVerdictIsTheCheckers = await page.evaluate(() => document.getElementById("kit-verdict")?.textContent?.includes("brand-accent") ?? false);
 
   await page.close();
 }
@@ -527,6 +547,73 @@ async function forced() {
 }
 
 /*
+ * EVERY LIVE APP ON GRAVIEW.DEV IS THE ONE FACE, IN ITS BOX (Graview HQ
+ * feature:f-one-face-by-default). Every page the site serves that mounts an
+ * app — found by its frames, never listed by hand — opened at a desk and on
+ * a phone, every frame mounted (the stepper's each step pressed): each
+ * embed is the one face held to its box, or a picture, and none offers the
+ * Scene/Pages switch or the routed Scene's own controls (Up, Close the map,
+ * From above, Reset view, the zoom).
+ */
+const LIVE_FRAME = /data-graview-(chapter|app|recipe|document)="|data-step-live="/;
+function livePages(dir = resolve(repoRoot, "docs/site"), at = "") {
+  return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    const path = at ? `${at}/${entry.name}` : entry.name;
+    if (entry.isDirectory()) return livePages(resolve(dir, entry.name), path);
+    return entry.name.endsWith(".html") && !entry.name.startsWith("_") && LIVE_FRAME.test(readFileSync(resolve(dir, entry.name), "utf8")) ? [path] : [];
+  });
+}
+
+async function oneFaceEverywhere() {
+  const pages = livePages();
+  const seen = [];
+  for (const [device, options] of [["desk", { viewport: { width: 1280, height: 800 } }], ["phone", { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true }]]) {
+    const context = await browser.newContext(options);
+    for (const file of pages) {
+      const page = await context.newPage();
+      await arrive(page, pageAt(file));
+      // Every step of a stepper pressed, so each of its frames is mounted.
+      for (const tab of await page.locator('.steps [role="tab"]').all()) await tab.click().catch(() => {});
+      // Down the page and back, so every frame mounts as the reader comes near it.
+      const tall = await page.evaluate(() => document.documentElement.scrollHeight);
+      for (let y = 0; y <= tall; y += 600) {
+        await page.evaluate((to) => window.scrollTo({ top: to, behavior: "instant" }), y);
+        await page.waitForTimeout(60);
+      }
+      const hosts = '[data-graview-chapter], [data-graview-app], [data-graview-recipe], [data-graview-document], [data-step-live]';
+      await page
+        .waitForFunction((hosts) => [...document.querySelectorAll(hosts)].every((el) => el.querySelector("[data-graview-embed]") !== null), hosts, { timeout: 30_000 })
+        .catch(() => {});
+      await settled(page, { most: 800 });
+      seen.push(
+        await page.evaluate(
+          ({ hosts, file, device }) => {
+            const shown = (el) => el.getClientRects().length > 0 && getComputedStyle(el).visibility !== "hidden";
+            const embeds = [...document.querySelectorAll(hosts)].map((host) => host.querySelector("[data-graview-embed]"));
+            const notOne = embeds.filter((el) => {
+              if (!el) return true;
+              const face = el.getAttribute("data-graview-embed");
+              return face !== "picture" && !(face === "pages" && el.hasAttribute("data-graview-one-face-box") && el.querySelector("[data-graview-one-place], [data-graview-one-face-arriving]") !== null);
+            }).map((el) => (el ? `${el.getAttribute("aria-label")}: ${el.getAttribute("data-graview-embed")}` : "not mounted"));
+            const switches = document.querySelectorAll('[data-graview-embed] [data-testid="app-faces"], [data-graview-embed] [data-testid="app-face-scene"], [data-graview-embed] [data-testid="app-face-pages"]').length;
+            const words = /^(up|close the map|from above|reset view|zoom in|zoom out)$/i;
+            const controls = [...document.querySelectorAll("[data-graview-embed] button, [data-graview-embed] [role=button]")]
+              .filter((el) => shown(el) && words.test((el.getAttribute("aria-label") ?? el.textContent ?? "").trim()))
+              .map((el) => (el.getAttribute("aria-label") ?? el.textContent).trim());
+            return { file, device, embeds: embeds.length, notOne, switches, controls: [...new Set(controls)] };
+          },
+          { hosts, file, device },
+        ),
+      );
+      await page.close();
+    }
+    await context.close();
+  }
+  report.oneFace = seen;
+  report.criteria.everyLiveAppOnTheSiteIsTheOneFaceInItsBox = seen.length > 0 && seen.every((one) => one.embeds > 0 && one.notOne.length === 0 && one.switches === 0 && one.controls.length === 0);
+}
+
+/*
  * THE STEPS, each on pages of its own, so the chain runs them in parts
  * (lib/parts.mjs): `--steps=sweep/tour.html` takes those, `--not=…` the rest.
  */
@@ -543,6 +630,7 @@ const steps = chooseSteps([
   { name: "chapters", run: chapters },
   { name: "reduced", run: reduced },
   { name: "forced", run: forced },
+  { name: "one-face", run: oneFaceEverywhere },
 ]);
 
 browser = await launchEngine(ENGINE, { headless: true });

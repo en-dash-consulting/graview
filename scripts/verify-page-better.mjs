@@ -304,6 +304,8 @@ async function serveHost() {
         const keptViews = withMemoryRevisions(memoryViews({ may: { views: !visitor, lenses: false } }));
         window.__keeper = keptViews;
         window.__handle = mount(document.getElementById("app"), {
+          // The routed face and its scene, which this harness holds: an embed draws the one face unless told otherwise.
+          sceneUnderPages: false,
           app: current.app,
           store: current.store,
           principal: visitor ? { kind: "human", id: "v1", roles: ["viewer"] } : { kind: "human", id: "p1", roles: ["owner"] },

@@ -38,7 +38,7 @@ async function at(path: string, options: Partial<EmbedOptions> = {}) {
   document.body.appendChild(host);
   let handle: EmbedHandle | undefined;
   await act(async () => {
-    handle = mount(host, { app, seed, fonts: false, studio: false, ...options } as EmbedOptions);
+    handle = mount(host, { sceneUnderPages: false, app, seed, fonts: false, studio: false, ...options } as EmbedOptions);
   });
   await act(async () => handle!.drawn());
   await settle();

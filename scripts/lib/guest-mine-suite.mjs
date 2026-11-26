@@ -114,6 +114,8 @@ if (asked.get("mode") === "fork") {
   views.draftFork(fork);
   window.__keep = () => views.fork(fork);
   window.__handle = mount(document.getElementById("app"), {
+    // The routed face and its scene, which this harness holds: an embed draws the one face unless told otherwise.
+    sceneUnderPages: false,
     app, store, principal: nick, viewerState, keptViews: views,
     face: "pages", path: "/rocks", scheme: "light", label: "Rocks", heading: false, height: "100%", fonts: false, studio: false,
   });
@@ -126,6 +128,8 @@ if (asked.get("mode") === "fork") {
     return ticksOf(store, { me: nick }).map((tick) => makerWords(tick, where));
   };
   window.__handle = mount(document.getElementById("app"), {
+    // The routed face and its scene, which this harness holds: an embed draws the one face unless told otherwise.
+    sceneUnderPages: false,
     app, store, principal: mia, viewerState,
     face: "pages", path: "/places/quiz", scheme: "light", label: "Rocks", heading: false, height: "100%", fonts: false, studio: false,
     views: (schema, registry) => registerWorkerView(registry, { manifest: ${JSON.stringify(MANIFEST("quiz"))}, worker: { source } }),

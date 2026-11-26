@@ -8,17 +8,21 @@ import { mount, preload, type EmbedHandle, type EmbedOptions } from "../../src/i
 import { mount as mountPages, type PagesEmbedHandle, type PagesEmbedOptions } from "../../src/pages.js";
 import { openAppMenu } from "../support/the-app-menu.js";
 import { InBarSlot } from "../../src/frame.js";
+import { pageOfStop } from "../../src/embed.js";
 
 /**
- * THE ONE FACE, MOUNTED WHOLE THROUGH THE EMBED (FR-239).
+ * THE ONE FACE, MOUNTED THROUGH THE EMBED (FR-239, Graview HQ
+ * feature:f-one-face-by-default).
  *
- * Graview Cloud draws every app's page through `mount`, and 0.2.0's one
- * face — Pages and the Scene as one place — was reachable only through
- * `PagesApp`'s context. `mount` (and `@graview/embed/pages`) take
- * `sceneUnderPages`: the routed face stands over the city with the views
- * the embed already has, the embed's bar stands in the one face's bar slot
- * — a public attribute, `data-graview-one-face-bar` — and the page is in
- * the window's flow. Without it the embed draws as it did.
+ * Graview Cloud draws every app's page through `mount`, and graview.dev's
+ * docs mount each chapter with it. `mount` draws the one face unless told
+ * `sceneUnderPages: false` (`@graview/embed/pages` only when told `true`):
+ * the routed face stands over the city with the views the embed already
+ * has, and the embed's bar stands in the one face's bar slot — a public
+ * attribute, `data-graview-one-face-bar`. Under address routing the host's
+ * page is the app and the page is in the window's flow; anywhere else the
+ * face is held to the embed's box (`data-graview-one-face-box`), the root
+ * the containing block of every layer, the page scrolling inside it.
  */
 const task = defineNode("task", { fields: z.object({ label: z.string() }), plural: "Tasks" });
 const app = defineApp({ name: "Errands", schema: createSchema([task]), mutations: [] });
@@ -71,8 +75,8 @@ const content = (host: Element) => host.querySelector<HTMLElement>("[data-embed-
 const barInSlot = (host: Element) => host.querySelector("[data-graview-one-face-bar] [data-graview-app-bar]");
 
 describe("mount takes sceneUnderPages (FR-239)", () => {
-  it("draws the one face, its bar in the face's slot, and the page in the window's flow", async () => {
-    const { host } = await whole({ sceneUnderPages: true, height: "100dvh" });
+  it("draws the one face, its bar in the face's slot, and the page in the window's flow, where the host's page is the app", async () => {
+    const { host } = await whole({ routing: "address", height: "100dvh" });
     await until(() => barInSlot(host) !== null);
     expect(host.querySelectorAll("[data-graview-one-place]")).toHaveLength(1);
     expect(root(host).getAttribute("data-graview-embed")).toBe("pages");
@@ -87,6 +91,80 @@ describe("mount takes sceneUnderPages (FR-239)", () => {
     expect(root(host).style.isolation).toBe("isolate");
     // The page keeps its room under the bar.
     expect(host.querySelector("[data-graview-one-place] [data-graview-bar-room]")).not.toBeNull();
+    expect(root(host).hasAttribute("data-graview-one-face-box")).toBe(false);
+  });
+
+  it("draws the one face with no option given, held to its box on somebody else's page", async () => {
+    const { host } = await whole({ height: 560 });
+    await until(() => barInSlot(host) !== null);
+    expect(host.querySelectorAll("[data-graview-one-place]")).toHaveLength(1);
+    expect(root(host).getAttribute("data-graview-embed")).toBe("pages");
+    // The root is the box: every layer of the face is placed from it and clipped to it, none over the host's page.
+    expect(root(host).hasAttribute("data-graview-one-face-box")).toBe(true);
+    expect(root(host).style.contain).toBe("layout paint");
+    expect(root(host).style.overflow).toBe("clip");
+    expect(root(host).style.height).toBe("560px");
+    expect(root(host).style.isolation).toBe("isolate");
+    // One bar, in the slot at the box's top.
+    expect(host.querySelectorAll("[data-graview-app-bar]")).toHaveLength(1);
+    expect(host.querySelector<HTMLElement>("[data-graview-one-face-bar]")!.style.top).toBe("0px");
+    // The page scrolls itself in the box, under the bar: the host's window is not what scrolls it.
+    await until(() => host.querySelector<HTMLElement>("[data-graview-one-place]")?.style.overflowY === "auto");
+    const sheet = host.querySelector<HTMLElement>("[data-graview-one-place]")!;
+    expect(sheet.style.position).toBe("fixed");
+    expect(sheet.style.overflowY).toBe("auto");
+    expect(sheet.hasAttribute("data-graview-away")).toBe(false);
+  });
+
+  it("holds a box sized from its content at the scene's height", async () => {
+    const { host } = await whole({ height: "auto" });
+    await until(() => barInSlot(host) !== null);
+    expect(root(host).hasAttribute("data-graview-one-face-box")).toBe(true);
+    expect(root(host).style.height).toBe("480px");
+  });
+
+  it("moves a level for the keys only while the keyboard is in its box", async () => {
+    const { host } = await whole({ height: 560 });
+    await until(() => barInSlot(host) !== null);
+    await until(() => host.querySelector('[data-testid="altitude"] button') !== null);
+    const sheet = () => host.querySelector<HTMLElement>("[data-graview-one-place]")!;
+    // A key pressed on the host's page is the host's.
+    await act(async () => void document.body.dispatchEvent(new KeyboardEvent("keydown", { key: "3", bubbles: true })));
+    expect(sheet().hasAttribute("data-graview-away")).toBe(false);
+    // Pressed inside the box, it is the face's.
+    const inside = host.querySelector<HTMLElement>('[data-testid="altitude"] button')!;
+    await act(async () => void inside.dispatchEvent(new KeyboardEvent("keydown", { key: "3", bubbles: true })));
+    expect(sheet().hasAttribute("data-graview-away")).toBe(true);
+  });
+
+  it("opens at the page a stop names when no path is given", async () => {
+    const host = document.createElement("div");
+    document.body.appendChild(host);
+    let handle: EmbedHandle | undefined;
+    await act(async () => {
+      handle = mount(host, { app, seed, fonts: false, studio: false, stop: "#focus=t2" } as EmbedOptions);
+    });
+    await act(async () => handle!.drawn());
+    mounted.push(async () => {
+      await act(async () => handle!.unmount());
+      host.remove();
+    });
+    expect(handle!.where().path).toBe("/tasks/t2");
+    // A stop set later goes to the page it names, as the first one did.
+    await act(async () => handle!.setStop("#focus=agg:task"));
+    await until(() => handle!.where().path === "/tasks");
+    expect(handle!.where().path).toBe("/tasks");
+  });
+
+  it("reads a stop as the page it names: the Map, a record, a kind's list, a place, or none", () => {
+    const kindOf = (id: string) => (id.startsWith("t") ? "task" : undefined);
+    const places = [{ as: "the-week", kind: "task" }] as never;
+    expect(pageOfStop("#overview=1", app.schema, kindOf, places)).toBe("/places/overview");
+    expect(pageOfStop("#focus=t1", app.schema, kindOf, places)).toBe("/tasks/t1");
+    expect(pageOfStop("#focus=agg:task", app.schema, kindOf, places)).toBe("/tasks");
+    expect(pageOfStop("#view=the-week", app.schema, kindOf, places)).toBe("/places/the-week");
+    expect(pageOfStop("#focus=nowhere", app.schema, kindOf, places)).toBeUndefined();
+    expect(pageOfStop(undefined, app.schema, kindOf, places)).toBeUndefined();
   });
 
   it("offers no switch to a scene: the city is the camera rising", async () => {
@@ -103,8 +181,8 @@ describe("mount takes sceneUnderPages (FR-239)", () => {
     expect(handle.where().face).toBe("pages");
   });
 
-  it("without it, draws exactly as before: no city, the bar in the frame, the page scrolled in its box", async () => {
-    const { host } = await whole();
+  it("with sceneUnderPages: false, draws the routed face as before: no city, the bar in the frame, the page scrolled in its box", async () => {
+    const { host } = await whole({ sceneUnderPages: false });
     await until(() => host.querySelector("[data-graview-app-bar]") !== null);
     expect(host.querySelector("[data-graview-one-place]")).toBeNull();
     expect(host.querySelector("[data-graview-one-face-bar]")).toBeNull();
@@ -112,12 +190,16 @@ describe("mount takes sceneUnderPages (FR-239)", () => {
     expect(content(host).style.overflow).toBe("auto");
   });
 
-  it("is taken by the pages alone (`@graview/embed/pages`) too", async () => {
+  it("is drawn by the pages alone (`@graview/embed/pages`) only when told, and held to its box there", async () => {
+    const plain = await pagesAlone();
+    await until(() => plain.host.querySelector("[data-graview-app-bar]") !== null);
+    expect(plain.host.querySelector("[data-graview-one-place]")).toBeNull();
     const { host } = await pagesAlone({ sceneUnderPages: true });
     await until(() => barInSlot(host) !== null);
     expect(host.querySelectorAll("[data-graview-one-place]")).toHaveLength(1);
     expect(host.querySelectorAll("[data-graview-app-bar]")).toHaveLength(1);
     expect(barInSlot(host)).not.toBeNull();
+    expect(root(host).hasAttribute("data-graview-one-face-box")).toBe(true);
   });
 });
 
@@ -209,9 +291,9 @@ describe("the one face's bar slot (FR-239)", () => {
     await until(() => barInSlot(host) !== null);
     await act(async () => handle.setPath("/places/overview"));
     const sheet = () => host.querySelector<HTMLElement>("[data-graview-one-place]");
-    await until(() => sheet()?.style.position === "fixed");
+    await until(() => sheet()?.hasAttribute("data-graview-away") === true);
     // The page has left the window for the city, the one face's way of standing at the overview, over the home.
-    expect(sheet()?.style.position).toBe("fixed");
+    expect(sheet()?.hasAttribute("data-graview-away")).toBe(true);
     expect(root(host).getAttribute("data-graview-embed")).toBe("pages");
     expect(handle.where().face).toBe("pages");
     expect(handle.where().path).toBe("/");

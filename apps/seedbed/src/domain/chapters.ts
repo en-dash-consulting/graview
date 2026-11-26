@@ -103,7 +103,7 @@ const chapterOne: Chapter = {
   n: 1,
   slug: "a-plot",
   title: "A plot",
-  claim: "One kind, one act. The city, the district, the derived form and the routed face all exist before a line of UI is written.",
+  claim: "One kind, one act. The city, the district, the derived form and its pages all exist before a line of UI is written.",
   adds: ['defineNode("plot")', 'defineMutation("add-plot") with creates: ["plot"]'],
   app: asApp(defineApp({ name: "Seedbed", schema: one, mutations: [addPlot as never] })),
   seed: {
@@ -323,14 +323,14 @@ const chapterEight: Chapter = {
   seats,
 };
 
-/* ------------------------------------------------- 9 · the other face */
+/* ------------------------------------------- 9 · an ordinary web app */
 
 const chapterNine: Chapter = {
   n: 9,
   slug: "the-other-face",
-  title: "The other face",
+  title: "An ordinary web app",
   claim: "The same declaration is also an ordinary web application, routed, at phone width: it lands on a gallery — every kind drawn as a picture until the garden names a lens, then the lens by its name — with a list, a record and a form per kind, the problems, a map of how the kinds fit together, and the seat on every route. Any page can be replaced with one the app writes, in its own words, over the same derivations.",
-  adds: ["PagesApp at /pages, from the same store", "views in the page context: every lens a page at /places, and the assistant with it", "createPageRegistry(schema).register(\"plot\", \"record\", PlotPage) — the plot's page in the garden's words"],
+  adds: ["PagesApp from the same store: each page over the garden's own map", "views in the page context: every lens a page at /places, and the assistant with it", "createPageRegistry(schema).register(\"plot\", \"record\", PlotPage) — the plot's page in the garden's words"],
   app: chapterEight.app,
   seed: seedFour,
   stop: "",
@@ -498,7 +498,7 @@ const chapterThirteen: Chapter = {
   n: 13,
   slug: "the-gardens-own-face",
   title: "The garden's own face",
-  claim: "Every surface of the pages face replaced with the garden's own design — an almanac, not an admin panel — and a lens the garden drew of itself in the scene. The same store, acts, rules and permissions underneath; only what a reader sees is the app's.",
+  claim: "Every surface of the pages replaced with the garden's own design — an almanac, not an admin panel — and a lens the garden drew of itself. The same store, acts, rules and permissions underneath; only what a reader sees is the app's.",
   adds: [
     'createPageRegistry(schema).surface("shell" | "home" | "problems", …) and .register(kind, "list" | "record", …) for every kind',
     'register("plot", { cardinality: "many", fidelity: "full" }, GardenMapView, { title: "The garden map" }) — a lens of the garden\'s own',

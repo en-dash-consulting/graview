@@ -82,10 +82,11 @@ import { views } from "./ui/views.js";
 /**
  * ${escapeComment(ids.name).toUpperCase()} ON SOMEBODY ELSE'S PAGE.
  *
- * The embed brings its own strip, its own theme scoped to the element it is
- * given, and this app's named places — no Shell, nothing on the host page
- * touched. Pass \`seats\` once a policy exists and the reader can sit in each
- * one: the strip, the pages and the acts all narrow together.
+ * The embed brings its own bar, its own theme scoped to the element it is
+ * given, and the one face — each page over the app's own city, Page ·
+ * Nearby · Map — held to that element: nothing on the host page touched.
+ * Pass \`seats\` once a policy exists and the reader can sit in each one:
+ * the bar, the pages and the acts all narrow together.
  */
 const store = createStore();
 
@@ -95,7 +96,6 @@ mount(document.getElementById("here")!, {
   // The app's own registry, in the app's own schema — no casts.
   views,
   scheme: "auto",
-  stop: "#overview=1",
   label: "${escapeString(ids.name)}",
 });
 `;

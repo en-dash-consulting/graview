@@ -6,9 +6,10 @@ host option, `sceneUnderPages`, off unless a host gave it. Since
 one-face-by-default (Graview HQ feature:f-one-face-by-default), it is what
 a routed face that owns its page draws: a `PagesApp` handed `views` is the
 one face unless its host says `sceneUnderPages: false`, and `graview
-create` and the example (Things, `apps/todo`) open on it at `/`. An
-embedded face (`@graview/embed`, in a box of somebody else's page) still
-draws the routed face alone unless its host says `sceneUnderPages: true`.
+create` and the example (Things, `apps/todo`) open on it at `/`. Since
+embed-one-face-in-a-box, an embedded face (`@graview/embed`) is the one
+face too unless its host says `sceneUnderPages: false`: held to its box on
+somebody else's page, against the window under `routing: "address"`.
 Pre-1.0: no shims, no aliases. The format upgrade does the moving.
 
 ## What a person sees on the one face
@@ -132,12 +133,12 @@ and held by `pnpm verify one-face` (`aDuplicateViewIsFound`).
 
 1. Since one-face-by-default, a `PagesApp` it mounts itself with `views`
    is the one face unless it says `sceneUnderPages: false`: pass `false`
-   for every app not yet moved. Through `@graview/embed` nothing changed:
-   `mount` draws the one face only where it says `sceneUnderPages: true`,
-   which it does per app as it moves each one (see "Upgrading to 0.2"),
-   where it hosts that app as the page itself. Where it embeds an app and
-   wants no switch, pass `bar: { faces: false }` until the embed draws the
-   one face in a box (below).
+   for every app not yet moved. Since embed-one-face-in-a-box the same
+   holds for `@graview/embed`: `mount` and `<Embed>` draw the one face
+   unless told `sceneUnderPages: false`, so pass `false` for every app
+   Cloud mounts and has not moved. One it hosts as the page itself
+   (`routing: "address"`) stands against the window; one it embeds in a
+   box is held to the box.
 2. Run `upgradeDocument` on read (it already does) once format 2 ships. The
    stored document upgrades itself, and Cloud records the system-authored
    version it returns. No hand migration of users' documents.
@@ -154,11 +155,13 @@ and held by `pnpm verify one-face` (`aDuplicateViewIsFound`).
   "In the scene" link, and no Up on the bar. The page's bar is portaled to a
   fixed slot at the window's top. A `pages-design` shell that measured the
   bar inside its own flow sees a spacer of the bar's height in its place.
-- `@graview/embed`: unchanged in this pass. The one face positions the page
-  and the city against the window (`position: fixed`), so it is not yet
-  drawn inside a host's box. The embed keeps its faces, and a host that wants
-  no switch already says `bar: { faces: false }`. Making the one face live in
-  a box (the embed's root as the camera's frame) is the next step.
+- `@graview/embed` (since embed-one-face-in-a-box): `mount` and `<Embed>`
+  draw the one face unless told `sceneUnderPages: false`. Under memory
+  routing it is held to the embed's element, whose root is the containing
+  block of every layer (`contain: layout paint`), `height` tall (`"auto"`:
+  `AUTO_SCENE_HEIGHT`); under `routing: "address"` it stands against the
+  window. `sceneUnderPages: false` keeps the routed face, its switch and
+  the scene and the Graview as faces.
 - Format 2 (when it ships): `lenses` with titles move to `views.items`, and
   `pages.scene` / `pages.pages` are gone. Code declarations (`defineApp`)
   change by hand, guided by the check.
@@ -204,10 +207,9 @@ when staff choose:
    first.
 3. **Move one app.** Two steps, each its own act:
    - Turn on `sceneUnderPages` for that app where Cloud hosts it as the page
-     itself (a per-app setting of Cloud's, not of the document). An embed
-     keeps its faces for now: pass `bar: { faces: false }` to
-     `@graview/embed` if the switch should not show, until the one face
-     draws in a box (below).
+     itself (a per-app setting of Cloud's, not of the document). Since
+     embed-one-face-in-a-box an embed draws the one face unless told
+     `sceneUnderPages: false`, in a box as against the window.
    - Apply the app's `view-duplicates-another` edits as one new version
      authored by the system ("one view per picture, 0.2"):
      `findings.filter((f) => f.code === "check:view-duplicates-another").flatMap((f) => f.edits ?? [])`,
@@ -280,9 +282,6 @@ first try found, and where it went:
 
 ## Deferred past 0.2.0 (named follow-ups)
 
-- **embed-one-face-in-a-box**: the one face drawn inside a host's element.
-  It positions against the window today, so `@graview/embed` draws the plain
-  routed face, and Cloud's embedded pages get no city yet.
 - **close-up-live-views**: a view up close on the Map as its live,
   interactive page.
 - **format-2**: `views.items` in the stored format, done by `UPGRADES[1]`.

@@ -10,7 +10,9 @@ import type { FrameOptions } from "./frame.js";
  * The routed face in the frame. The page scrolls inside the embed's box,
  * unless the embed is sized from its content: then the page is as tall as
  * it is, and the height the host is told is the whole of it. On the one
- * face (`sceneUnderPages`) the window scrolls it.
+ * face (unless `sceneUnderPages: false`) the window scrolls it where the
+ * host's page is the app (`routing: "address"`); in a box, the one face's
+ * own page scrolls itself inside the box (`inBox`).
  */
 export function PagesContent<S extends AnySchema>({
   store,
@@ -50,8 +52,10 @@ export function PagesContent<S extends AnySchema>({
   readonly props: FrameOptions<S>;
 }) {
   const css = useMemo(() => viewsCss({ scope: `.${scope}` }), [scope]);
-  // The one face reads its page in the window's flow, the window scrolling it: the box scrolls nothing of its own (FR-239).
-  const oneFace = props.sceneUnderPages === true;
+  // The one face reads its page in the window's flow, the window scrolling it, where the host's page is the app: the box scrolls nothing of its own (FR-239).
+  const oneFace = props.sceneUnderPages !== false;
+  // Elsewhere it is held to the embed's box (`PageContext.inBox`): its layers are the box's, and what is drawn before them scrolls in the box.
+  const inBox = oneFace && props.routing !== "address";
   /*
    * THE SCENE'S RULES UNDER THE ONE FACE. The frame's sheet is
    * `themeBaseCss`, which has none of the Scene's, and the city under the
@@ -61,7 +65,7 @@ export function PagesContent<S extends AnySchema>({
    */
   const sceneRules = useMemo(() => ({ scheme, scope: `.${scope}` }), [scheme, scope]);
   return (
-    <div data-embed-content="" style={auto || oneFace ? { flex: "0 0 auto", background: "var(--graview-ground)" } : { flex: "1 1 auto", minHeight: 0, overflow: "auto", background: "var(--graview-ground)" }}>
+    <div data-embed-content="" style={(auto || oneFace) && !inBox ? { flex: "0 0 auto", background: "var(--graview-ground)" } : { flex: "1 1 auto", minHeight: 0, overflow: "auto", background: "var(--graview-ground)" }}>
       <style>{css}</style>
       <div data-embed-measure="" style={{ display: "flow-root" }}>
         <PagesApp<S>
@@ -77,7 +81,7 @@ export function PagesContent<S extends AnySchema>({
             ...(props.bar !== false ? { barAbove: true } : {}),
             ...(overview && !oneFace ? { overview } : {}),
             /* Pages and the Scene as one face (FR-239): the city under the page, the frame's bar in its slot. */
-            ...(oneFace ? { sceneUnderPages: true, sceneRules, ...(onBarSlot ? { onBarSlot } : {}), ...(props.panel !== undefined ? { panel: props.panel } : {}) } : {}),
+            ...(oneFace ? { sceneUnderPages: true, sceneRules, inBox, ...(onBarSlot ? { onBarSlot } : {}), ...(props.panel !== undefined ? { panel: props.panel } : {}) } : { sceneUnderPages: false }),
             titleLevel,
             views,
             settings: props.app.settings ?? [],

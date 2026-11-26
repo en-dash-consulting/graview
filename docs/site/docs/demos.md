@@ -8,11 +8,11 @@ Every kind is a district; every record a building on its own plot; every edge a 
 
 *The example garden at altitude, live: a live demo, on the HTML page.*
 
-## The routed face
+## Every page
 
 The same store as ordinary pages — here in the garden's own design: an almanac over the same acts, rules and log.
 
-*The garden's routed pages, live: a live demo, on the HTML page.*
+*The garden's pages, live: a live demo, on the HTML page.*
 
 ## The studio
 

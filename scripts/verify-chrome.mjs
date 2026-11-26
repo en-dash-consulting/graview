@@ -81,6 +81,8 @@ async function buildHost() {
         import seed from ${JSON.stringify(seed)};
         const asked = new URLSearchParams(location.search);
         const options = {
+          // The routed face and its scene, which this harness holds: an embed draws the one face unless told otherwise.
+          sceneUnderPages: false,
           app: todoApp,
           seed,
           face: asked.get("face") ?? "graview",

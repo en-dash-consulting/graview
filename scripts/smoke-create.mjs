@@ -384,58 +384,29 @@ try {
     await oneFace(page);
     b.axeAfterDark = await axe(page);
 
-    /* ---- the scene at phone width: chrome must not sit on the content */
+    /* ---- somebody else's page at phone width: the one face held to its box */
     /*
-     * A rail needs a gutter, and 390 has none. The acts are the menu at the
-     * pointer, and the seat is an ask field across the picture's foot, in a
-     * strip the layout keeps clear — measured from the SCENE's box rather
-     * than the window's, since an embed in a column of an article is narrow
-     * on the widest monitor there is. What must never happen is the seat
-     * sitting on the thing you are acting on.
+     * The project's embed draws the one face, as its own address does, held
+     * to the element it is mounted in: a box about 350 wide, which is the
+     * shape a Graview in a column of an article has on any monitor. Its bar
+     * stands at the box's top, not the window's, and no Ask box is drawn
+     * across the page being acted on: the quick ask replaced it (Roadmap
+     * f-quick-ask-framework).
      */
     const narrow = watch(await browser.newPage({ viewport: { width: 390, height: 844 } }));
-    // The embed page, at phone width: a box about 350 wide, which is the
-    // shape a Graview in a column of an article has on any monitor.
     await narrow.goto(`${base}/embed.html`, { waitUntil: "networkidle" });
-    await narrow.waitForTimeout(1500);
-    // An empty graph has nothing to act on: put one thing in it, then go in.
-    await narrow.click('#here [data-graview-view^="kind:"]', { button: "right" });
-    await narrow.waitForTimeout(400);
-    await narrow.click('[data-testid="context-menu"] [data-testid="affordances"] button[data-affordance]', { timeout: 10_000 }).catch(async (error) => {
-      // What the narrow Graview showed instead is the finding.
-      const seen = await narrow.evaluate(() => ({
-        testids: [...new Set([...document.querySelectorAll("#here [data-testid]")].map((el) => el.getAttribute("data-testid")))].slice(0, 60),
-        affordances: document.querySelectorAll("#here [data-testid='affordances']").length,
-        buttons: [...document.querySelectorAll("#here button")].map((el) => el.textContent?.trim()).filter(Boolean).slice(0, 30),
-      }));
-      throw new Error(`${error.message.split("\n")[0]} — the narrow page showed ${JSON.stringify(seen)}`);
+    await narrow.waitForSelector("#here [data-graview-one-place]", { timeout: 30_000 });
+    await narrow.waitForTimeout(800);
+    b.narrow = await narrow.evaluate(() => {
+      const root = document.querySelector("#here [data-graview-embed]");
+      const box = root?.getBoundingClientRect();
+      const bar = document.querySelector("#here [data-graview-one-face-bar]")?.getBoundingClientRect();
+      const inside = (r) => Boolean(r && box && r.width > 0 && r.left >= box.left - 0.5 && r.right <= box.right + 0.5 && r.top >= box.top - 0.5 && r.bottom <= box.bottom + 0.5);
+      return {
+        askBox: document.querySelector('#here [data-testid="seat"], #here [data-testid="seat-field"]') !== null,
+        inItsBox: root?.hasAttribute("data-graview-one-face-box") === true && inside(bar),
+      };
     });
-    await narrow.waitForTimeout(300);
-    await narrow.fill('[data-testid="context-menu"] input[aria-label="Name"]', "Sweep the path");
-    await narrow.click('[data-testid="context-menu"] button[type="submit"]');
-    await narrow.waitForTimeout(700);
-    /*
-     * Opening the district lists its records beside the map (on a phone, a
-     * sheet): press the one just made there, then go to it — what a person
-     * does now that the district is no longer opened in place as chips.
-     */
-    // The right-click that made it chose its district, whose panel may already be listing it.
-    if ((await narrow.locator('#here [data-testid="district-panel"]').count()) === 0) {
-      await narrow.click('#here [data-testid^="open-"]');
-      await narrow.waitForTimeout(500);
-    }
-    await narrow.click('#here [data-testid="district-panel"] [data-graview-record]');
-    await narrow.waitForTimeout(400);
-    await narrow.click('#here [data-testid="record-panel-go"]');
-    await narrow.waitForTimeout(900);
-    /*
-     * No Ask box stands over the thing being acted on: the quick ask replaced
-     * it (Roadmap f-quick-ask-framework), and nothing is drawn across the foot.
-     */
-    b.narrow = await narrow.evaluate(() => ({
-      askBox: document.querySelector('#here [data-testid="seat"], #here [data-testid="seat-field"]') !== null,
-      focus: document.querySelector('#here [data-graview-plane="0"] [data-graview-primitive="panel"]') !== null,
-    }));
     /*
      * THE PROFILE IS WHOLE AND ON TOP (W-119, FR-76). It hung from its
      * button's right edge, 280 wide: in a 350-wide embed it began off the
@@ -815,7 +786,7 @@ report.verdict = {
         // the pane sitting on the thing you came to act on.
         noAskBoxCoversWhatYouAreActingOn:
           b.narrow?.askBox === false &&
-          b.narrow?.focus === true,
+          b.narrow?.inItsBox === true,
         theProjectMountsItselfOnSomebodyElsesPage:
           b.embed?.mounted === true &&
           b.embed?.tag === "SECTION" &&

@@ -784,3 +784,17 @@ export function boardsInTheirPlaces<B extends { readonly key: string }>(boards: 
   for (const board of going) if (!placed.has(board.key)) out.push(board);
   return out;
 }
+
+/** What marks the element a face held to a box is drawn in: the containing block of every layer of it. */
+export const ONE_FACE_BOX = "data-graview-one-face-box";
+/**
+ * WHERE THE FRAME'S CORNER IS IN THE WINDOW: none for the window itself;
+ * for a box, its padding box's top left, which every layer of the face is
+ * placed from — so a rectangle the browser says in the window's terms is
+ * said in the frame's by taking this off.
+ */
+export function frameOrigin(frame: HTMLElement | null): { readonly x: number; readonly y: number } {
+  if (!frame) return { x: 0, y: 0 };
+  const r = frame.getBoundingClientRect();
+  return { x: r.left + frame.clientLeft, y: r.top + frame.clientTop };
+}

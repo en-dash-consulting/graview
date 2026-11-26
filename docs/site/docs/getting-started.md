@@ -77,7 +77,7 @@ Open a session beside the declaration. The skills are already installed where Cl
 - [graview-new-app](https://graview.dev/docs/skills/graview-new-app.html): The shape of the declaration, the shell that comes for free, and the CI that keeps it honest.
 - [graview-node-kind](https://graview.dev/docs/skills/graview-node-kind.html): Add a kind — fields, edges, label, plural, roles — and verify it with graview check.
 - [graview-invariant](https://graview.dev/docs/skills/graview-invariant.html): A rule that names the acts that would repair it, then make it fire.
-- [graview-pages](https://graview.dev/docs/skills/graview-pages.html): The routed face, from the derived pages to a design of your own.
+- [graview-pages](https://graview.dev/docs/skills/graview-pages.html): The pages, from the derived ones to a design of your own.
 - [graview-ship](https://graview.dev/docs/skills/graview-ship.html): Persistence, migrations, export and health, self-hosted or behind a service.
 
 ## One release, run from the project

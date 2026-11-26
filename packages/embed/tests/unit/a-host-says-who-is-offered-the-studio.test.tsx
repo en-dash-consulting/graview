@@ -48,7 +48,7 @@ async function builder(principal: Principal, studio: EmbedOptions["studio"]) {
   document.body.append(element);
   let handle!: EmbedHandle;
   await act(async () => {
-    handle = mount(element, { app, principal, studio, stop: "#overview=1&in.studio=open", face: "graview", fonts: false } as EmbedOptions<AnySchema>);
+    handle = mount(element, { sceneUnderPages: false, app, principal, studio, stop: "#overview=1&in.studio=open", face: "graview", fonts: false } as EmbedOptions<AnySchema>);
   });
   handles.push(handle);
   // The studio's chunk arrives; give it the time a drawn studio takes.

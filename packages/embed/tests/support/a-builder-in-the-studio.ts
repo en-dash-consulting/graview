@@ -37,7 +37,7 @@ export async function builder(onApply: StudioOnApply): Promise<HTMLElement> {
   const element = document.createElement("div");
   document.body.append(element);
   await act(async () => {
-    handles.push(mount(element, { app, principal: { kind: "human", id: "builder", roles: ["owner"] }, studio: { onApply }, stop: "#overview=1&in.studio=open", face: "graview", fonts: false } as EmbedOptions<AnySchema>));
+    handles.push(mount(element, { sceneUnderPages: false, app, principal: { kind: "human", id: "builder", roles: ["owner"] }, studio: { onApply }, stop: "#overview=1&in.studio=open", face: "graview", fonts: false } as EmbedOptions<AnySchema>));
   });
   await until(() => element.querySelector('[data-testid="studio"]') !== null);
   expect(element.querySelector('[data-testid="studio"]'), "the studio opened").not.toBeNull();

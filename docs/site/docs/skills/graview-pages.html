@@ -509,6 +509,7 @@ ul.plain b { color: var(--ink); font-weight: 600; }
 .kit-controls label { display: inline-flex; align-items: center; gap: 6px; font-size: 13.5px; color: var(--ink-2); min-height: 24px; }
 .kit-controls select, .kit-controls input[type="color"] { font: inherit; font-size: 13px; color: var(--ink); background: var(--panel); border: 1px solid var(--rule); border-radius: var(--radius-sm); padding: 3px 6px; min-height: 28px; }
 .kit-controls input[type="color"] { width: 40px; padding: 2px; }
+.kit-controls input[type="range"] { width: 132px; height: 28px; margin: 0; accent-color: var(--pine); }
 .kit-controls input:focus-visible, .kit-controls select:focus-visible { outline: 2px solid var(--pine); outline-offset: 2px; }
 .kit-decl { margin: 0; padding: 12px 14px; background: var(--sunk); border: 1px solid var(--rule); border-radius: var(--radius-sm); font-family: var(--mono); font-size: 12px; line-height: 1.6; color: var(--ink); overflow-x: auto; }
 .kit-verdict { margin: 0; font-size: 13px; line-height: 1.6; color: var(--ink-2); }
@@ -1867,7 +1868,7 @@ export const pages = createPageRegistry&lt;S, PageComponent&lt;S&gt;&gt;(schema)
 <h3>Rung two: a product design</h3>
 <p>Replacing every surface — the shell under the bar, the home, the problems, each kind's list and record — is a product: <code>graview-pages-design</code>, with its own tabs lit from the section a kind's pages are in, and Find and the way back in its own bar.</p>
 <h3>On somebody else's page</h3>
-<p><code>graview-embed</code> mounts the app into one element of any page (<code>face: "pages"</code>, <code>path</code>, <code>routing</code>): the routed face in a box, without the city. A host whose page IS the app passes <code>sceneUnderPages: true</code> to <code>mount</code>.</p>
+<p><code>graview-embed</code> mounts the app into one element of any page: the one face held to that box. <code>routing: "address"</code> stands it against the window.</p>
 <h3>Then find out whether it worked</h3>
 <div class="code" data-scroller><pre><code class="language-sh">pnpm build &amp;&amp; npx graview check ./dist/domain/app.js   # the declaration is still whole
 pnpm test                                               # render every page you registered</code></pre></div>

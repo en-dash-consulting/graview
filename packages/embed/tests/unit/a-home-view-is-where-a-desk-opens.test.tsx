@@ -50,7 +50,7 @@ async function opened(options: Partial<EmbedOptions<AnySchema>> & { app: Graview
   element = document.createElement("div");
   document.body.append(element);
   await act(async () => {
-    handle = mount(element!, { seed, principal: owner, fonts: false, studio: false, heading: 1, ...options });
+    handle = mount(element!, { sceneUnderPages: false, seed, principal: owner, fonts: false, studio: false, heading: 1, ...options });
   });
   await act(async () => {
     await handle!.drawn();

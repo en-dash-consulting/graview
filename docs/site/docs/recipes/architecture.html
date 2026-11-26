@@ -509,6 +509,7 @@ ul.plain b { color: var(--ink); font-weight: 600; }
 .kit-controls label { display: inline-flex; align-items: center; gap: 6px; font-size: 13.5px; color: var(--ink-2); min-height: 24px; }
 .kit-controls select, .kit-controls input[type="color"] { font: inherit; font-size: 13px; color: var(--ink); background: var(--panel); border: 1px solid var(--rule); border-radius: var(--radius-sm); padding: 3px 6px; min-height: 28px; }
 .kit-controls input[type="color"] { width: 40px; padding: 2px; }
+.kit-controls input[type="range"] { width: 132px; height: 28px; margin: 0; accent-color: var(--pine); }
 .kit-controls input:focus-visible, .kit-controls select:focus-visible { outline: 2px solid var(--pine); outline-offset: 2px; }
 .kit-decl { margin: 0; padding: 12px 14px; background: var(--sunk); border: 1px solid var(--rule); border-radius: var(--radius-sm); font-family: var(--mono); font-size: 12px; line-height: 1.6; color: var(--ink); overflow-x: auto; }
 .kit-verdict { margin: 0; font-size: 13px; line-height: 1.6; color: var(--ink-2); }
@@ -1830,7 +1831,7 @@ main.landing > section.agent-hero { padding-top: clamp(40px, 6vh, 72px); gap: va
     </section>
     <section id="face" aria-labelledby="h-face">
       <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-face">A face of its own</h2></div>
-      <p>An app worth keeping wants a look and feel of its own before it wants a server. This one keeps the store where <code>graview preview</code> runs it, and draws Graview's routed face over it with a shell, a home, a route and a record page in the team's own words: a change made on either page is the other's at once. If it mounts the scene too, give the embed <code>bar: { faces: false, name: false }</code> so the face's own shell is the one bar.</p>
+      <p>An app worth keeping wants a look and feel of its own before it wants a server. This one keeps the store where <code>graview preview</code> runs it, and draws Graview's pages over it with a shell, a home, a route and a record page in the team's own words: a change made on either page is the other's at once.</p>
       <div class="code" data-scroller aria-label="Running the face"><pre><code class="language-sh"># the store and its own page, on 4800: it prints the address to open, which carries its key
 npx graview preview app.json --seed seed.json --port 4800
 # the face, over it, on 5173, handed that address
@@ -1934,7 +1935,7 @@ export default defineConfig({
   &lt;/body&gt;
 &lt;/html&gt;</code></pre></div>
       <h3><code>face/src/main.tsx</code></h3>
-      <p>The app and the seat from the preview's <code>/graview/document</code>, the store over <code>openRemote</code>, live; <code>themeCss</code> adopted by hand; the pictures from <code>registerDeclaredLenses(registerViewSpecs(registerDefaultViews(…)))</code>; and <code>PagesApp</code> with the face's own registry.</p>
+      <p>The app and the seat from the preview's <code>/graview/document</code>, the store over <code>openRemote</code>, live; <code>themeCss</code> adopted by hand; the pictures from <code>registerDeclaredLenses(<wbr>registerViewSpecs(<wbr>registerDefaultViews(…)))</code>; and <code>PagesApp</code> with the face's own registry.</p>
       <div class="code" data-scroller aria-label="face/src/main.tsx" style="max-height: 560px; overflow: auto;"><pre><code class="language-typescript">import type { AnySchema, GraviewApp, Principal } from "@graview/core";
 import { appFromOrCompile, sayFindings } from "@graview/core/compiled";
 import { PagesApp } from "@graview/pages";

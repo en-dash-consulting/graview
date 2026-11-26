@@ -116,8 +116,8 @@ async function whole() {
     label: app.name,
     heading: 1,
     keptViews,
-    // Pages and the Scene as one face (FR-239), as Graview Cloud draws an app that has moved: `?graview-one-face=1` on the address it opens at.
-    ...(oneFace ? { sceneUnderPages: true, ...(Number.isFinite(panel) ? { panel } : {}) } : {}),
+    // Pages and the Scene as one face (FR-239), as Graview Cloud draws an app that has moved: `?graview-one-face=1` on the address it opens at. Without it the routed face, as an app Cloud has not moved: the embed's own default is the one face.
+    ...(oneFace ? { sceneUnderPages: true, ...(Number.isFinite(panel) ? { panel } : {}) } : { sceneUnderPages: false }),
     // A view proposed and not kept (`--view` and `--manifest`, FR-187), drawn where it attaches and marked as a draft.
     ...(handed.draftView ? { draftView: handed.draftView } : {}),
   });

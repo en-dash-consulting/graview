@@ -27,8 +27,8 @@ describe("two embeds on one page", () => {
     for (const host of hosts) document.body.appendChild(host);
     const handles: EmbedHandle[] = [];
     await act(async () => {
-      handles.push(mount(hosts[0]!, { app, fonts: false, face: "pages", seed, label: "The notes" } as unknown as EmbedOptions));
-      handles.push(mount(hosts[1]!, { app, fonts: false, face: "pages", seed, label: "The log" } as unknown as EmbedOptions));
+      handles.push(mount(hosts[0]!, { sceneUnderPages: false, app, fonts: false, face: "pages", seed, label: "The notes" } as unknown as EmbedOptions));
+      handles.push(mount(hosts[1]!, { sceneUnderPages: false, app, fonts: false, face: "pages", seed, label: "The log" } as unknown as EmbedOptions));
     });
     try {
       for (let turn = 0; turn < 200 && document.querySelectorAll("[role=search]").length < 2; turn++) await act(async () => new Promise((resolve) => setTimeout(resolve, 5)));
@@ -59,8 +59,8 @@ describe("the scene's Find on somebody else's page", () => {
     document.body.append(editor, ...hosts);
     const handles: EmbedHandle[] = [];
     await act(async () => {
-      handles.push(mount(hosts[0]!, { app, fonts: false, face: "scene", seed, label: "The notes" } as unknown as EmbedOptions));
-      handles.push(mount(hosts[1]!, { app, fonts: false, face: "scene", seed, label: "The log" } as unknown as EmbedOptions));
+      handles.push(mount(hosts[0]!, { sceneUnderPages: false, app, fonts: false, face: "scene", seed, label: "The notes" } as unknown as EmbedOptions));
+      handles.push(mount(hosts[1]!, { sceneUnderPages: false, app, fonts: false, face: "scene", seed, label: "The log" } as unknown as EmbedOptions));
     });
     try {
       for (let turn = 0; turn < 200 && document.querySelectorAll("[data-testid='find-input'], [data-graview-app-bar] input").length < 2; turn++) await act(async () => new Promise((resolve) => setTimeout(resolve, 5)));

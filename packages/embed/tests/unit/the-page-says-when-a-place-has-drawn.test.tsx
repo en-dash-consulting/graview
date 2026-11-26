@@ -35,7 +35,7 @@ async function mounted(options: Partial<EmbedOptions>) {
   host = document.createElement("div");
   document.body.appendChild(host);
   await act(async () => {
-    handle = mount(host!, { app, seed, fonts: false, studio: false, face: "pages", ...options } as EmbedOptions);
+    handle = mount(host!, { sceneUnderPages: false, app, seed, fonts: false, studio: false, face: "pages", ...options } as EmbedOptions);
   });
   return { root: () => host!.querySelector<HTMLElement>("[data-graview-embed]")!, handle: handle! };
 }

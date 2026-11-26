@@ -57,13 +57,29 @@ export interface PageContext<S extends AnySchema> {
    * that city (Nearby) to the whole city (Map) (`one-place.tsx`). Needs
    * `views`, the registry the Scene draws with. On unless said: `false`
    * keeps the routed face alone, with its Scene/Pages switch. An embedded
-   * face (somebody else's page around it) is the routed face in its box
-   * unless its host says `true` (`onTheOneFace`).
+   * face is the one face too, held to its box where `inBox` says so
+   * (`onTheOneFace`).
    */
   readonly sceneUnderPages?: boolean;
   /**
+   * THE ONE FACE HELD TO A BOX, NOT THE WINDOW (Graview HQ
+   * feature:f-one-face-by-default): for a face drawn in an element of
+   * somebody else's page — a docs chapter, a demo in an article. Every
+   * layer of the one face (the bar's slot, the page, the city, the boards,
+   * the level control and the panel's edge) is drawn inside the nearest
+   * element that holds it marked `data-graview-one-face-box`, which is the
+   * containing block of each (`contain: layout paint`, as `@graview/embed`
+   * draws its root), so none is drawn over the host's page; Page, Nearby
+   * and Map are that element's rect, its own page scrolls inside it under
+   * the bar, and the level keys move it only while the keyboard is in it.
+   * Unsaid, it is `embedded`; where no marked element holds the face, or it
+   * is `false`, the one face stands against the window and the window
+   * scrolls its page. Read only where `sceneUnderPages` is.
+   */
+  readonly inBox?: boolean;
+  /**
    * WHERE A HOST'S OWN BAR GOES ON THE ONE FACE (FR-239): handed the bar's
-   * slot, fixed at the window's top over the page and the city, above every
+   * slot, fixed at the window's top (the box's, `inBox`) over the page and the city, above every
    * layer of the one face (`[data-graview-one-face-bar]`), once it is drawn,
    * and null once it is gone. A host that draws the app's bar itself (the
    * embed's, with `barAbove`) draws it there, so it stays at Page, Nearby
@@ -321,14 +337,13 @@ export interface PageContext<S extends AnySchema> {
 /**
  * WHETHER A ROUTED FACE IS THE ONE FACE: the page over the Scene's own city.
  * It is wherever the face was handed the `views` the city is drawn with and
- * the host did not say `sceneUnderPages: false` — except on an embedded
- * face, drawn in a box of somebody else's page, which is the one face only
- * where its host says `sceneUnderPages: true` (the one face stands against
- * the window).
+ * the host did not say `sceneUnderPages: false` — an embedded face, drawn
+ * in a box of somebody else's page, as much as one that owns its page
+ * (held to its box there, `inBox`).
  */
-export function onTheOneFace(context: { readonly views?: unknown; readonly sceneUnderPages?: boolean | undefined; readonly embedded?: boolean | undefined }): boolean {
+export function onTheOneFace(context: { readonly views?: unknown; readonly sceneUnderPages?: boolean | undefined }): boolean {
   if (!context.views) return false;
-  return context.sceneUnderPages ?? !context.embedded;
+  return context.sceneUnderPages !== false;
 }
 
 /**

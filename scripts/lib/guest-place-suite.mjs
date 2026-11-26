@@ -41,6 +41,8 @@ const definition = { manifest: ${JSON.stringify(PACKAGES_MANIFEST)}, worker: { s
 window.__problems = [];
 const notes = { manifest: ${JSON.stringify(NOTES_MANIFEST)}, worker: { source: window.NOTES }, onProblem: (said) => window.__problems.push(said), images: { origins: ["https://images.example"] } };
 window.__handle = mount(document.getElementById("app"), {
+  // The routed face and its scene, which this harness holds: an embed draws the one face unless told otherwise.
+  sceneUnderPages: false,
   app: offersApp,
   seed: offersSeed,
   principal: asked.get("seat") === "erin" ? erin : lin,

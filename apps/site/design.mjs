@@ -297,12 +297,12 @@ function faceSection(r) {
     "package.json": "What it installs: the framework's packages, React and the router, and Vite. No framework source: a product installs the packages.",
     "vite.config.ts": "The dev server, and its proxy: every <code>/graview</code> request, the socket too, goes to the preview, with the preview's own Origin, so its same-app doors answer a page they would refuse from another port.",
     "index.html": "The page.",
-    "src/main.tsx": "The app and the seat from the preview's <code>/graview/document</code>, the store over <code>openRemote</code>, live; <code>themeCss</code> adopted by hand; the pictures from <code>registerDeclaredLenses(registerViewSpecs(registerDefaultViews(…)))</code>; and <code>PagesApp</code> with the face's own registry.",
+    "src/main.tsx": "The app and the seat from the preview's <code>/graview/document</code>, the store over <code>openRemote</code>, live; <code>themeCss</code> adopted by hand; the pictures from <code>registerDeclaredLenses(<wbr>registerViewSpecs(<wbr>registerDefaultViews(…)))</code>; and <code>PagesApp</code> with the face's own registry.",
     "src/pages.tsx": "The face's own shell (with Find and Undo in its own row), home, a route about no one kind, and a zone's record page whose map link is <code>spatialHref(id, sceneHref)</code> into the preview's own scene. Every other page is still derived.",
     "tsconfig.json": "Strict, for the bundler.",
   };
   return section("face", "A face of its own",
-    `      <p>An app worth keeping wants a look and feel of its own before it wants a server. This one keeps the store where <code>graview preview</code> runs it, and draws Graview's routed face over it with a shell, a home, a route and a record page in the team's own words: a change made on either page is the other's at once. If it mounts the scene too, give the embed <code>bar: { faces: false, name: false }</code> so the face's own shell is the one bar.</p>\n` +
+    `      <p>An app worth keeping wants a look and feel of its own before it wants a server. This one keeps the store where <code>graview preview</code> runs it, and draws Graview's pages over it with a shell, a home, a route and a record page in the team's own words: a change made on either page is the other's at once.</p>\n` +
     `      <div class="code" data-scroller aria-label="Running the face"><pre><code class="language-sh"># the store and its own page, on 4800: it prints the address to open, which carries its key\nnpx graview preview app.json --seed seed.json --port 4800\n# the face, over it, on 5173, handed that address\ncd face &amp;&amp; npm install &amp;&amp; GRAVIEW_PREVIEW=&quot;http://localhost:4800/?graview_key=…&quot; npm run dev</code></pre></div>\n` +
     `      <p class="sm dim">CI runs these files as they are: <code>pnpm verify face-recipe</code> installs them over the built packages, starts the preview and the face&rsquo;s own dev server, and checks that they typecheck, that the preview refuses the face&rsquo;s page without the proxy and answers it through it, that the face draws its own shell, home and zone page, and that a change on either side reaches the other live.</p>\n` +
     r.face.map((file) => `      <h3><code>face/${escape(file.path)}</code></h3>\n${what[file.path] ? `      <p>${what[file.path]}</p>\n` : ""}      <div class="code" data-scroller aria-label="face/${escape(file.path)}" style="max-height: 560px; overflow: auto;"><pre><code class="language-${faceLanguage(file.path)}">${escape(file.source.trimEnd())}</code></pre></div>`).join("\n"));
@@ -627,7 +627,7 @@ const DOCS = {
         `        <li><a href="skills/graview-new-app.html"><strong>graview-new-app</strong><span>The shape of the declaration, the shell that comes for free, and the CI that keeps it honest.</span></a></li>\n` +
         `        <li><a href="skills/graview-node-kind.html"><strong>graview-node-kind</strong><span>Add a kind — fields, edges, label, plural, roles — and verify it with graview check.</span></a></li>\n` +
         `        <li><a href="skills/graview-invariant.html"><strong>graview-invariant</strong><span>A rule that names the acts that would repair it, then make it fire.</span></a></li>\n` +
-        `        <li><a href="skills/graview-pages.html"><strong>graview-pages</strong><span>The routed face, from the derived pages to a design of your own.</span></a></li>\n` +
+        `        <li><a href="skills/graview-pages.html"><strong>graview-pages</strong><span>The pages, from the derived ones to a design of your own.</span></a></li>\n` +
         `        <li><a href="skills/graview-ship.html"><strong>graview-ship</strong><span>Persistence, migrations, export and health, self-hosted or behind a service.</span></a></li>\n` +
         `      </ul>`) +
       section("one-release", "One release, run from the project",
@@ -697,8 +697,8 @@ const DOCS = {
       `    </section>\n` +
       section("city", "The city, at altitude",
         `      <p>Every kind is a district; every record a building on its own plot; every edge a road with its words on it. Drag the ground, press a district, come down to a plot.</p>\n` + frame(16, "The garden, grown", "The example garden at altitude, live", ' data-stop="#overview=1" data-settle="1"')) +
-      section("pages", "The routed face",
-        `      <p>The same store as ordinary pages — here in the garden's own design: an almanac over the same acts, rules and log.</p>\n` + frame(13, "The garden's own face", "The garden's routed pages, live", ' data-face="pages"')) +
+      section("pages", "Every page",
+        `      <p>The same store as ordinary pages — here in the garden's own design: an almanac over the same acts, rules and log.</p>\n` + frame(13, "The garden's own face", "The garden's pages, live", ' data-face="pages"')) +
       section("studio", "The studio",
         `      <p>The declaration itself, open as a graph, edited with ordinary acts and checked before the change lands.</p>\n` + frame(15, "Seedbed, in the studio", "The declaration open in the studio, live", ' data-settle="0"')) +
       section("seat", "A seat for an agent",
@@ -836,7 +836,7 @@ const DOCS = {
       `      <p class="lede" style="margin-top: 18px;">graview.dev is a Graview app: one declaration, <a class="inl" href="${DECLARATION}"><code>apps/site/app.json</code></a>, and ${total} records written out of the repository by <code>node scripts/site-docs.mjs</code>. Every page the site serves is one of those records, rendered as static HTML by <code>renderPlace</code> from <code>@graview/pages/static</code> in the site's own design, so a search engine and a model read plain pages, and none of them can say what the records do not.</p>\n` +
       `    </section>\n` +
       section("live", "The site, running",
-        `      <p>This is that declaration, compiled in your browser by the same compiler <code>graview check</code> uses, over the same records the pages are rendered from: the city of its packages, skills, check findings and pages. Press a district; come down to a record; switch to its pages.</p>\n` +
+        `      <p>This is that declaration, compiled in your browser by the same compiler <code>graview check</code> uses, over the same records the pages are rendered from: the city of its packages, skills, check findings and pages. Read its home; rise to its map and press a district; come down to a record's page.</p>\n` +
         `      <div class="chapter-live" data-graview-document="site-app" data-graview-seed="site-records" data-stop="#overview=1" data-label="graview.dev" role="region" aria-label="graview.dev as a Graview app, live"><p class="chapter-loading">graview.dev, loading…</p></div>`) +
       section("declared", "What it declares",
         `      <p><b>${escape(declared.name ?? "graview.dev")}</b>: ${escape(declared.description ?? "")} ${kinds.length} kinds, each read out of the tree:</p>\n` +

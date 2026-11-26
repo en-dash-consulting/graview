@@ -7,7 +7,7 @@ import { mount, type EmbedHandle, type EmbedOptions } from "../../src/index.js";
 
 /**
  * THE SCENE FACE, MOUNTED AT ITS ROOT, OPENS ON THE OVERVIEW (from Graview
- * Cloud). `mount(stage, { face: "scene", routing: "memory" })` opened on
+ * Cloud). `mount(stage, { sceneUnderPages: false, face: "scene", routing: "memory" })` opened on
  * the scene descended on nothing — a near-empty floor, the kinds' tiles
  * along its foot — where `graview preview`, at `/places/overview`, opens on
  * the whole thing from above. A scene asked for with nowhere to be (no
@@ -36,7 +36,7 @@ async function mounted(options: Partial<EmbedOptions>) {
   host = document.createElement("div");
   document.body.appendChild(host);
   await act(async () => {
-    handle = mount(host!, { app, seed, fonts: false, studio: false, ...options } as EmbedOptions);
+    handle = mount(host!, { sceneUnderPages: false, app, seed, fonts: false, studio: false, ...options } as EmbedOptions);
   });
   await act(async () => new Promise((resolve) => setTimeout(resolve, 200)));
   return { drawn: () => host!.querySelector<HTMLElement>("[data-graview-embed]")!.getAttribute("data-graview-embed"), handle: handle! };

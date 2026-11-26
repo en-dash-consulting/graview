@@ -43,7 +43,7 @@ describe("the studio a host hands in", () => {
     document.body.append(element);
     const onApply = () => {};
     // No act, no waiting: mount's first render is synchronous, and the studio is in it.
-    const handle = mount(element, { app, seed, face: "graview", fonts: false, studio: { onApply, offered: true, place: HandedIn as never } });
+    const handle = mount(element, { sceneUnderPages: false, app, seed, face: "graview", fonts: false, studio: { onApply, offered: true, place: HandedIn as never } });
     unmounts.push(() => handle.unmount());
     expect(element.querySelector('[data-testid="studio-place-handed-in"]')).not.toBeNull();
     expect(handed.props).toMatchObject({ app, within: "box", onApply, offered: true });
