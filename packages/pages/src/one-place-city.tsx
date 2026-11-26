@@ -2014,7 +2014,9 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
         // The shared line's marker says how many it carries: wide enough for the number, and a fingertip's size.
         const size = gathered?.lead ? 22 : 16;
         const wide = gathered?.lead ? Math.max(22, 10 + 7 * String(gathered.count).length) : 16;
-        drawn.ring.textContent = gathered?.lead ? String(gathered.count) : "";
+        // Written only where it changed: text set again as it was is a node taken out and another put in, which a page that says it has drawn waits out (HQ f-city-drawn-waits-its-cap).
+        const count = gathered?.lead ? String(gathered.count) : "";
+        if (drawn.ring.textContent !== count) drawn.ring.textContent = count;
         drawn.ring.style.width = `${wide}px`;
         drawn.ring.style.height = `${size}px`;
         drawn.ring.style.borderRadius = `${size / 2}px`;

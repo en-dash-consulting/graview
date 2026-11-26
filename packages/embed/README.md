@@ -140,8 +140,9 @@ moving for 200 ms —
 the embed's root wears `data-graview-drawn`, its value the place's path,
 and `onDrawn(place)` is told where it is as `where()` says it. A move to
 another place takes the attribute off in the same commit, and the next
-place puts it back as it settles. A place that never stops moving is said
-drawn after ten seconds all the same. On the one face a person may be shown
+place puts it back as it settles. An attribute written again as it was —
+the one face's city writes its own every frame — is no movement. A place
+that never stops moving is said drawn after ten seconds all the same. On the one face a person may be shown
 the page before that: the root says `data-graview-painted`
 (`PAINTED_ATTRIBUTE`) the same way but for what stands under the page, and
 an opening screen (`@graview/pages/splash`) lifts on it, or on
