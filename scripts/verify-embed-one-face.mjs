@@ -580,8 +580,8 @@ async function boxed(browser, { name, options }, errors) {
       const top = el.getBoundingClientRect().top + window.scrollY;
       window.scrollTo({ top: Math.max(0, top - 160), behavior: "instant" });
     }, BOX);
-    // The page names the overview as its stop: the one face opens at the Map.
-    await restInBox(page, 2, 30_000);
+    // graview.dev opens a frame on its page, its overview's stop the Map a level control away.
+    await restInBox(page, 0, 30_000);
 
     // The app menu opened as a person opens it: no Scene, no Pages in it, and nothing of the old two faces anywhere on the docs page.
     const menu = await page.locator(`${BOX} [data-testid="app-menu-open"]`).locator("visible=true").first().click({ timeout: 5_000 }).then(

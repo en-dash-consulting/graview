@@ -61,6 +61,14 @@ declare global {
   }
 }
 
+/*
+ * A FRAME ON THE SITE OPENS ON ITS PAGE. A stop that names the overview
+ * would open the one face at its Map, whose boards are drawn small in a
+ * frame of a column; on graview.dev the frame opens on the app's home
+ * instead, and the Map is the control at its foot away.
+ */
+const onItsPage = (stop: string | undefined): { readonly path?: string } => (stop && /(^#|&)overview=1(&|$)/.test(stop) ? { path: "/" } : {});
+
 /** The embeds the page holds, so a control on the page can reach the one it stands next to. */
 export const handles = new Map<HTMLElement, EmbedHandle>();
 
@@ -77,7 +85,7 @@ export function mountChapter(element: HTMLElement, n: number, face?: EmbedFace, 
     // the overview, a record's page for a record, a kind's list for a kind.
     ...(face ? { face } : chapter.face === "pages" ? { face: "pages" as const } : {}),
     ...(stop ?? chapter.stop ? { stop: (stop ?? chapter.stop)! } : {}),
-    ...(chapter.path ? { path: chapter.path.replace(/^\/pages/, "") || "/" } : {}),
+    ...(chapter.path ? { path: chapter.path.replace(/^\/pages/, "") || "/" } : onItsPage(stop ?? chapter.stop)),
     ...(chapter.principal ? { principal: chapter.principal } : {}),
     // The page's scheme where it says one: a frame on a night band is dark whatever the reader's setting.
     ...(scheme ? { scheme } : {}),
@@ -231,6 +239,7 @@ export function mountRecipe(element: HTMLElement, slug: string, face?: EmbedFace
     ...(seat ? { principal: seat } : {}),
     ...(face ? { face } : {}),
     ...(stop ?? entry?.stop ? { stop: (stop ?? entry?.stop)! } : {}),
+    ...onItsPage(stop ?? entry?.stop),
     ...(scheme ? { scheme } : {}),
     label: label ?? entry?.title ?? app.name,
   });
@@ -266,6 +275,7 @@ export function mountDocument(element: HTMLElement, documentId: string, seedId: 
     seed: carried(seedId) as never,
     ...(face ? { face } : {}),
     ...(stop ? { stop } : {}),
+    ...onItsPage(stop),
     label: label ?? app.name,
   });
   handles.set(element, handle);

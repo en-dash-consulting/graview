@@ -825,13 +825,30 @@ export function useFrame<S extends AnySchema>(props: FrameOptions<S>) {
     // sweep names what is INSIDE it — a named section is a region too, and
     // the seat is one (FR-40).
     // A landmark that already says which picture it is in — a board's column, "Vendors by status · Researching, 0" (FR-109) — keeps its name.
-    const sweep = () =>
+    /*
+     * A REGION NAMED BY ITS OWN HEADING (`aria-labelledby`, as a design's
+     * sections are) is named after the embed too: two embeds of one design on
+     * a page were two regions of one name. Its heading's words become its
+     * label, under the embed's, and the reference is let go.
+     */
+    const byHeading = (el: Element) => {
+      const ids = el.getAttribute("aria-labelledby")?.split(/\s+/).filter(Boolean) ?? [];
+      const words = ids.map((id) => root.querySelector(`[id="${CSS.escape(id)}"]`)?.textContent?.trim() ?? "").filter(Boolean).join(" ");
+      if (!words) return;
+      el.removeAttribute("aria-labelledby");
+      el.setAttribute("aria-label", words);
+    };
+    const sweep = () => {
+      root.querySelectorAll("section[aria-labelledby]:not([role]), [role=region][aria-labelledby]").forEach((el) => {
+        if (!el.hasAttribute("data-graview-named-by-lens")) byHeading(el);
+      });
       root.querySelectorAll("aside, nav, main, header, footer, section[aria-label]:not([role]), [role=region], [role=complementary], [role=navigation], [role=search]").forEach((el) => {
         if (!el.hasAttribute("data-graview-named-by-lens")) name(el);
       });
+    };
     sweep();
     const observer = new MutationObserver(sweep);
-    observer.observe(root, { childList: true, subtree: true, attributes: true, attributeFilter: ["aria-label"] });
+    observer.observe(root, { childList: true, subtree: true, attributes: true, attributeFilter: ["aria-label", "aria-labelledby"] });
     return () => observer.disconnect();
   }, [label]);
 

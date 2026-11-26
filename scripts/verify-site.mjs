@@ -434,18 +434,18 @@ async function chapters() {
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
   await arrive(page, pageAt("progression.html"));
   await settled(page, { most: 600 });
-  /* A chapter opens on its Map (its stop is the overview) and comes down to its home on the page itself: one face, its level's key pressed in its box (FR-239). */
+  /* A chapter opens on its home page — graview.dev opens a frame on its page — and rises to its Map with its level's key pressed in its box: one face (FR-239). */
   const one = '#chapter-1 [data-graview-chapter="1"]';
   await page.locator(one).scrollIntoViewIfNeeded();
   await page.waitForFunction((one) => document.querySelector(`${one} [data-graview-one-place]`) !== null, one, { timeout: 20_000 }).catch(() => {});
   const levelAt = () => page.evaluate((one) => document.querySelector(`${one} [data-graview-one-place]`)?.getAttribute("data-graview-one-place") ?? null, one);
-  await page.waitForFunction((one) => document.querySelector(`${one} [data-graview-one-place]`)?.getAttribute("data-graview-one-place") === "2", one, { timeout: 20_000 }).catch(() => {});
+  await settled(page, { most: 500 });
   const levelBefore = await levelAt();
   await page.evaluate((one) => document.querySelector(`${one} [data-testid="altitude"] button`)?.focus({ preventScroll: true }), one);
-  await page.keyboard.press("1");
-  await page.waitForFunction((one) => document.querySelector(`${one} [data-graview-one-place]`)?.getAttribute("data-graview-one-place") === "0", one, { timeout: 20_000 }).catch(() => {});
+  await page.keyboard.press("3");
+  await page.waitForFunction((one) => document.querySelector(`${one} [data-graview-one-place]`)?.getAttribute("data-graview-one-place") === "2", one, { timeout: 20_000 }).catch(() => {});
   const levelAfter = await levelAt();
-  report.criteria.aChapterComesDownFromItsMapToItsHomeOnThePage = levelBefore === "2" && levelAfter === "0";
+  report.criteria.aChapterRisesFromItsHomeToItsMapOnThePage = levelBefore === "0" && levelAfter === "2";
 
   /* The kit re-dresses the live garden: a right-angled route draws elbows, a kind kept quiet is not drawn. */
   await page.locator('#kit [data-graview-chapter="8"]').scrollIntoViewIfNeeded();
