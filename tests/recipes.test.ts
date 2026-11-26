@@ -120,7 +120,7 @@ describe("the home", () => {
      */
     const landing = read("index.html");
     const prompt = /<code id="prompt">([\s\S]*?)<\/code>/.exec(landing)?.[1] ?? "";
-    expect(prompt.replace(/&rsquo;/g, "'")).toBe("Read https://graview.dev/start.md, then map this repo as a Graview app and show me what's in it.");
+    expect(prompt.replace(/<[^>]+>/g, "").replace(/&rsquo;/g, "'")).toBe("Read https://graview.dev/start.md, then map this repo as a Graview app and show me what's in it.");
     expect(landing).toContain('href="docs/index.html"');
     expect(read("docs/index.html")).toContain('href="recipes.html"');
     for (const recipe of index.recipes) expect(read("docs/recipes.html"), recipe.slug).toContain(`href="recipes/${recipe.slug}.html"`);
