@@ -57,8 +57,9 @@ haze. A brand supplies its own and `graview check` measures it. The sheet is
 three parts: `themeBaseCss`, what every face draws on; `viewsCss`, the blocks
 a view spec is drawn with, which each face that draws a view draws beside it;
 and `sceneCss`, the rules only the scene draws (the districts from altitude,
-the plots, the village, the billboards), which an embed's scene face draws
-beside it so a page on the pages face carries none of them.
+the plots, the village, the billboards), which the one face's city and an embed's
+Scene draw with: an embed's frame, whose sheet is `themeBaseCss`, writes them only as
+the city or the Scene is fetched, so its Pages carry none of them.
 
 ## Design language
 

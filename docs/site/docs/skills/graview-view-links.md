@@ -8,7 +8,7 @@ Installed into a project by `graview skills install .`, and read by whichever as
 
 ## Links in a worker view
 
-A worker view (`graview-worker-view`: its manifest, its global, its limits) writes no address of the page's: an `href` it built is never drawn. What it may link to is a record, a named place or a kind's list of this app, and the host makes that a link and follows it, on both faces, only to what the viewer may see.
+A worker view (`graview-worker-view`: its manifest, its global, its limits) writes no address of the page's: an `href` it built is never drawn. What it may link to is a record, a named place or a kind's list of this app, and the host makes that a link and follows it, on its page and in the city, only to what the viewer may see.
 
 **Go somewhere with a link, do something with a button.** `<a data-record>` or `<a data-place>` to go; `<button>`, or `<button data-act>` (`graview-view-forms`), to do. Style both as you like: the host resets a button and a link it made to the words around them at no specificity, so your own class always wins. A `<div>` or `<span>` with a `graview.on("click")` handler is reached by no keyboard and is nothing to a screen reader: do not draw one. A list of records is a list of `<a data-record>`, never `graview.on("click", "[data-id]", … navigate)`.
 

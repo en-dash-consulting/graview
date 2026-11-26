@@ -246,7 +246,7 @@ async function verifyKeyboardSurvivesThePane(engine, launch) {
   const browser = await launch();
   try {
     const page = await browser.newPage({ viewport: { width: 1560, height: 940 } });
-    await page.goto(`${at("todo")}/?today=2026-09-01`, { waitUntil: "load" });
+    await page.goto(`${at("todo")}/scene/?today=2026-09-01`, { waitUntil: "load" });
     await page.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
     await page.waitForTimeout(900);
     // Somewhere with a pane — the acts at the pointer — and the keyboard inside it.
@@ -305,7 +305,7 @@ async function verifyAltitudeCut() {
     const page = await browser.newPage({ viewport: { width: 1560, height: 940 } });
     const errors = [];
     page.on("pageerror", (e) => errors.push(e.message));
-    await page.goto(`${at("todo")}/?today=2026-09-01`, { waitUntil: "load" });
+    await page.goto(`${at("todo")}/scene/?today=2026-09-01`, { waitUntil: "load" });
     await page.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
     const unsupported = await page.evaluate(() => typeof globalThis.CSSPropertyRule === "undefined");
     await page.click('[data-testid="overview"]');
@@ -369,7 +369,7 @@ async function verifyLocalFallback() {
     await page.addInitScript(() => {
       window.__todoAi = { onDevice: true };
     });
-    await page.goto(`${at("todo")}/?today=2026-09-01`, { waitUntil: "load" });
+    await page.goto(`${at("todo")}/scene/?today=2026-09-01`, { waitUntil: "load" });
     await page.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
     const engineFacts = await page.evaluate(() => ({
       webgpu: "gpu" in navigator,

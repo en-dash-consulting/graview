@@ -1813,7 +1813,7 @@ main.landing > section.agent-hero { padding-top: clamp(40px, 6vh, 72px); gap: va
   acts: ["set-summary", { act: "set-standing", as: "recommend", constants: { standing: "recommended" } }] }</code></pre></div>
 <ul>
 <li><code>name</code> is lower-case letters, digits and hyphens. Acts are recorded <code>via: "view:&lt;name&gt;"</code>.</li>
-<li><code>title</code> makes it a named place on both faces, with the slug <code>placeSlug(title)</code> (<code>"the-packages"</code>).</li>
+<li><code>title</code> makes it a named place, with the slug <code>placeSlug(title)</code> (<code>"the-packages"</code>).</li>
 <li>A view is as tall as it draws, measured by the host: set no height. On Pages it flows with the page. On the Scene it is a card held to its box: a fade and More where cut, Open to its page. <code>flows: false</code> keeps a frame on Pages; <code>scene: { maxHeight }</code> holds the card lower (80–4000px).</li>
 <li><code>attach</code> is a kind, or <code>"home"</code> for the front page's body (cardinality <code>many</code>).</li>
 <li><code>reads</code> lists the other kinds and the edges it is shown. Nothing else is handed to it. A view of one reading an edge from its kind to its kind (rock <code>becomes</code> rock) is handed the records linked to it. An edge to a kind it is not handed brings nothing, and the check says so.</li>
@@ -1857,7 +1857,7 @@ pages.surface("home", workerHome({ manifest: front, worker: { source: frontSourc
 <ol>
 <li><code>graview check</code> the app the view names. <code>checkManifest(manifest, store)</code> and <code>checkViewSource(source)</code> from <code>@graview/guest/host/views</code> must both say nothing.</li>
 <li>Run it headless, with no network, as each seat, over a seed: `graview view check view.js --app &lt;app&gt; --manifest manifest.json --seed &lt;seed.json&gt; --seats<code> (or </code>--roles &lt;role&gt;`, one). It says what it drew, or why it will not do: <code>error</code> (what it threw), <code>nodes</code>, <code>flood</code>, <code>slow</code>, <code>act</code> (an act its manifest does not name), <code>manifest</code> or <code>source</code>. A view of one record runs over the first of its kind the seat sees, or <code>--record &lt;id&gt;</code>. It presses each control (<code>graview-view-forms</code>). So does <code>runWorkerViewForEachSeat</code> (<code>guest/headless</code>).</li>
-<li>Open the place on both faces as that member. Is anything shown that they should not see? Does the region carry no <code>data-worker-view-failed</code>? <code>start</code> there means it never ran: the note under the plain face names what the page's Content-Security-Policy lacks (<code>worker-src blob:</code>).</li>
+<li>Open the place as that member, as a page and on the Map. Is anything shown that they should not see? Does the region carry no <code>data-worker-view-failed</code>? <code>start</code> there means it never ran: the note under the plain face names what the page's Content-Security-Policy lacks (<code>worker-src blob:</code>).</li>
 <li>Toggle to dark: does it restyle?</li>
 <li>Follow each link, and tap each card on a phone, as <code>graview-view-links</code> says. A view that writes is pressed as <code>graview-view-forms</code> says.</li>
 <li>Revising one? Hand both to <code>compareViewRevision</code> (<code>@graview/core/revisions</code>): it names what the new one stopped styling.</li>

@@ -239,7 +239,8 @@ const SCREENS = [
   ...firstLook,
   board,
   ...hosted("workshop"),
-  ...example("todo", ["/", "/pages", "/pages/tasks", "/pages/tasks/t-deposit", "/pages/problems", "/pages/search?q=the"]),
+  // Things is one face at its root; `/scene/` is the Scene's own face, kept for the harnesses of its own hand.
+  ...example("todo", ["/", "/tasks", "/tasks/t-deposit", "/problems", "/search?q=the", "/scene/"]),
   ...example("seedbed", ["/", "/pages"]),
   ...example("rota", ["/", "/pages"]),
   ...example("discography", ["/", "/pages"]),

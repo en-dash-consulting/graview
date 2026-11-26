@@ -109,7 +109,8 @@ describe("what a screen reader is told on the routed face", () => {
   });
 
   it("names a picture a record is seen in once, by the picture, and the record's way to the scene says no arrow aloud", () => {
-    const html = renderToStaticMarkup(<PagesApp context={{ store: store(), views: views(), sceneHref: "/" }} initialPath="/staff/priya" />);
+    // The way to the scene is the routed face alone's (`sceneUnderPages: false`): on the one face the city is the camera rising, never a link.
+    const html = renderToStaticMarkup(<PagesApp context={{ store: store(), views: views(), sceneHref: "/", sceneUnderPages: false }} initialPath="/staff/priya" />);
     const page = new DOMParser().parseFromString(html, "text/html");
     // Each picture is one stop (Roadmap f-seen-in-phone-length): the arrow beside it to the scene is gone, with its stop.
     expect([...page.querySelectorAll('[data-testid="seen-in"] a')].map(nameOf)).toEqual(["The roster"]);

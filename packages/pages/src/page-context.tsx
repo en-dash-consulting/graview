@@ -46,15 +46,18 @@ export interface PageContext<S extends AnySchema> {
    */
   readonly timeZone?: string;
 
-  /** Where the spatial face lives, for the cross-links. Default "/". */
+  /** Where the Scene's own face lives, for the cross-links, on a face that is the routed face alone. Default "/". */
   readonly sceneHref?: string;
   /**
-   * PAGES AND THE SCENE ARE ONE PLACE (Graview HQ
-   * feature:f-page-zooms-out-to-the-city), a prototype: the Scene's own
-   * city is drawn under the page, and Up — or a pinch — moves the page
-   * itself, continuously, from the window to a panel beside its place in
-   * that city, to standing on it, to the whole city (`one-place.tsx`).
-   * Needs `views`, the registry the Scene draws with. Off unless given.
+   * PAGES AND THE SCENE ARE ONE FACE (Graview HQ
+   * feature:f-one-face-by-default): the Scene's own city is drawn under
+   * the page, and one control — or a pinch — moves the page itself,
+   * continuously, from the window (Page) to a panel beside its place in
+   * that city (Nearby) to the whole city (Map) (`one-place.tsx`). Needs
+   * `views`, the registry the Scene draws with. On unless said: `false`
+   * keeps the routed face alone, with its Scene/Pages switch. An embedded
+   * face (somebody else's page around it) is the routed face in its box
+   * unless its host says `true` (`onTheOneFace`).
    */
   readonly sceneUnderPages?: boolean;
   /**
@@ -298,11 +301,24 @@ export interface PageContext<S extends AnySchema> {
 }
 
 /**
+ * WHETHER A ROUTED FACE IS THE ONE FACE: the page over the Scene's own city.
+ * It is wherever the face was handed the `views` the city is drawn with and
+ * the host did not say `sceneUnderPages: false` — except on an embedded
+ * face, drawn in a box of somebody else's page, which is the one face only
+ * where its host says `sceneUnderPages: true` (the one face stands against
+ * the window).
+ */
+export function onTheOneFace(context: { readonly views?: unknown; readonly sceneUnderPages?: boolean | undefined; readonly embedded?: boolean | undefined }): boolean {
+  if (!context.views) return false;
+  return context.sceneUnderPages ?? !context.embedded;
+}
+
+/**
  * WHERE A THING STANDS IN THE SCENE (FR-132, FR-137): a link from a page to
  * the scene at a stop — a record in focus, a picture in place. Through the
  * embed's own way when the face is in one that draws the scene; to the
- * scene's address when the face owns its page; nowhere, and nothing drawn,
- * when there is no scene to go to.
+ * scene's address when the face owns its page and is the routed face alone;
+ * nowhere, and nothing drawn, on the one face or when there is no scene.
  */
 export function SceneLink<S extends AnySchema>({
   context,
@@ -333,7 +349,7 @@ export function SceneLink<S extends AnySchema>({
   );
   const named = label ? { "aria-label": label } : {};
   // One face: the city is the camera rising from this page (the button at the window's foot), never another address.
-  if (context.sceneUnderPages && context.views) return null;
+  if (onTheOneFace(context)) return null;
   if (context.overview) {
     const go = context.overview;
     return (

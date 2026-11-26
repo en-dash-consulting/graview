@@ -175,7 +175,7 @@ try {
     page.on("pageerror", (e) => errors.push(String(e).slice(0, 90)));
 
     const sitAs = async (as) => {
-      await page.goto(`${at("todo")}/?theme=light&today=2026-09-01&fresh=1&as=${as}`, { waitUntil: "load" });
+      await page.goto(`${at("todo")}/scene/?theme=light&today=2026-09-01&fresh=1&as=${as}`, { waitUntil: "load" });
       await page.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
       await page.waitForTimeout(900);
     };
@@ -278,7 +278,7 @@ const openProfile = async (page) => {
 
     /* And what a member IS told about a person's own record. */
     const refused = await page.evaluate(async () => {
-      const response = await fetch("/pages/users/user-nora?today=2026-09-01");
+      const response = await fetch("/users/user-nora?today=2026-09-01");
       return response.ok;
     });
     check("things: the member's routed face still answers, and lists only their own kinds",
@@ -286,7 +286,7 @@ const openProfile = async (page) => {
       String(refused),
     );
     const memberKinds = await page.evaluate(async () => {
-      window.location.href = "/pages?today=2026-09-01&as=user-sam";
+      window.location.href = "/?today=2026-09-01&as=user-sam";
       return true;
     });
     await page.waitForTimeout(1400);
@@ -298,7 +298,7 @@ const openProfile = async (page) => {
       memberKinds && !listed.some((word) => word.startsWith("People")),
       listed.join(", "),
     );
-    await page.goto(`${at("todo")}/pages?today=2026-09-01&as=user-nora`, { waitUntil: "networkidle" });
+    await page.goto(`${at("todo")}/?today=2026-09-01&as=user-nora`, { waitUntil: "networkidle" });
     await page.waitForTimeout(700);
     const keeperListed = await page.evaluate(() =>
       // The places the one bar offers, on the row or under its list.
@@ -420,7 +420,7 @@ const openProfile = async (page) => {
           },
         };
       });
-      await page.goto(`${at("todo")}/?theme=light&today=2026-09-01&fresh=1&chat=1&as=${as}`, { waitUntil: "load" });
+      await page.goto(`${at("todo")}/scene/?theme=light&today=2026-09-01&fresh=1&chat=1&as=${as}`, { waitUntil: "load" });
       await page.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
       await page.waitForTimeout(900);
       // The conversation lives in Activity, the inbox's tab, beside the tidy seat: open it the way a person would.

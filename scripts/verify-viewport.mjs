@@ -207,8 +207,8 @@ async function onAnIpad(browser, engine) {
   for (const device of IPADS) {
     reach("theBarFitsAnIpadInBothOrientations");
     for (const [app, url, ready] of [
-      ["todo, the scene", `${at("todo")}/?today=2026-09-01`, todoReady],
-      ["todo, the pages", `${at("todo")}/?today=2026-09-01&face=pages`, todoReady],
+      ["todo, the scene", `${at("todo")}/scene/?today=2026-09-01`, todoReady],
+      ["todo, the pages", `${at("todo")}/?today=2026-09-01`, todoReady],
       ["ten kinds, the pages", `${at("viewport-host")}/?doc=recon&face=pages&height=viewport`, embedReady],
       ["ten kinds, the scene", `${at("viewport-host")}/?doc=recon&face=scene&height=viewport`, embedReady],
     ]) {
@@ -251,7 +251,7 @@ async function onAnIpad(browser, engine) {
     await context.close();
   }
   // And the todo example's Shell, on the ground: the window grows by the toolbar and back.
-  const { context, page } = await open("iPad Pro 11", `${at("todo")}/?today=2026-09-01`, todoReady);
+  const { context, page } = await open("iPad Pro 11", `${at("todo")}/scene/?today=2026-09-01`, todoReady);
   await toolbarFolds(page, "iPad Pro 11", "todo, the scene", true);
   await context.close();
   if (!BACK_CRASHES) return;
@@ -263,7 +263,7 @@ async function onAnIpad(browser, engine) {
   for (const [device, app, url, ready] of [
     ["iPad Pro 11", "ten kinds, the scene", `${at("viewport-host")}/?doc=recon&face=scene&height=viewport`, embedReady],
     ["iPad Pro 11 landscape", "ten kinds, the scene", `${at("viewport-host")}/?doc=recon&face=scene&height=viewport`, embedReady],
-    ["iPad Pro 11", "todo, the scene", `${at("todo")}/?today=2026-09-01`, todoReady],
+    ["iPad Pro 11", "todo, the scene", `${at("todo")}/scene/?today=2026-09-01`, todoReady],
   ]) {
     reach("theSceneHoldsStillWhenSafarisToolbarCollapses");
     const { context, page } = await open(device, url, ready, { isMobile: false });
@@ -446,7 +446,7 @@ try {
     const context = await browser.newContext({ viewport: PORTRAIT, hasTouch: true });
     const page = await context.newPage();
     page.on("pageerror", (error) => errors.push(`${engine} shell: ${error.message}`));
-    await arriveWithoutWebfonts(page, `${at("todo")}/?today=2026-09-01`);
+    await arriveWithoutWebfonts(page, `${at("todo")}/scene/?today=2026-09-01`);
     await page.waitForFunction(() => "__todoReady" in window, null, { timeout: 120_000 });
     await page.waitForTimeout(SETTLE);
     const said = await turnAndMeasure(page, "shell");

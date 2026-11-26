@@ -74,7 +74,7 @@ const APPS = {
         await page.waitForTimeout(700);
       },
       member: async (page) => {
-        await page.goto(`${at("todo")}/?theme=light&today=2026-09-01&fresh=1&as=user-sam`, { waitUntil: "load" });
+        await page.goto(`${at("todo")}/scene/?theme=light&today=2026-09-01&fresh=1&as=user-sam`, { waitUntil: "load" });
         await page.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
         await page.waitForTimeout(700);
       },
@@ -115,12 +115,12 @@ const APPS = {
        */
       pages: async (page) => {
         const scheme = new URL(page.url()).searchParams.get("theme");
-        await page.goto(`${at("todo")}/pages?theme=${scheme}&today=2026-09-01`, { waitUntil: "networkidle" });
+        await page.goto(`${at("todo")}/?theme=${scheme}&today=2026-09-01`, { waitUntil: "networkidle" });
         await page.waitForTimeout(400);
       },
       pagesRecord: async (page) => {
         const scheme = new URL(page.url()).searchParams.get("theme");
-        await page.goto(`${at("todo")}/pages/tasks/t-deposit?theme=${scheme}&today=2026-09-01`, { waitUntil: "networkidle" });
+        await page.goto(`${at("todo")}/tasks/t-deposit?theme=${scheme}&today=2026-09-01`, { waitUntil: "networkidle" });
         await page.waitForTimeout(400);
       },
       tidied: async (page) => {

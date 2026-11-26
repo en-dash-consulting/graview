@@ -130,6 +130,32 @@ describe("what a project starts with passes its own checks", () => {
   });
 });
 
+describe("the face a project opens on (Graview HQ feature:f-one-face-by-default)", () => {
+  it("is one PagesApp at /, on the one face, with no /pages split and no Scene-at-root entry", () => {
+    for (const options of [{ name: "Field Notes", kind: "note" }, { name: "Field Notes", link: "../graview" }]) {
+      const project = scaffoldProject(options);
+      const main = project.files.find((f) => f.path === "src/main.tsx")!.contents;
+      // One face, mounted once, at the root: no basename, no address that picks another face.
+      expect(main.match(/<PagesApp\b/g)).toHaveLength(1);
+      expect(main).not.toMatch(/basename=/);
+      expect(main).not.toMatch(/(?<![\w.])\/pages\b/);
+      expect(main).not.toMatch(/location\.pathname/);
+      // The city is drawn with the views it is handed, and the one face is not turned off.
+      expect(main).toMatch(/views: views\(\)/);
+      expect(main).not.toMatch(/^\s*sceneUnderPages:\s*false/m);
+      // The Scene's own face is not an entry: no Shell, no app.tsx to mount it.
+      expect(main).not.toMatch(/\bShell\b|\.\/ui\/app\.js/);
+      expect(project.files.map((f) => f.path)).not.toContain("src/ui/app.tsx");
+      // A record's page written in your words has no link to another face.
+      expect(project.files.find((f) => f.path === "src/ui/pages.tsx")!.contents).not.toMatch(/spatial-link|in the scene/i);
+      // And the README says so.
+      const readme = project.files.find((f) => f.path === "README.md")!.contents;
+      expect(readme).not.toMatch(/(?<![\w.])\/pages\b|two faces/i);
+      expect(readme).toMatch(/Page · Nearby · Map/);
+    }
+  });
+});
+
 describe("what a project starts with", () => {
   it("is the shape the graview-new-app skill describes", () => {
     const paths = scaffoldProject({ name: "Field Notes", kind: "note" }).files.map((f) => f.path);
@@ -150,7 +176,6 @@ describe("what a project starts with", () => {
       "src/domain/brand.ts",
       "src/domain/app.ts",
       "src/ui/views.tsx",
-      "src/ui/app.tsx",
       "src/ui/pages.tsx",
       "src/main.tsx",
       "src/embed.tsx",
@@ -350,7 +375,7 @@ describe("a new project's pages", () => {
 });
 
 describe("a picture on a record (the thirteenth walk)", () => {
-  it("can be put on one in development: the dev server keeps files, and both faces are handed them", () => {
+  it("can be put on one in development: the dev server keeps files, and the face is handed them", () => {
     // graview-node-kind's first example declares imageField(); a project that followed it was told "This host doesn't take files".
     for (const link of [undefined, "../graview"]) {
       const s = scaffoldProject({ name: "Pictured", ...(link ? { link } : {}) });
@@ -359,8 +384,6 @@ describe("a picture on a record (the thirteenth walk)", () => {
       const main = file("src/main.tsx");
       expect(main).toContain('filesAt("/__graview/files"');
       expect(main).toMatch(/files: devHostFiles/);
-      expect(main).toMatch(/files=\{devHostFiles\}/);
-      expect(file("src/ui/app.tsx")).toMatch(/files=\{files\}/);
     }
   });
 });

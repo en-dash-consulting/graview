@@ -28,7 +28,7 @@ handle.setFace("pages"); handle.setStop("#focus=plot-2"); handle.unmount();
 ### The moves
 
 1. **Say where it opens with the stop, not with code.** `stop` is exactly the fragment the app writes — `#overview=1`, `#focus=agg:plot`, `#view=the-week` — so a link you copied from the app is an embed's starting point. `face` follows the stop unless you name one.
-2. **Pick the face for the page.** One app bar: the name and its app menu (Scene, Pages), the place you are on opening the rest (on a wide row they stand, the rest under More), Find, one inbox, the people, the standing, the person. Name no `face` and an app with a home view opens on it, else the scene; `"scene"`, `"graview"`, `"pages"` (on `path`); `"picture"` is ONE lens alone (`stop: "#view=the-week"`), no bar. `bar: false` drops the bar. Under a product's own bar, `bar: { faces: false, name: false }` (and `heading: false`) keeps the places, Find, the standing and the person, never CSS hiding them.
+2. **Pick the face for the page.** One app bar: the name and its app menu (Scene, Pages), the place you are on opening the rest (on a wide row they stand, the rest under More), Find, one inbox, the people, the standing, the person. Name no `face` and an app with a home view opens on it, else the scene; `"scene"`, `"graview"`, `"pages"` (on `path`); `"picture"` is ONE lens alone (`stop: "#view=the-week"`), no bar. `bar: false` drops the bar. Under a product's own bar, `bar: { faces: false, name: false }` (and `heading: false`) keeps the places, Find, the standing and the person, never CSS hiding them. In a box the embed draws the routed face without the city: the one face that `PagesApp` draws by default stands against the window, so only a host whose page IS the app draws it (`graview-host-page`).
 3. **Name it.** Two embeds on one page carry the same landmarks — the relation key, the inspector, the pages' navigation — and a landmark must be unique by role and name. `label` names every one of them after the embed.
 4. **Let the host decide the look.** `scheme: "auto"` follows the host's `data-theme` stamp; `setScheme` follows a host toggle; `fonts: false` when the host already loads them; `brand` / `setBrand` to dress it. Where the host keeps a person's Appearance, `schemeChoice: { value: "system" | "light" | "dark", onChoose }` draws the three in the app menu, the host's value pressed. A press only calls `onChoose`: keep the choice, stamp `data-theme`, then `handle.setSchemeChoice({ value, onChoose })` moves the press (`undefined` takes it off).
 5. **Make the policy felt, if the page is about it.** `seats` lists the principals a reader may take — each a label and a `Principal` — in the person's menu; the acts and the pages narrow the moment one sits down, and `setSeat` does it from the host. See `graview-permissions`.
@@ -47,7 +47,7 @@ The other way round: somebody's HTML page drawn inside the app as a view of a ki
 ```ts
 views.register("package", { cardinality: "many", fidelity: "full" },
   guestView({ url, name: "prices", title: "The price sheet", reads: { kinds: ["offer"], edges: ["includes"] } }),
-  { title: "The price sheet" });   // a place on both faces, by its title
+  { title: "The price sheet" });   // a place, by its title
 views.home(guestView({ url: frontUrl, name: "front", reads: { kinds: ["package"] } }));
 ```
 

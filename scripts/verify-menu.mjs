@@ -260,7 +260,7 @@ try {
   const page = await browser.newPage({ viewport: { width: 1560, height: 940 } });
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
-  await page.goto(`${at("todo")}/?today=2026-09-01`, { waitUntil: "load" });
+  await page.goto(`${at("todo")}/scene/?today=2026-09-01`, { waitUntil: "load" });
   await page.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
 
   /*
@@ -387,7 +387,7 @@ try {
   // 2026-09-04 leaves five tasks past their date; 2026-09-01 leaves one,
   // and one subject cannot show an order problem between subjects.
   const LATE = "today=2026-09-04";
-  await page.goto(`${at("todo")}/?${LATE}&fresh=1`, { waitUntil: "load" });
+  await page.goto(`${at("todo")}/scene/?${LATE}&fresh=1`, { waitUntil: "load" });
   await page.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
   const led = {};
   for (const [id, label] of [
@@ -410,7 +410,7 @@ try {
    * first subject the rule happened to walk. And the acts it does list
    * carry the derivation's rank, ascending — one order, two renderings.
    */
-  await page.goto(`${at("todo")}/pages/tasks/t-post?${LATE}`, { waitUntil: "networkidle" });
+  await page.goto(`${at("todo")}/tasks/t-post?${LATE}`, { waitUntil: "networkidle" });
   await page.waitForSelector('[data-testid="record-violations"] [data-graview-repair]', {
     timeout: 20_000,
   });
@@ -435,7 +435,7 @@ try {
     record.ranks.every((rank, at) => at === 0 || rank > record.ranks[at - 1]);
 
   /* ------------------------- the inbox's repair changes what it names */
-  await page.goto(`${at("todo")}/pages/problems?${LATE}`, { waitUntil: "networkidle" });
+  await page.goto(`${at("todo")}/problems?${LATE}`, { waitUntil: "networkidle" });
   await page.waitForSelector('[data-testid="repairs"] [data-graview-repair]', { timeout: 20_000 });
   const finishPost = await page.evaluate(() =>
     [...document.querySelectorAll('[data-testid="repairs"] [data-graview-repair="finish"]')].findIndex(
@@ -485,7 +485,7 @@ try {
    * act or an answered ask closes the menu and gives the keyboard back to
    * where it was opened — never to the body.
    */
-  await page.goto(`${at("todo")}/?today=2026-09-01&fresh=1`, { waitUntil: "load" });
+  await page.goto(`${at("todo")}/scene/?today=2026-09-01&fresh=1`, { waitUntil: "load" });
   await page.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
   await page.waitForTimeout(800);
   const where = () =>
@@ -572,7 +572,7 @@ try {
    * the keyboard back, and the browser keeps its own menu in a text field
    * and with Shift held. At a desk and at a phone's width.
    */
-  const pagesAt = (path) => `${at("todo")}/pages${path}?today=2026-09-01`;
+  const pagesAt = (path) => `${at("todo")}${path}?today=2026-09-01`;
   /** What the menu is showing: its words, its acts, the face's own rows, and whether the keyboard is in it. */
   const menuSays = (on) =>
     on.evaluate(() => {
@@ -760,7 +760,7 @@ try {
       const box = said?.getBoundingClientRect();
       return { copied: window.__copied[0] ?? null, said: said?.textContent ?? null, seen: Boolean(box && box.width > 1 && box.height > 1), menuGone: !document.querySelector('[data-testid="context-menu"]') };
     });
-    const expectedLink = new URL("/pages/tasks/t-deposit", at("todo")).href;
+    const expectedLink = new URL("/tasks/t-deposit", at("todo")).href;
     report.checks[`theMenuOffersCopyLinkUnderOpenInANewTab_${size}`] = {
       rows: linked?.rows ?? null,
       ...linkCopied,
@@ -867,7 +867,7 @@ try {
       await on.waitForTimeout(300);
       const rested = await menuSays(on);
       // Still on the record's page: the press that opened the menu followed nothing.
-      const stayed = on.url().includes("/pages/tasks/t-deposit");
+      const stayed = new URL(on.url()).pathname === "/tasks/t-deposit";
       await putAway(on);
       report.checks.pagesLongPressOpensTheMenu_phone = {
         how,
@@ -992,7 +992,7 @@ try {
     const context = await browser.newContext({ viewport: { width, height }, hasTouch: size === "phone" });
     const on = await context.newPage();
     on.on("pageerror", (error) => errors.push(`${size} scene: ${error.message}`));
-    await on.goto(`${at("todo")}/?today=2026-09-01`, { waitUntil: "load" });
+    await on.goto(`${at("todo")}/scene/?today=2026-09-01`, { waitUntil: "load" });
     await on.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
     await on.waitForTimeout(800);
     await on.evaluate(() => {
@@ -1255,11 +1255,11 @@ try {
     return [...said.acts, ...said.rows.filter((row) => row.id !== "ask-typed").map((row) => row.text)].every((label) => wanted.every((word) => fold(label).some((one) => one.startsWith(word))));
   };
   const faces = {
-    scene: { at: (ai) => `${at("todo")}/?today=2026-09-01&fresh=1${ai}`, ready: async (on) => {
+    scene: { at: (ai) => `${at("todo")}/scene/?today=2026-09-01&fresh=1${ai}`, ready: async (on) => {
       await on.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
       await on.waitForTimeout(800);
     }, target: '[data-graview-pick="t-deposit"]' },
-    pages: { at: (ai) => `${at("todo")}/pages/tasks?today=2026-09-01&fresh=1${ai}`, ready: async (on) => {
+    pages: { at: (ai) => `${at("todo")}/tasks?today=2026-09-01&fresh=1${ai}`, ready: async (on) => {
       await on.waitForSelector('[data-graview-record="t-deposit"]', { timeout: 60_000 });
       await on.waitForTimeout(500);
     }, target: '[data-graview-record="t-deposit"]' },
@@ -1332,7 +1332,7 @@ try {
     const menuGone = !(await on.$(MENU));
     const keyboardOnBody = await on.evaluate(() => document.activeElement === document.body);
     typing.enter[face] = { words, lit: lit?.lit, doneBefore, ran, menuGone, keyboardOnBody };
-    typing.enter[face].ok = menuGone && !keyboardOnBody && (face === "pages" ? lit?.lit === "Copy link" && ran === new URL("/pages/tasks/t-deposit", at("todo")).href : lit?.lit === "Finish it" && doneBefore === false && ran === true);
+    typing.enter[face].ok = menuGone && !keyboardOnBody && (face === "pages" ? lit?.lit === "Copy link" && ran === new URL("/tasks/t-deposit", at("todo")).href : lit?.lit === "Finish it" && doneBefore === false && ran === true);
 
     /* Free words, asked about what is under the cursor: the thinking marked on it, the answer a card beside it. */
     reach(`freeWordsAskAboutWhatIsUnderTheCursor_${face}`);
@@ -1883,7 +1883,7 @@ try {
     await context.addInitScript(KEEP_THE_STORE);
     const on = await context.newPage();
     on.on("pageerror", (error) => errors.push(`these: ${error.message}`));
-    const WEEK = `${at("todo")}/pages/lists/week?today=2026-09-01&fresh=1`;
+    const WEEK = `${at("todo")}/lists/week?today=2026-09-01&fresh=1`;
     const openWeek = async () => {
       await on.goto(WEEK, { waitUntil: "load" });
       await on.waitForSelector("[data-graview-page-title], main h1", { timeout: 60_000 });

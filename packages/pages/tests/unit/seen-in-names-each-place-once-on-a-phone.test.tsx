@@ -40,8 +40,12 @@ describe("Seen in", () => {
     expect(seen.textContent).not.toContain("↗");
     expect(seen.querySelector('a[href^="/#view="]')).toBeNull();
   });
-  it("still says the record's own way to the scene above it", () => {
-    expect(page().querySelector('[data-testid="spatial-link"]')).not.toBeNull();
+  it("still says the record's own way to the scene above it, where the routed face stands alone", () => {
+    const alone = new DOMParser().parseFromString(renderToStaticMarkup(<PagesApp context={{ store: store(), views: views(), sceneHref: "/", sceneUnderPages: false }} initialPath="/threats/t1" />), "text/html");
+    expect(alone.querySelector('[data-testid="spatial-link"]')).not.toBeNull();
+  });
+  it("draws no way to another face on the one face, where the city is the camera rising from the page", () => {
+    expect(page().querySelector('[data-testid="spatial-link"]')).toBeNull();
   });
   it("on a phone, keeps the places past the third behind a button that says how many, which opens them", async () => {
     const host = document.createElement("div");

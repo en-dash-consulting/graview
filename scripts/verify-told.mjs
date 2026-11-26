@@ -217,7 +217,7 @@ async function fresh({ as, told = [] } = {}) {
   await context.addInitScript(KEEP_THE_STORE);
   const page = await context.newPage();
   page.on("pageerror", (error) => errors.push(String(error)));
-  await page.goto(`${at("todo")}/pages/lists?${DAY}&fresh=1${as ? `&as=${as}` : ""}`, { waitUntil: "load" });
+  await page.goto(`${at("todo")}/lists?${DAY}&fresh=1${as ? `&as=${as}` : ""}`, { waitUntil: "load" });
   await page.waitForSelector('[data-graview-record="week"]', { timeout: 60_000 });
   await page.waitForTimeout(500);
   return { context, page };
@@ -258,7 +258,7 @@ try {
     const TOLD = /told-ui|menu-told\.ts|told-card|told-listed|told-panel\.tsx/;
     const asked = [];
     await page.route(TOLD, (route) => (asked.push(route.request().url()), route.abort()));
-    await page.goto(`${at("todo")}/pages/lists?${DAY}&fresh=1`, { waitUntil: "load" });
+    await page.goto(`${at("todo")}/lists?${DAY}&fresh=1`, { waitUntil: "load" });
     await page.waitForSelector('[data-graview-record="week"]', { timeout: 60_000 });
     await page.waitForTimeout(500);
     await page.click('[data-graview-record="week"]', { button: "right" });
@@ -368,7 +368,7 @@ try {
     await context.addInitScript(FAKE_AI);
     const page = await context.newPage();
     page.on("pageerror", (error) => errors.push(String(error)));
-    await page.goto(`${at("todo")}/?${DAY}&fresh=1`, { waitUntil: "load" });
+    await page.goto(`${at("todo")}/scene/?${DAY}&fresh=1`, { waitUntil: "load" });
     await page.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
     await page.waitForTimeout(800);
     const shown = await page.evaluate(() => {

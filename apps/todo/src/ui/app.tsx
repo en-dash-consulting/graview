@@ -242,7 +242,9 @@ function TodoShell({
        */
       // A person's own record on the routed face: the profile the self
       // grant already makes theirs to edit and nobody else's.
-      profileHref={(userId) => `/pages/people/${userId}`}
+      profileHref={(userId) => `/people/${userId}`}
+      // The fixture at `/scene/`: its way back to the pages is the app's root.
+      pagesHref="/"
       /*
        * THE APP'S OWN DECLARATION, one press away. The keeper who keeps
        * who is here also keeps what the app IS — its kinds, fields, acts

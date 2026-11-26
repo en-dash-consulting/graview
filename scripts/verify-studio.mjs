@@ -333,7 +333,7 @@ try {
   page.on("pageerror", (error) => errors.push(error.message));
 
   const open = async (as) => {
-    await page.goto(`${at("todo")}/?today=2026-09-01&fresh=1&as=${as}&${DOOR_KEY_PARAM}=${encodeURIComponent(doorKey())}`, { waitUntil: "load" });
+    await page.goto(`${at("todo")}/scene/?today=2026-09-01&fresh=1&as=${as}&${DOOR_KEY_PARAM}=${encodeURIComponent(doorKey())}`, { waitUntil: "load" });
     await page.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
     await page.waitForTimeout(800);
     await profile();
@@ -722,7 +722,7 @@ try {
         },
       };
     }, `${at("studio-model")}/v1`);
-    await page.goto(`${at("todo")}/?today=2026-09-01&fresh=1&as=user-nora`, { waitUntil: "load" });
+    await page.goto(`${at("todo")}/scene/?today=2026-09-01&fresh=1&as=user-nora`, { waitUntil: "load" });
     await page.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
     await page.waitForTimeout(900);
     await profile();

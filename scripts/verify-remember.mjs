@@ -26,7 +26,7 @@ import { openActivity } from "./lib/bar.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const ENGINE = engineName();
-const BASE = `${at("todo")}/?today=2026-09-01`;
+const BASE = `${at("todo")}/scene/?today=2026-09-01`;
 
 /**
  * The app this harness drives — borrowed if a dev server is already holding
@@ -141,7 +141,7 @@ try {
   report.steps.afterFresh = { deposit: await labelOf(page, "t-deposit") };
 
   // The pages face shares the store — and the way back.
-  await page.goto(`${at("todo")}/pages/tasks/t-deposit?today=2026-09-01&remember=1`, {
+  await page.goto(`${at("todo")}/tasks/t-deposit?today=2026-09-01&remember=1`, {
     waitUntil: "networkidle",
   });
   await page.waitForTimeout(500);
@@ -312,7 +312,7 @@ try {
     // The same browser, at the app's own port: one store, two doors.
     const own = await serving("todo", portFor("todo"), repoRoot);
     const alone = await context.newPage({ viewport: { width: 1400, height: 900 } });
-    await alone.goto(`${at("todo")}/?today=2026-09-01&remember=1`, { waitUntil: "load" });
+    await alone.goto(`${at("todo")}/scene/?today=2026-09-01&remember=1`, { waitUntil: "load" });
     await alone.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
     await alone.waitForTimeout(1000);
     const atItsOwnPort = await offeredOn(alone, "t-deposit", FINISH);

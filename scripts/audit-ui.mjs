@@ -73,7 +73,7 @@ const APPS = {
       await p.waitForTimeout(700);
     },
     member: async (p) => {
-      await p.goto(`${at("todo")}/?theme=light&today=2026-09-01&fresh=1&as=user-sam`, { waitUntil: "load" });
+      await p.goto(`${at("todo")}/scene/?theme=light&today=2026-09-01&fresh=1&as=user-sam`, { waitUntil: "load" });
       await p.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
       await p.waitForTimeout(700);
     },
@@ -113,12 +113,12 @@ const APPS = {
      * a node with no edge or judgment of it, twelve chips that must wrap.
      */
     judged: async (p) => {
-      await p.goto(`${at("todo")}/?theme=light&today=2026-09-01#focus=rule-order&relation=task&zoom=1`, { waitUntil: "load" });
+      await p.goto(`${at("todo")}/scene/?theme=light&today=2026-09-01#focus=rule-order&relation=task&zoom=1`, { waitUntil: "load" });
       await p.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
       await p.waitForTimeout(900);
     },
     crowd: async (p) => {
-      await p.goto(`${at("todo")}/?theme=light&today=2026-09-01#focus=reason-deposit&relation=task&zoom=1`, { waitUntil: "load" });
+      await p.goto(`${at("todo")}/scene/?theme=light&today=2026-09-01#focus=reason-deposit&relation=task&zoom=1`, { waitUntil: "load" });
       await p.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
       await p.waitForTimeout(900);
     },
@@ -131,7 +131,7 @@ const APPS = {
      * between late tasks.
      */
     menu: async (p) => {
-      await p.goto(`${at("todo")}/?theme=light&today=2026-09-04&fresh=1`, { waitUntil: "load" });
+      await p.goto(`${at("todo")}/scene/?theme=light&today=2026-09-04&fresh=1`, { waitUntil: "load" });
       await p.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
       await p.waitForTimeout(600);
       await p.click('[data-graview-pick="t-post"]', { button: "right" });
@@ -150,12 +150,12 @@ const APPS = {
      * this state exists to catch.
      */
     figures: async (p) => {
-      await p.goto(`${at("todo")}/?theme=light&today=2026-09-01&fresh=1#overview=1`, { waitUntil: "load" });
+      await p.goto(`${at("todo")}/scene/?theme=light&today=2026-09-01&fresh=1#overview=1`, { waitUntil: "load" });
       await p.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
       await p.waitForTimeout(900);
     },
     figuresDark: async (p) => {
-      await p.goto(`${at("todo")}/?theme=dark&today=2026-09-01&fresh=1#overview=1`, { waitUntil: "load" });
+      await p.goto(`${at("todo")}/scene/?theme=dark&today=2026-09-01&fresh=1#overview=1`, { waitUntil: "load" });
       await p.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
       await p.waitForTimeout(900);
     },

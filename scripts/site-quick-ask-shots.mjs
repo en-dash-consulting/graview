@@ -52,7 +52,7 @@ try {
     const context = await browser.newContext({ viewport: { width: 1280, height: 760 }, deviceScaleFactor: 2, colorScheme: scheme });
     await context.addInitScript(LEND_A_MODEL, ASKED);
     const page = await context.newPage();
-    await page.goto(`${at("todo")}/?today=2026-09-01&fresh=1&theme=${scheme}`, { waitUntil: "load", timeout: 90_000 });
+    await page.goto(`${at("todo")}/scene/?today=2026-09-01&fresh=1&theme=${scheme}`, { waitUntil: "load", timeout: 90_000 });
     await page.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
     await page.waitForTimeout(1200);
     await page.click('[data-graview-pick="t-deposit"]');

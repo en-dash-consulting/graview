@@ -29,7 +29,7 @@ fields, edges, label, roles — is `graview-node-kind`.
    `{ "op": "set-view", "kind": "fixture", "slot": "card", "blocks": [...] }`
    (`null` gives the default back).
 
-   `card` is drawn beside the focus and on the pages face's gallery, `row`
+   `card` is drawn beside the focus and on the home's gallery, `row`
    as the one line a member is among many (a focused group, the list page),
    and `page` above the default record. Tones are `good`, `warn`, `bad`,
    `neutral` and `accent`, the theme's own. A card shows three lines of a

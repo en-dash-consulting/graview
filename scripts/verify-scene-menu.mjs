@@ -89,7 +89,7 @@ try {
   const page = await context.newPage();
   page.setDefaultNavigationTimeout(120_000);
   page.on("pageerror", (error) => errors.push(error.message));
-  await page.goto(`${at("todo")}/?today=2026-09-01&fresh=1`, { waitUntil: "load" });
+  await page.goto(`${at("todo")}/scene/?today=2026-09-01&fresh=1`, { waitUntil: "load" });
   await page.waitForFunction(() => "__todoReady" in window, null, { timeout: 120_000 });
   await page.waitForFunction(() => [...document.querySelectorAll("section")].some((one) => one.textContent?.includes("Find someone who moves pianos")), null, { timeout: 60_000 });
   await page.waitForTimeout(800);
@@ -156,7 +156,7 @@ try {
     report.checks.aRightClickOnAPlaceInTheSceneOffersBetterUiAndOpensThePanel = {
       place,
       panel,
-      ok: Boolean(place?.modes.includes("better")) && honest && panel !== null && /The lists/.test(panel.about ?? "") && /From the scene/.test(panel.says) && /\/pages\/places\/the-lists/.test(panel.path),
+      ok: Boolean(place?.modes.includes("better")) && honest && panel !== null && /The lists/.test(panel.about ?? "") && /From the scene/.test(panel.says) && /^\/places\/the-lists/.test(panel.path),
     };
   }
 
@@ -201,7 +201,7 @@ try {
       page.setDefaultNavigationTimeout(120_000);
       page.on("pageerror", (error) => errors.push(`${engine}: ${error.message}`));
       const spots = {};
-      await page.goto(`${at("todo")}/?today=2026-09-01&fresh=1`, { waitUntil: "load" });
+      await page.goto(`${at("todo")}/scene/?today=2026-09-01&fresh=1`, { waitUntil: "load" });
       await page.waitForFunction(() => "__todoReady" in window, null, { timeout: 120_000 });
       await page.waitForFunction(() => [...document.querySelectorAll("*")].some((one) => one.children.length === 0 && one.textContent?.trim() === "Give notice on the flat"), null, { timeout: 60_000 });
       await page.waitForTimeout(800);
@@ -214,7 +214,7 @@ try {
       spots.ground = await opened(page, { x: 300, y: 200 });
       await page.keyboard.press("Escape");
       await page.waitForTimeout(300);
-      await page.goto(`${at("todo")}/pages/places/the-lists?today=2026-09-01&fresh=1`, { waitUntil: "load" });
+      await page.goto(`${at("todo")}/places/the-lists?today=2026-09-01&fresh=1`, { waitUntil: "load" });
       await page.waitForFunction(() => [...document.querySelectorAll("*")].some((one) => one.children.length === 0 && one.textContent?.trim() === "Give notice on the flat"), null, { timeout: 60_000 });
       await page.waitForTimeout(800);
       const row = await textAt(page, "Give notice on the flat");

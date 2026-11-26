@@ -120,7 +120,7 @@ not draw and what it ignores:
   and `lens-binding-undeclared-kind`.
 
 `graview describe` lists the places that draw, saying which are hidden. Report the output, then open
-each place on both faces and look.
+each place, as a page and on the Map, and look.
 
 ## Let the owner choose
 

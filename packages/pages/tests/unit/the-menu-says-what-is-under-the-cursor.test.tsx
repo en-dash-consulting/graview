@@ -11,6 +11,7 @@ import { createRoot } from "react-dom/client";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 import { PagesApp, type PageContext } from "../../src/index.js";
+import { theOneFaceHasCome, thePageIn } from "./on-the-one-face.js";
 
 /**
  * THE RIGHT-CLICK MENU, ABOUT WHAT IS UNDER THE CURSOR (Roadmap
@@ -64,14 +65,17 @@ const drawn = (host: HTMLElement) => until(steady(() => (host.querySelector("mai
 const opened = () => until(steady(() => (menu()?.querySelector("[data-menu-item], [data-affordance]") ? menu()!.innerHTML : undefined)), "the menu to open");
 
 async function mounted(context: PageContext<AnySchema>, path: string) {
-  const host = document.createElement("div");
-  document.body.appendChild(host);
-  const root = createRoot(host);
+  const frame = document.createElement("div");
+  document.body.appendChild(frame);
+  const root = createRoot(frame);
   await act(async () => root.render(<PagesApp context={context} initialPath={path} />));
+  await theOneFaceHasCome(frame);
+  // The page on the one face, not the city out of sight under it.
+  const host = thePageIn(frame) as HTMLElement;
   await drawn(host);
   cleanup = async () => {
     await act(async () => root.unmount());
-    host.remove();
+    frame.remove();
   };
   return host;
 }

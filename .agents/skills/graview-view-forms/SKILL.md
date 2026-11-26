@@ -189,7 +189,7 @@ nothing of anybody's.
    carries, and whether this seat may (rehearsed, never applied), or the
    refusal the view would hear; the link it follows; and what the view's
    code did on the click.
-4. Open it on both faces as that member, and on a phone. Press each with
+4. Open it as that member, at a desk and on a phone. Press each with
    typed words, then again with a field the view filled. The first
    applies and the second is refused. A prefilled field is filled only
    for a seat that may write it: open it as one who may not, and it is

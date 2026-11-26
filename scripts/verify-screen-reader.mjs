@@ -350,7 +350,7 @@ try {
       for (const server of servers) server.stop();
       process.exit(130);
     });
-    process.stdout.write(`The Roadmap, as Ada: ${ROADMAP_AT("/")} (and ?as=ben in a second tab)\nThe todo example: ${TODO_AT("/pages")}\nCtrl-C to stop.\n`);
+    process.stdout.write(`The Roadmap, as Ada: ${ROADMAP_AT("/")} (and ?as=ben in a second tab)\nThe todo example: ${TODO_AT("/")}\nCtrl-C to stop.\n`);
     await new Promise(() => undefined);
   }
 
@@ -389,8 +389,8 @@ try {
         ["roadmap · a record", ROADMAP_AT("/features/feature-0"), roadmapReady],
         ["roadmap · columns", ROADMAP_AT("/places/roadmap"), roadmapReady],
         ["roadmap · blocks", ROADMAP_AT("/places/up-next"), roadmapReady],
-        ["todo · a list", TODO_AT("/pages/tasks"), todoReady],
-        ["todo · a record", TODO_AT("/pages/tasks/t-deposit"), todoReady],
+        ["todo · a list", TODO_AT("/tasks"), todoReady],
+        ["todo · a record", TODO_AT("/tasks/t-deposit"), todoReady],
       ];
       const nameless = [];
       for (const [name, url, isReady] of stops) {
@@ -732,7 +732,7 @@ try {
     /* ── TODO: the same stops on the example, standalone ── */
     reach("todo");
     {
-      const todo = await open(TODO_AT("/pages"), todoReady);
+      const todo = await open(TODO_AT("/"), todoReady);
       const tcdp = await cdpOf(todo);
       const bar = stop("Things (todo)", "The bar", "The todo example's routed face, standalone: its own banner, main and footer.");
       const barOrder = await readingOrder(todo, tcdp, { selector: "header" });
@@ -789,7 +789,7 @@ try {
       check("todo · an act's form: what it did is said aloud", heard.length > 0, { heard });
 
       const ask = stop("Things (todo)", "The quick ask", "⌘K on a task's page, lent a stub model, asked what is left.");
-      await todo.goto(`${TODO_AT("/pages/tasks/t-deposit")}&ai=stub`, { waitUntil: "load" });
+      await todo.goto(`${TODO_AT("/tasks/t-deposit")}&ai=stub`, { waitUntil: "load" });
       await todoReady(todo);
       await todo.keyboard.press("ControlOrMeta+K");
       await todo.waitForSelector(ASK, { timeout: 30_000 }).catch(() => undefined);

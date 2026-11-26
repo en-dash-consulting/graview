@@ -561,9 +561,8 @@ export function readme(ids: Ids, workspace = false): string {
   app.ts         defineApp: the whole surface, in one object
 src/ui/
   views.tsx      registerDefaultViews, then your own where the generic one is wrong
-  app.tsx        the provider, the Shell primitive, and a seat — under sixty lines
-  pages.tsx      the ${ids.kind}'s page on the routed face, in your words, over the derived ones
-src/main.tsx     the theme, the store that remembers, the two faces
+  pages.tsx      the ${ids.kind}'s page and the home, in your words, over the derived ones
+src/main.tsx     the theme, the store that remembers, and the app on one face
 tests/           the rule fires on a graph that breaks it, and its repair resolves it`;
   const linked = ids.link
     ? `
@@ -581,7 +580,7 @@ derived from one declaration in \`src/domain/\`.
 ${linked}
 \`\`\`sh
 ${pm} install
-${run} dev        # http://localhost:${ids.port}  — the scene; /pages is the routed face
+${run} dev        # http://localhost:${ids.port}  — the app: its pages over its own city
 ${run} verify     # typecheck, tests, build, and graview check
 ${run} skills     # the authoring skills, for Claude Code and Codex
 \`\`\`
@@ -616,19 +615,21 @@ the interface, or an agent reads a tool schema.
 ## What comes for free
 
 - **The empty state is generative.** \`creates\` on a mutation is how an empty
-  ${ids.Plural} district offers its own beginnings.
+  app offers its own beginnings, on the home and on the empty ${ids.Plural} list.
 - **Lines are actionable.** \`connects\` and \`severs\` on a mutation make the
   drawn relation selectable, and offer the acts from either end.
 - **The past is a horizon.** \`lifecycle\` on the kind keeps a closed ${ids.spoken}
   in the record and out of the counts; \`?past=1\` widens the view.
-- **A seat, a chat, a tool surface.** The agent seat in the activity rail, the
-  chat panel and the derived tool schemas all read the same declaration.
-- **Two faces.** \`/\` is the spatial workbench; \`/pages\` is the same app as
-  ordinary routed pages, at phone widths. It lands on a gallery of the app's
-  pictures — every kind drawn as a card until you title a lens, then the lens
-  by its name — with lists, records, forms, the map and the problems derived
-  from the declaration, and any of them replaceable with a page you write
-  (see \`src/ui/pages.tsx\`).
+- **A seat and a tool surface.** The seat on every page and the derived tool
+  schemas read the same declaration.
+- **One face.** \`/\` is the app as ordinary routed pages, at any width. It
+  lands on a gallery of the app's pictures — every kind drawn as a card until
+  you title a lens, then the lens by its name — with lists, records, forms
+  and the problems derived from the declaration, and any of them replaceable
+  with a page you write (see \`src/ui/pages.tsx\`). The pages stand over the
+  app's own city: the control at the bottom left (Page · Nearby · Map, or
+  Alt+↑ and Alt+↓) moves the page you are on out beside the records it shows,
+  and then to the whole map.
 - **It remembers.** Edits persist in this browser, attributed and undoable;
   "Start fresh" is the way back.
 `;

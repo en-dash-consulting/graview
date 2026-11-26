@@ -139,9 +139,9 @@ drawn once they are read, or after two seconds, saying which did not come.
 What is not lent is said to the host's `{ onProblem }` (`guestView` says it in the console).
 
 `title` names the frame for assistive technology. Registered with the same
-title, the guest is a place on both faces: listed by `placesOf`, at
-`/places/the-price-sheet` on the routed face and `#view=the-price-sheet` in
-the scene. `props.places` lists the app's places, and
+title, the guest is a place: listed by `placesOf`, at
+`/places/the-price-sheet` as a page, and standing on its district on the
+Map (`#view=the-price-sheet` on the Scene's own face). `props.places` lists the app's places, and
 `guest.navigate({ place: "the-packages" })` goes to one.
 
 ### One client, served or inlined
@@ -455,8 +455,8 @@ attaches to (the members the face hands it, or every one the viewer sees)
 and the kinds and edges it reads: a record the viewer may not see is in
 none of it, and a kind it did not ask to read is not handed to it however
 visible. Every record's `label` is filled as the host labels it — for a
-frame guest too. A titled view is a named place on the Graview face and
-the pages face, by its title; whatever the registry drew for that kind
+frame guest too. A titled view is a named place, by its title, as a page
+and on the Map; whatever the registry drew for that kind
 before is drawn if the view fails. A view of one record (`cardinality:
 "one"`) is drawn above the record's own fields, which stay editable: on
 the scene the record drawn at full is the view and then the record's
@@ -599,16 +599,16 @@ place the app has. `graview.navigate("offer:coaching")` and
 string is a record the viewer may see first, then a place by that slug, so
 `graview.navigate("the-packages")` goes to the place. The Scene and the
 home are places by name too (FR-235): `data-place="overview"` goes to the
-Scene's overview and `data-place="home"` to the front page, on either
-face; a kind's list by its slug. What a view may name is one vocabulary,
+Map (the Scene's overview) and `data-place="home"` to the front page, on
+every face; a kind's list by its slug. What a view may name is one vocabulary,
 `placeNamesOf` on `@graview/core/navigate`, read alike by the headless
 check and the page. A destination that
 is neither goes nowhere and says why — in the view's console, and to the
 host's problems (the onProblem option on `mountWorkerView` and on a registered view's
 definition) — naming the places there are. The
 props list the app's places (`places`, each with its slug and title). On
-the Graview face a record is focused and chosen and a place is drawn; on
-the pages face each goes to its own address — through `useGoTo` in
+the Scene's own face a record is focused and chosen and a place is drawn; on
+the routed face each goes to its own address — through `useGoTo` in
 `@graview/react`, which the routed face provides — and an `<a data-record>`
 or `<a data-place>` carries that address as its `href` (`GoTo.href`, or
 the address option on `mountWorkerView`): a plain click, a tap and Enter are followed
