@@ -3,7 +3,7 @@ name: graview-pages-design
 description: Give a Graview app a product design over its routed face — its own shell under the one bar, every surface replaced, its tabs lit from the section a kind's pages are in, and a trail that says where a person is — and verify it by rendering each page and opening it, rather than assuming the derived pages are gone.
 ---
 
-# A product design over the pages face
+# A product design over the routed face
 
 `graview-pages` takes the routed face from derived to one page in the app's
 own words. This is the rung after: the registry's three surfaces and two

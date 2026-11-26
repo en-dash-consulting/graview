@@ -8,7 +8,7 @@ description: Send a person from a Graview worker view to a record, a place or a 
 A worker view (`graview-worker-view`: its manifest, its global, its limits)
 writes no address of the page's: an `href` it built is never drawn. What it
 may link to is a record, a named place or a kind's list of this app, and
-the host makes that a link and follows it, on both faces, only to what the
+the host makes that a link and follows it, on its page and in the city, only to what the
 viewer may see.
 
 **Go somewhere with a link, do something with a button.** `<a data-record>`

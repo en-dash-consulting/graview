@@ -232,7 +232,7 @@ import { ${ids.schemaVar}, type ${ids.SchemaType} } from "./schema.js";
 
 /**
  * The whole surface, in one object. \`graview check\` reads this; so do the
- * docs generator, the tool surface, the pages face and the scene. Keep React
+ * docs generator, the tool surface, the pages and the city under them. Keep React
  * out of this directory and the declaration stays inspectable by a build, a
  * CLI and an agent.
  */

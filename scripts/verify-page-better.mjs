@@ -1718,7 +1718,7 @@ try {
   const things = await todoContext.newPage();
   things.on("pageerror", (error) => errors.push(`todo: ${error.message}`));
   const thingsAt = async (path) => {
-    await things.goto(`${at("todo")}/pages${path}?today=2026-09-01&fresh=1`, { waitUntil: "load" });
+    await things.goto(`${at("todo")}${path}?today=2026-09-01&fresh=1`, { waitUntil: "load" });
     await things.waitForSelector("[data-graview-page-title], main h1", { timeout: 60_000 });
     await things.waitForTimeout(300);
   };

@@ -4,7 +4,7 @@ import { HOME_SLUG, openingOf, OVERVIEW_PATH, OVERVIEW_SLUG, sayIn } from "@grav
 import { narrowedPath } from "@graview/core/navigate";
 import { revealSection } from "./section.js";
 import { pluralSlug } from "./registry.js";
-import { Suspense, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from "react";
+import { Suspense, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type ComponentType, type ReactNode } from "react";
 import { HrefOfContext } from "./href-of.js";
 import { aggregateId } from "@graview/layout/view";
 import { aheadOf, afterFirstDraw, GoToContext, GraviewProvider, lazyPart, hasLanded, HostAssetsContext, HostFilesContext, HostReelContext, HostViewerStateContext, markLanded, useHostViewerState, useKeptDrawings, useHostReel, PlaybackContext, useGraviewIfAny, useOwnPlayback, useTheKeyboardLandsSomewhere, useTheWatchKnowsWhatIsUnseen, type FieldTyping, type GoTo, type GoToAlso, type GoToTarget, type GraviewContextValue, type Playback } from "@graview/react/provider";
@@ -13,11 +13,11 @@ import { PageQuickAsk } from "./quick-ask.js";
 const DraftPage = lazyPart(() => import("./page-draft.js").then((module) => ({ default: module.DraftPage })));
 import { FaceControlsRoot } from "./face-controls.js";
 import { PagesContextMenu } from "./context-menu.js";
-import { DefaultHomePage, DefaultListPage, DefaultMapPage, DefaultPlacePage, DefaultPlacesPage, DefaultProblemsPage, DefaultRecordPage, DefaultSearchPage, DefaultShell, type PageContext } from "./pages.js";
+import { DefaultHomePage, DefaultListPage, DefaultMapPage, DefaultPlacePage, DefaultPlacesPage, DefaultProblemsPage, DefaultRecordPage, DefaultSearchPage, DefaultShell, onTheOneFace, type PageContext } from "./pages.js";
 import { pathOfPlace, placesOf } from "./page-places.js";
 import { createPageRegistry, kindOfSlug, type PageRegistry } from "./registry.js";
 import { useHref, useLocation, useNavigate, useNavigationType, useParams } from "react-router";
-// The page over the Scene's own city is fetched only where a face asks for it (`sceneUnderPages`): a hosted page draws none of it.
+// The page over the Scene's own city is fetched only on the one face (`onTheOneFace`), after the page's first draw: a face that is the routed face alone draws none of it.
 import { OneFaceComing, OneFaceContext, useOneFace, useOneFaceComing, type OneFace } from "./one-place-control.js";
 import { createPortal } from "react-dom";
 import { heldHost, HeldHere } from "./held-element.js";
@@ -669,7 +669,7 @@ export function PagesRoutes<S extends AnySchema>({
           * keeps its page here.
           */}
         {/* On the one face the overview is the city over the home: the face takes its address there itself (`one-place.tsx`), keeping what it carries. */}
-        {placesOf(inside).some((place) => place.as === OVERVIEW_SLUG) || (inside.sceneUnderPages && inside.views) ? null : <Route path={OVERVIEW_PATH} element={<Navigate to="/" replace />} />}
+        {placesOf(inside).some((place) => place.as === OVERVIEW_SLUG) || onTheOneFace(inside) ? null : <Route path={OVERVIEW_PATH} element={<Navigate to="/" replace />} />}
         <Route path="/places/:as" element={<DefaultPlacePage context={inside} />} />
         <Route path="/:slug" element={<KindSwitch context={inside} registry={registry} page="list" />} />
         <Route
@@ -704,6 +704,10 @@ export function PagesRoutes<S extends AnySchema>({
  * same page, its fields and focus as they were. The one face says itself to
  * the page from where the page is drawn, once it has come.
  */
+const noChange = () => () => undefined;
+const notOnAServer = () => false;
+const onAServer = () => true;
+
 function OneFacePage({ context, registry }: { readonly context: PageContext<AnySchema>; readonly registry: PageRegistry<AnySchema, PageComponent<AnySchema>> | undefined }) {
   const [host] = useState(() => heldHost("data-graview-one-face-page"));
   const [face, setFace] = useState<OneFace | null>(null);
@@ -711,8 +715,9 @@ function OneFacePage({ context, registry }: { readonly context: PageContext<AnyS
   useEffect(() => () => host?.remove(), [host]);
   // One element across the face's changes: a level moved re-renders the face, never the whole page (`setFace`).
   const page = useMemo(() => <PagesRoutes context={context} {...(registry ? { registry } : {})} />, [context, registry]);
-  // Drawn on a server, nothing moves: the page as the fallback draws it.
-  if (!host)
+  // Drawn on a server, nothing moves: the page as the fallback draws it — a string drawn where a document is shimmed too, which has no portal to move.
+  const toAString = useSyncExternalStore(noChange, notOnAServer, onAServer);
+  if (!host || toAString)
     return (
       <Suspense fallback={<OneFaceArriving>{page}</OneFaceArriving>}>
         <OnePlace context={context} onFace={setFace}>
@@ -830,7 +835,7 @@ export function PagesApp<S extends AnySchema>({
       <Reported onNavigate={onNavigate} path={path} />
       {steering ? <Steered steering={steering} /> : null}
       {context.presence || outer ? <SaysWhere context={context} to={outer} /> : null}
-      {context.sceneUnderPages && context.views ? (
+      {onTheOneFace(context) ? (
         <OneFacePage context={context as unknown as PageContext<AnySchema>} registry={registry as unknown as PageRegistry<AnySchema, PageComponent<AnySchema>> | undefined} />
       ) : (
         <PagesRoutes context={context} {...(registry ? { registry } : {})} />

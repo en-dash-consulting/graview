@@ -39,6 +39,7 @@ export {
   WhyLine,
   StartFreshLink,
   SceneLink,
+  onTheOneFace,
   useStoreTick,
   pageStyles,
   PageMain,

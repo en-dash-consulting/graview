@@ -95,7 +95,6 @@ export type Ids = {
   schemaVar: string;
   SchemaType: string;
   StoreType: string;
-  AppComponent: string;
   accent: string;
   port: number;
   link: string | undefined;
@@ -103,8 +102,6 @@ export type Ids = {
   range: string;
   packageManager: "pnpm" | "npm";
   packageName: string;
-  /** The act the starter seat is gated on: one that creates the kind. */
-  gate: string;
   /** Made from a template (FR-08): the declaration is the document in src/domain/app.json. */
   fromTemplate: boolean;
 };

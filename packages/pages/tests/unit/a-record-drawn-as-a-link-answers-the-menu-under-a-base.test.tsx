@@ -9,6 +9,7 @@ import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { PagesApp } from "../../src/index.js";
+import { theOneFaceHasCome, thePageIn } from "./on-the-one-face.js";
 
 /**
  * A RECORD DRAWN AS A LINK ANSWERS THE MENU UNDER A BASE (FR-189).
@@ -53,14 +54,17 @@ async function at(place: string) {
   if (!compiled.ok) throw new Error(`the document compiles: ${JSON.stringify(compiled.findings.filter((f) => f.severity === "error"))}`);
   const app = compiled.app as GraviewApp<AnySchema>;
   const store = new Store<AnySchema>({ schema: app.schema, mutations: app.mutations ?? [], ...(app.policy ? { policy: app.policy } : {}), snapshot: { nodes: NODES, edges: [] } as never });
-  const host = document.createElement("div");
-  document.body.appendChild(host);
-  const root = createRoot(host);
+  const frame = document.createElement("div");
+  document.body.appendChild(frame);
+  const root = createRoot(frame);
   await act(async () => root.render(<PagesApp context={{ store, views: declaredViews(app), principal: OWNER }} basename={BASE} initialPath={`/places/${place}`} />));
   await settle();
+  await theOneFaceHasCome(frame);
+  // The page on the one face, not the city out of sight under it.
+  const host = thePageIn(frame) as HTMLElement;
   cleanup = async () => {
     await act(async () => root.unmount());
-    host.remove();
+    frame.remove();
   };
   const card = (id: string) => host.querySelector<HTMLAnchorElement>(`[data-graview-listed="${id}"] .graview-spec-item-link`)!;
   return { host, store, card };

@@ -1,8 +1,9 @@
 import { type Ids, escapeComment, escapeHtml, escapeJsxText, escapeString } from "./names.js";
 
 /*
- * THE FACES A NEW PROJECT HAS: the page, the embed, the scene, the pages
- * face and the entry that opens the store and mounts it.
+ * WHAT A NEW PROJECT DRAWS: the page, the embed, the views the app's city
+ * and its pages draw with, the pages in your own words, and the entry that
+ * opens the store and mounts the one face.
  */
 
 export function indexHtml(ids: Ids): string {
@@ -11,7 +12,7 @@ export function indexHtml(ids: Ids): string {
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>${escapeHtml(ids.name)}</title>
-<!-- No icon of its own until the Shell draws the brand's mark: Chrome asks for /favicon.ico before any script runs, and a 404 there is an error on the console. -->
+<!-- No icon of its own until the face draws the brand's mark: Chrome asks for /favicon.ico before any script runs, and a 404 there is an error on the console. -->
 <link rel="icon" href="data:," />
 <style>
   /* The theme is injected by src/main.tsx from the declared brand; this is
@@ -128,125 +129,6 @@ export function views() {
 `;
 }
 
-export function uiAppTsx(ids: Ids): string {
-  return `import type { HostFiles } from "@graview/core";
-import { EMPTY_VIEW, type ViewState } from "@graview/layout";
-import { GraviewProvider, useGraph, useGraview, type Scheme } from "@graview/react";
-import { AgentSeat, Shell } from "@graview/primitives";
-import { StudioPlace } from "@graview/studio";
-import { templateIntelligence, type ToolCall } from "@graview/tools";
-import { useMemo, useState } from "react";
-import { ${ids.appVar}, createStore, type ${ids.StoreType} } from "../domain/app.js";
-import { ${ids.brandVar} } from "../domain/brand.js";
-import type { ${ids.SchemaType} } from "../domain/schema.js";
-import { views } from "./views.js";
-
-type S = ${ids.SchemaType};
-
-/**
- * The app opens from ALTITUDE: every kind a district, each saying how many
- * it holds — or "none yet", which is an invitation rather than a void.
- */
-export const INITIAL_VIEW: ViewState = { ...EMPTY_VIEW, overview: true };
-
-export interface ${ids.AppComponent}Props {
-  readonly store?: ${ids.StoreType};
-  readonly initialView?: ViewState;
-  readonly syncUrl?: boolean;
-  readonly initialScheme?: Scheme;
-  readonly onSchemeChange?: (scheme: Scheme) => void;
-  /** Whether the store behind this app is remembered in the browser (see main.tsx). */
-  readonly remembers?: boolean;
-  /** Where a picture or a file put on a record goes (see main.tsx). */
-  readonly files?: HostFiles;
-}
-
-/**
- * The whole application. \`Shell\` is the command bar, the scene, the
- * inspector and the rail, derived; what ${escapeComment(ids.name)} adds is a
- * sentence for when nothing is wrong and a seat for an agent. If this file
- * grows, ask whether the declaration should have grown instead.
- */
-export function ${ids.AppComponent}({
-  store,
-  initialView = INITIAL_VIEW,
-  syncUrl = false,
-  initialScheme = "light",
-  onSchemeChange,
-  remembers = false,
-  files,
-}: ${ids.AppComponent}Props) {
-  const created = useMemo(() => store ?? createStore(), [store]);
-  const registry = useMemo(() => views(), []);
-  const [scheme, setScheme] = useState<Scheme>(initialScheme);
-
-  return (
-    <GraviewProvider
-      store={created}
-      views={registry}
-      initialView={initialView}
-      scheme={scheme}
-      brand={${ids.brandVar}}
-      settings={${ids.appVar}.settings ?? []}
-      app={${ids.appVar}}
-    >
-      <Shell<S>
-        standing="Everything is in order"
-        /*
-         * THE APP'S OWN DECLARATION, one press away and in place. The
-         * kinds, fields, edges, acts and rules of \`src/domain\` are a graph
-         * here: change one with the ordinary acts, watch the checker judge
-         * it, and apply to get the files to write back. Offered to the seat
-         * that administers where there is one, and to whoever is here where
-         * there is not — which is this project, today.
-         */
-        studio={<StudioPlace app={${ids.appVar}} />}
-        seat={(onCall) => <Starter onCall={onCall} />}
-        remembers={remembers}
-        files={files}
-        syncUrl={syncUrl}
-        scheme={scheme}
-        onScheme={(next) => {
-          setScheme(next);
-          onSchemeChange?.(next);
-        }}
-      />
-    </GraviewProvider>
-  );
-}
-
-/**
- * The seat at zero. An empty graph plus a seat that proposes starter data is
- * the "describe your domain, get a working app" moment. Every proposal is an
- * ordinary mutation through the derived tool surface — logged, attributed to
- * the seat, reviewable, undoable.
- */
-function Starter({ onCall }: { onCall: (call: ToolCall) => void }) {
-  const { store } = useGraview<S>();
-  const nodes = useGraph();
-  const empty = nodes.length === 0;
-  return (
-    <AgentSeat<S>
-      who="starter"
-      testId="agent-starter"
-      count={empty ? 1 : 0}
-      gate="${ids.gate}"
-      label={() => "Add some starter data"}
-      busyLabel="Adding…"
-      idle="There is something here already"
-      onCall={onCall}
-      run={async (agent) => {
-        const starter = templateIntelligence<S>();
-        for (const proposal of await starter.propose(store)) {
-          await agent.run(proposal.mutation, { ...proposal.args });
-        }
-      }}
-    />
-  );
-}
-`;
-}
-
 export function pagesTsx(ids: Ids): string {
   return `import { isCurrent, nounOf, withArticle } from "@graview/core";
 import { Begin, EditableValue } from "@graview/primitives";
@@ -263,7 +145,6 @@ import {
   recordFacts,
   relationFacts,
   Repairs,
-  spatialHref,
   titleFieldOf,
   useStoreTick,
   type PageComponent,
@@ -275,8 +156,9 @@ import { ${ids.schemaVar}, type ${ids.SchemaType} } from "../domain/schema.js";
 type S = ${ids.SchemaType};
 
 /**
- * THE OTHER FACE, IN YOUR OWN WORDS. /pages is an ordinary routed web
- * application derived from the declaration: a list and a record per kind,
+ * YOUR PAGES, IN YOUR OWN WORDS. The app is an ordinary routed web
+ * application derived from the declaration, standing over its own city
+ * (the control at the window's foot): a list and a record per kind,
  * forms from the mutations, a problems page from the rules. Every one of
  * those can be replaced per kind — or per surface: shell, home, problems —
  * with a page you write. This is the ${ids.spoken}'s record page; delete it
@@ -362,9 +244,7 @@ function ${ids.KindPascal}Page({ context }: { context: PageContext<S> }) {
           {isCurrent(store.schema.tryDefinition(node.kind), node) ? null : "In the past: out of the picture, never out of the record. "}
           {ties.length === 0 ? "Connected to nothing yet." : null}
         </p>
-        <a href={spatialHref(id, context.sceneHref)} style={{ ...pageStyles.link, ...pageStyles.quiet }} data-testid="spatial-link">
-          See it in the scene ↗
-        </a>
+        {/* Where it stands in the app's city is the control at the window's foot: Nearby draws a line from this page to it. */}
       </header>
       {facts.violations.length > 0 ? (
         <section style={{ ...pageStyles.rule, display: "grid", gap: 10 }} data-testid="record-violations">
@@ -400,7 +280,7 @@ function ${ids.KindPascal}Page({ context }: { context: PageContext<S> }) {
         * own sentence. Dropping it teaches a person the software is broken —
         * they watched a colleague do this yesterday and now the control is
         * gone — so it is drawn struck through with the reason beside it, the
-        * way the derived pages and the scene's strip both draw it.
+        * way the derived pages draw it.
         */}
       {facts.actions.withheld.length > 0 ? (
         <section style={{ ...pageStyles.rule, display: "grid", gap: 8 }} data-testid="record-withheld">
@@ -477,7 +357,6 @@ import { browserStartsFresh, createBrowserAdapter, filesAt, forgetFreshParam, op
 import { createRoot } from "react-dom/client";
 import { ${ids.appVar} } from "./domain/app.js";
 import { ${ids.brandVar} } from "./domain/brand.js";
-import { ${ids.AppComponent} } from "./ui/app.js";
 import { pages } from "./ui/pages.js";
 import { views } from "./ui/views.js";
 
@@ -538,36 +417,32 @@ forgetFreshParam();
  */
 const devHostFiles = (import.meta as { env?: { DEV?: boolean } }).env?.DEV ? filesAt("/__graview/files", { maxBytes: 10_000_000, kinds: ["image/*", "video/*", "application/pdf", "text/plain"] }) : undefined;
 
-if (window.location.pathname.startsWith("/pages")) {
-  // The routed, responsive face: same store, same ids, one app.
-  createRoot(root).render(
-    <PagesApp
-      basename="/pages"
-      context={{
-        store: opened.store,
-        brand: ${ids.brandVar},
-        sceneHref: "/",
-        remembers: true,
-        /*
-         * THE SAME PICTURES ON BOTH FACES. Handed the registry the scene
-         * draws from, the pages land on a gallery of them — every kind as
-         * a card until you title a lens, then the lens by its name — with
-         * the map of the kinds and the seat on every route.
-         */
-        views: views(),
-        settings: ${ids.appVar}.settings ?? [],
-        app: ${ids.appVar},
-        files: devHostFiles,
-      }}
-      // Your own pages over the derived ones: see ui/pages.tsx.
-      registry={pages()}
-    />,
-  );
-} else {
-  createRoot(root).render(
-    <${ids.AppComponent} store={opened.store} remembers files={devHostFiles} syncUrl initialScheme={scheme} onSchemeChange={applyScheme} />,
-  );
-}
+/*
+ * ONE FACE. The app's pages are ordinary addresses — a list and a record
+ * per kind, the places you title, the problems — and they stand over the
+ * app's own city: the control at the bottom left (Page · Nearby · Map, or
+ * Alt+↑ and Alt+↓, or a pinch) moves the page you are on out into a panel
+ * beside the records it shows, then to the whole map of the app. Handed
+ * \`views\`, the registry the city draws with, the pages land on a gallery
+ * of them — every kind as a card until you title a lens, then the lens by
+ * its name — with the seat on every route. \`sceneUnderPages: false\`
+ * would keep the pages alone, without the city.
+ */
+createRoot(root).render(
+  <PagesApp
+    context={{
+      store: opened.store,
+      brand: ${ids.brandVar},
+      remembers: true,
+      views: views(),
+      settings: ${ids.appVar}.settings ?? [],
+      app: ${ids.appVar},
+      files: devHostFiles,
+    }}
+    // Your own pages over the derived ones: see ui/pages.tsx.
+    registry={pages()}
+  />,
+);
 
 // A flag a harness can wait for, rather than a timer and a hope.
 (window as unknown as Record<string, unknown>)["__graviewReady"] = { scheme };

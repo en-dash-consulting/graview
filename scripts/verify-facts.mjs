@@ -38,7 +38,7 @@ const engines = asked ? [asked] : QUICK ? ["chromium"] : ENGINES;
 const DESK = { width: 1440, height: 1000 };
 const PHONE = { width: 390, height: 844 };
 const SCHEMES = QUICK ? ["dark"] : ["light", "dark"];
-const TASK = "/pages/tasks/t-paint?today=2026-09-01";
+const TASK = "/tasks/t-paint?today=2026-09-01";
 /** The chair, who may change a talk; the gauntlet's seats are ids, never names. */
 const TALK_ID = "talk:memory-safety-without-garbage-collection-a-field-report-on-an-airline-s-booking-engine";
 const TALK = `/pages/talks/${encodeURIComponent(TALK_ID)}?as=u-4f1c9a`;

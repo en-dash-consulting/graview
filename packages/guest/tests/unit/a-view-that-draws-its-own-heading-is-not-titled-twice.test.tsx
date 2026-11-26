@@ -98,7 +98,8 @@ async function page(manifest: WorkerViewManifest) {
   document.body.appendChild(host);
   const root = createRoot(host);
   const views = registerWorkerView(registerDefaultViews(workshopApp.schema as AnySchema, createViews(workshopApp.schema as AnySchema)), { manifest, worker: { source: NAMED } });
-  await act(async () => root.render(<PagesApp context={{ store: store(), views: views as never, principal: nick }} initialPath="/deliverables/deliverable%3Aemail" />));
+  // The routed face alone (`sceneUnderPages: false`), whose head has the record's way to the scene: what is drawn of the head is the claim, and on the one face that way is the camera, not a link.
+  await act(async () => root.render(<PagesApp context={{ store: store(), views: views as never, principal: nick, sceneUnderPages: false }} initialPath="/deliverables/deliverable%3Aemail" />));
   done = async () => {
     await act(async () => root.unmount());
     host.remove();

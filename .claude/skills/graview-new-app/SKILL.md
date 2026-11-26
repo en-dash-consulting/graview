@@ -27,8 +27,8 @@ harnesses beside it); `--merge` starts in a repository that already has a
 README, naming collisions rather than writing over them.
 
 It writes exactly the shape below — one kind with `creates`, `connects`,
-`writes` and a `lifecycle`, one rule with its repair, the shell, the routed
-face, a headless test, a CI workflow — installs it, installs these skills
+`writes` and a `lifecycle`, one rule with its repair, the one routed
+face at `/`, a headless test, a CI workflow — installs it, installs these skills
 into it, and makes the first commit ("My App, on Graview"; staged instead
 when git has no identity). `AGENTS.md` at the root says the loop, the rules
 and the skills, and `CLAUDE.md` imports it; `verify` rewrites `docs/agents.md`
@@ -49,8 +49,8 @@ src/
     app.ts           # defineApp({ ... }) — one object, the whole surface
   ui/
     views.tsx        # registerDefaultViews, then your own where you care
-    app.tsx          # the provider, the scene, the workbench
-  main.tsx
+    pages.tsx        # your own pages over the derived ones
+  main.tsx           # one PagesApp at /: the one face
 ```
 
 `graview check` reads `defineApp`; a React import in `domain/` would drag a
@@ -87,28 +87,22 @@ In a framework checkout, `pnpm graview:link` puts `graview` on PATH.
      say "+N past".
    - `subject: { kinds, arg }` on every mutation that acts on a thing.
 
-5. **Take the shell.** `Shell` from `@graview/primitives` is everything
-   not about your domain: the one app bar an embed wears too (the name and
-   its app menu, the scene's pictures, Find, the inbox, the standing, the
-   person), the scene, its key, the quick ask (⌘K, where
-   the host gives a model) and the acts at the pointer.
-   Its parts (`AppBar`, `Inspector`, `Standing`, `Inbox`, `Trail`,
-   `OverviewButton`) are exported for a shell of your own; one is about
-   eighty lines, and a longer one is probably rebuilding something derived.
-   `firstLook` on `Shell` and `PagesApp` (`true` or `{ seen, onDone,
-   steps }`) points a newcomer at the app's own controls once; write no tour.
-
-   Search comes with `Shell`: Find answers `/` or ⌘K from anywhere, lights
-   what the words find in whatever picture is open and dims the rest, and
-   `#q=` makes a search a stop Back returns to. Nothing is declared per kind.
-
-   The routed face is one branch in `main.tsx`: when the path starts with
-   `/pages`, render `<PagesApp basename="/pages" context={{ store, brand,
-   views: views(), settings }} />` from `@graview/pages`. It lands on a
-   gallery of the app's pictures — every kind drawn as a card until you title
-   a lens, then the lens by its name — with a list, a record and a form per
-   kind, the problems and the map, at phone widths. Hand it the same `views`
-   the scene draws from, or it has no pictures to land on.
+5. **Take the face.** `main.tsx` renders one `<PagesApp context={{ store,
+   brand, views: views(), settings }} />` from `@graview/pages` at `/`, and
+   it is everything not about your domain: the one app bar (the name and
+   its menu, the places, Find, the inbox, the standing, the person), a
+   gallery of the app's pictures — every kind a card until you title a lens
+   — a list, a record and a form per kind, the problems, at phone widths,
+   the quick ask (⌘K, where the host gives a model) and the acts at the
+   pointer. It is the one face: the page over the Scene's own city, and
+   `Page · Nearby · Map` at the bottom left moves the same page out onto
+   it. Hand it the `views`, or it has no pictures and no city.
+   `sceneUnderPages: false` keeps the pages alone (see `graview-pages`).
+   `firstLook` (`true` or `{ seen, onDone, steps }`) points a newcomer at
+   the app's own controls once; write no tour. Find answers `/` or ⌘K from
+   anywhere; nothing is declared per kind. `Shell` (`@graview/primitives`)
+   is the Scene's own face, for a product that wants the picture alone; its
+   parts (`AppBar`, `Inspector`, `Standing`, `Inbox`, `Trail`) are exported.
 
 6. **Register default views first, override later.** `registerDefaultViews`
    means a new kind renders sensibly at all three fidelities before you write

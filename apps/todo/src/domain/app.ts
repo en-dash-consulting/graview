@@ -77,7 +77,7 @@ export const todoApp = defineApp({
   /*
    * THREE PICTURES, DECLARED AND DRAWN (FR-79). Each lens here has a title,
    * so it is a place — a pill on the bar, a drive-in from altitude, a page
-   * at /pages/places/<name> — and the framework draws it from these lines
+   * at /places/<name> — and the framework draws it from these lines
    * alone: the UI registers none of them. The week is declared last, so it
    * is what the tasks' district draws when an address names no picture.
    */

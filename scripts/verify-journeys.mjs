@@ -72,7 +72,8 @@ const FACES = [...new Set(VARIANTS.map(({ face }) => face))];
  * first chapters plant it. Untimed.
  */
 const APPS = [
-  { dir: "todo", query: { today: "2026-09-01" } },
+  // Things is one face at its root, and keeps the Scene's own face at `/scene/` for the harnesses of its own hand.
+  { dir: "todo", query: { today: "2026-09-01" }, sceneAt: "/scene/", pagesAt: "" },
   {
     dir: "seedbed",
     query: {},
@@ -146,16 +147,16 @@ async function ready(page) {
 
 /** What every job of one app is told: its addresses, its records' names, its seats. */
 function contextFor(setup, page, variant) {
-  const { base, query, slugs, kinds, labels, refusal, refusalWhy, remember } = setup;
+  const { base, query, slugs, kinds, labels, refusal, refusalWhy, remember, sceneAt, pagesAt } = setup;
   const keep = remember ? { remember: "1" } : {};
   const recordUrl = (node, extra = {}) => {
     if (variant.face === "scene") {
-      return address(base, "/", query, { ...keep, ...extra }, `#focus=${encodeURIComponent(node.id)}&sel=${encodeURIComponent(node.id)}`);
+      return address(base, sceneAt, query, { ...keep, ...extra }, `#focus=${encodeURIComponent(node.id)}&sel=${encodeURIComponent(node.id)}`);
     }
     const kind = setup.kindOf[node.id];
-    return address(base, `/pages/${slugs[kind] ?? kind}/${encodeURIComponent(node.id)}`, query, { ...keep, ...extra });
+    return address(base, `${pagesAt}/${slugs[kind] ?? kind}/${encodeURIComponent(node.id)}`, query, { ...keep, ...extra });
   };
-  const homeAs = (extra = {}) => address(base, variant.face === "scene" ? "/" : "/pages", query, { ...keep, ...extra });
+  const homeAs = (extra = {}) => address(base, variant.face === "scene" ? sceneAt : pagesAt || "/", query, { ...keep, ...extra });
   return { page, ...variant, kinds, labels, refusal, refusalWhy, home: homeAs(), homeAs, recordUrl };
 }
 
@@ -245,6 +246,9 @@ async function setUp(browser, entry, declaration) {
     kinds: plan.kinds.map((one) => one.kind),
     arrange: entry.arrange ? entry.arrange.toString() : null,
     remember: Boolean(entry.arrange),
+    /* Where the Scene's own face and the pages are: "/" and "/pages", unless the app says otherwise. */
+    sceneAt: entry.sceneAt ?? "/",
+    pagesAt: entry.pagesAt ?? "/pages",
   };
   const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
   await context.addInitScript(storeHookInPage);
@@ -254,7 +258,7 @@ async function setUp(browser, entry, declaration) {
     await ready(page);
     if (setup.arrange) await inStore(page, setup.kinds, entry.arrange);
   };
-  await open("/");
+  await open(setup.sceneAt);
   const graph = await inStore(page, setup.kinds, (store) => store.graph.allNodes().map((node) => ({ id: node.id, kind: node.kind, label: window.__journeyName(store, node) })));
   setup.labels = graph.map((node) => node.label).filter(Boolean);
   setup.kindOf = Object.fromEntries(graph.map((node) => [node.id, node.kind]));
@@ -275,7 +279,7 @@ async function setUp(browser, entry, declaration) {
       : [];
     const wanted = plan.jobs.filter((job) => job.act).map((job) => job.act);
     for (const seat of [...seats].reverse()) {
-      await open("/", { as: seat.id });
+      await open(setup.sceneAt, { as: seat.id });
       const choice = await inStore(page, setup.kinds, (store, { wanted, plurals }, sat) => {
         if (!sat) return null;
         const permitted = new Set(store.permittedMutations(sat).map((mutation) => mutation.name));
@@ -306,12 +310,12 @@ async function setUp(browser, entry, declaration) {
   }
 
   /* Where each kind's pages are: the routed face's own links, not a guess at a slug. */
-  await open("/pages");
-  const links = await page.$$eval('a[href^="/pages/"]', (els) => els.map((el) => ({ href: el.getAttribute("href"), text: (el.textContent ?? "").trim() })));
+  await open(setup.pagesAt || "/");
+  const links = await page.$$eval(`a[href^="${setup.pagesAt}/"]`, (els) => els.map((el) => ({ href: el.getAttribute("href"), text: (el.textContent ?? "").trim() })));
   setup.slugs = {};
   for (const { kind, plural } of plan.kinds) {
-    const link = links.find((one) => one.text.startsWith(plural) && /^\/pages\/[^/]+$/.test(one.href));
-    setup.slugs[kind] = link ? link.href.split("/")[2] : plural.toLowerCase().replace(/\s+/g, "-");
+    const link = links.find((one) => one.text.startsWith(plural) && /^\/[^/]+$/.test(one.href.slice(setup.pagesAt.length)));
+    setup.slugs[kind] = link ? link.href.slice(setup.pagesAt.length).split("/")[1] : plural.toLowerCase().replace(/\s+/g, "-");
   }
   await context.close();
   takeViolations(); // Setup is not a job.

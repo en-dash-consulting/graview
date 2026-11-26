@@ -140,7 +140,7 @@ async function buildHost() {
         };
         let views = make();
         const root = createRoot(document.getElementById("app"));
-        const draw = () => root.render(createElement(PagesApp, { context: { store, app, principal: seat, views, viewerState, ...(params.has("one") ? { sceneUnderPages: true } : {}) } }));
+        const draw = () => root.render(createElement(PagesApp, { context: { store, app, principal: seat, views, viewerState, sceneUnderPages: params.has("one") /* The plain case is the routed face alone: the one face is the default now, so it is said. */ } }));
         window.__seat = (next) => { seat = next; draw(); };
         window.__without = (names) => { views = make(names); draw(); };
         draw();`,

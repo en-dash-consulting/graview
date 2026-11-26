@@ -52,7 +52,7 @@ try {
   page.on("pageerror", (error) => errors.push(error.message));
 
   /* ----------------------------------- the month is a place on the bar */
-  await page.goto(`${at("todo")}/?today=2026-09-01&fresh=1`, { waitUntil: "load" });
+  await page.goto(`${at("todo")}/scene/?today=2026-09-01&fresh=1`, { waitUntil: "load" });
   await page.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
   await page.waitForTimeout(800);
   const places = await placesNamed(page);
@@ -132,7 +132,7 @@ try {
   /* -------------------------- a busy day says how many, and opens itself */
   // 2026-09-04 onwards: the example's tasks cluster, so at one per cell the
   // overflow is guaranteed rather than hoped for.
-  await page.goto(`${at("todo")}/?today=2026-09-01#focus=aggregate:task&in.view=the-month&in.range=day&in.at=2026-09-03`, {
+  await page.goto(`${at("todo")}/scene/?today=2026-09-01#focus=aggregate:task&in.view=the-month&in.range=day&in.at=2026-09-03`, {
     waitUntil: "load",
   });
   await page.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
@@ -151,7 +151,7 @@ try {
    * date, the store judges it, and the log records it — so one undo puts
    * the entry back on the day it came from.
    */
-  await page.goto(`${at("todo")}/?today=2026-09-01&fresh=1#focus=aggregate:task&in.view=the-month`, {
+  await page.goto(`${at("todo")}/scene/?today=2026-09-01&fresh=1#focus=aggregate:task&in.view=the-month`, {
     waitUntil: "load",
   });
   await page.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });

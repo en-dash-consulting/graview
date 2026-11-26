@@ -57,8 +57,8 @@ product is for, and it is four seams, all of which the framework ships.
 
 ## Or in the context menu
 
-A desk can be a section of the menu a right-click opens on either face
-(on the pages Shift+F10 and a long press too): `menuSections` on the
+A desk can be a section of the menu a right-click opens on the page or
+the city (on a page Shift+F10 and a long press too): `menuSections` on the
 provider, `embed()` or the pages' context. Each source is told what the
 menu was opened on — `{ face, on, about, field, place, href }` — and answers
 `{ id, heading?, items?: [{ id, label, run }], render?: (close) => node }`
@@ -68,7 +68,7 @@ instead of them, and what it proposes goes through the same four seams.
 ## The inline AI, already in the menu
 
 Hand the host's models and Graview draws an AI section in the context menu
-on both faces — no section to write. `ai={{ fast, thinking }}`: the Fast
+on the page and the city — no section to write. `ai={{ fast, thinking }}`: the Fast
 slot is Jev's shape (`jevFast()`, or any `{ model, decide }`), the Thinking
 slot `{ model, think({ system, prompt, state, catalog }) }`; each call
 reports tier, model and tokens to `ai.meter`. The model only PICKS from

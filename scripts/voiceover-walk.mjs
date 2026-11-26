@@ -109,9 +109,9 @@ const STOPS = [
     await choice.selectOption(options.find((one) => one !== now) ?? options[0]);
     await choice.press("Enter").catch(() => undefined);
   } },
-  { name: "todo-list", title: "Things (todo): a list", url: todo("/pages/tasks") },
-  { name: "todo-record", title: "Things (todo): a record page", url: todo("/pages/tasks/t-deposit") },
-  { name: "ask", title: "Things (todo): the quick ask", url: `${todo("/pages/tasks/t-deposit")}&ai=stub`, act: async (page) => {
+  { name: "todo-list", title: "Things (todo): a list", url: todo("/tasks") },
+  { name: "todo-record", title: "Things (todo): a record page", url: todo("/tasks/t-deposit") },
+  { name: "ask", title: "Things (todo): the quick ask", url: `${todo("/tasks/t-deposit")}&ai=stub`, act: async (page) => {
     await page.keyboard.press("Meta+K");
     const box = page.getByRole("region", { name: /^Tell Graview about / }).getByRole("combobox").first();
     await box.fill("What is left?");

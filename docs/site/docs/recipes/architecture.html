@@ -1987,7 +1987,8 @@ createRoot(root).render(
       store: remote.store,
       principal: handed.principal,
       ...(app.brand ? { brand: app.brand } : {}),
-      // A record's "See it on the map" opens the preview's own scene, focused on it.
+      // A record's "See it on the map" opens the preview's own scene, focused on it: the city is the preview's page, not drawn under this one.
+      sceneUnderPages: false,
       sceneHref: SCENE,
       views,
       settings: app.settings ?? [],

@@ -75,6 +75,12 @@ if (window.location.pathname.startsWith("/pages")) {
         store: opened.store,
         brand: gauntletBrand,
         signature: true,
+        /*
+         * The routed face alone, its Scene at "/": the gauntlet is a fixture
+         * the Scene's own harnesses and the routed face's measure side by
+         * side. The one face is held on Things (`pnpm verify one-face`).
+         */
+        sceneUnderPages: false,
         sceneHref: "/",
         remembers: true,
         principal: openingSeat(),

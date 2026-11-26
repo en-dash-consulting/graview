@@ -6,18 +6,18 @@ Installed into a project by `graview skills install .`, and read by whichever as
 
 ## The skill
 
-## The pages face
+## The routed face
 
-A Graview app has two faces over one store. The scene is the picture. The pages face is the same declaration routed as an ordinary web application: a home, a list per kind, a record per node, forms for every act, and a problems page — derived, then replaceable one surface at a time, up to a product design of its own. The ladder ends at the framework's own example: `apps/seedbed`, chapters nine and thirteen.
+One face over one store: the declaration routed as a web application — a home, a list per kind, a record per node, forms for every act, a problems page — over the Scene's own city. Derived, then replaceable a surface at a time, up to a design of its own (`apps/seedbed`, chapters 9 and 13).
 
 ### What comes for free
 
 ```tsx
-// main.tsx — one branch: the path decides the face
-if (location.pathname.startsWith("/pages")) {
-  root.render(<PagesApp basename="/pages" context={{ store, brand, principal, sceneHref: "/" }} />);
-}
+// main.tsx — what graview create writes: one face, at /
+root.render(<PagesApp context={{ store, brand, principal, views: views() }} />);
 ```
+
+**Handed `views`, it is the one face**: `Page · Nearby · Map` at the bottom left (Alt+↑, Alt+↓, a pinch) moves the page beside its records' buildings, then onto the city. `sceneUnderPages: false` keeps the pages alone, with a Scene/Pages switch (`onTheOneFace(context)` says which).
 
 `PagesApp` renders with no registry at all:
 
@@ -26,7 +26,7 @@ if (location.pathname.startsWith("/pages")) {
 - `/<plural>/<id>` — a record: its facts, changed where they stand, its relations in the declaration's words, what can be done, what happened.
 - `/problems` — every broken rule, with repairs.
 
-The app bar, one row over any shell (`barAbove`): the name, the switch (Scene, Pages; none with `sceneUnderPages`), the place you are on — whose list holds the home, the Lists, the Pictures (standing on a wide bar, else under More, as an empty kind is) — Find, standing, person. A shell with a rail of its own says `surface("shell", Shell, { without: ["places"] })`: the bar keeps all that and names no place. Each list, record and picture opens with a trail (`nav` "You are here": the section, the kind's list, the page itself current), its hrefs under the base.
+The app bar, one row over any shell (`barAbove`): the name, the place you are on — whose list holds the home, the Lists, the Pictures (standing on a wide bar, else under More, as an empty kind is) — Find, standing, person. A shell with a rail of its own says `surface("shell", Shell, { without: ["places"] })`: the bar keeps all that and names no place. Each list, record and picture opens with a trail (`nav` "You are here": the section, the kind's list, the page itself current), its hrefs under the base.
 
 **Arrange it, declared**: `pages: { order: ["offer", "package"], hide: ["party"], first: "The offers" }`. `order` sorts gallery, nav, city; `hide` keeps kinds off the home and the bar's places (listed only while you are on one), each still at its address and in Find; `first` (place, kind or `"home"`) is where a new visit lands; a drawn home stays Home, on the bar and at `/`. `primary` stands on the bar. `placesOf(app)` (`/seat`) lists them. A lens only a home links to may be `hidden: true` (set-lens-hidden): off the bar and the page list, still at its address; set-lens-hidden on a kind (`title: "party"`) writes `hide`.
 
@@ -36,7 +36,7 @@ The app bar, one row over any shell (`barAbove`): the name, the switch (Scene, P
 
 **No home, and `purpose.jobs`** (the face handed `app`): the home opens on the jobs. The first with records waiting is the title, its count, five records, its `act` on each; the rest smaller, the gallery after. A drawn home answers a job only by listing its kind (`design-job-unanswered`). `composeDesign(document)` (`@graview/core/compose`) proposes jobs, a home, rows and glances where missing, the critic's edits and an accent.
 
-**Hand it `views`** (the scene's registry, plus `settings`/`presence`) — `graview create` does — and the face puts the scene's provider under its routes:
+**With `views`** (plus `settings`/`presence`) the face puts the scene's provider under its routes:
 
 - `/places`, `/places/<as>` — every named lens as a page (fullscreen, over the kind's members, the beginning acts beneath unless the lens says `create: false`). A kind's page lists its pictures; a pick in a lens travels to the record. A kind's own row (one × glyph) is each line of its list, and its own page view (one × full) heads its record. A script view that draws its own heading says `heading: "own"` in its manifest: its place, or the page it replaces, draws nothing over it.
 - `/map` — `kindMap(store)`: every declared relation in its words with its live count, also a section on the home page. A kind's list says what it relates to, arranged in the shared words (`?sort=due:desc`, `?filter=done:false`, `?group=due:month`, `?q=tape`) a lens carries in its fragment, so an arrangement is a link; `?by=`, `?<edge>=<id>`, `?with=` and `?past=1` still land. A record links back.
@@ -47,14 +47,14 @@ Everything a page shows is a derivation the scene uses too: `recordFacts`, `deri
 
 **Typed together.** Over a served store, hand the face `typing` (`openRemote`'s `remote.typing`; an embed passes it) and prose is edited live: each keystroke a splice, no Save, others' carets drawn. Markdown, a document's `text` and a string past 500 characters are; a short string is not, and stays a whole value with a Save: a name or a title is changed whole, two people merging letters into one name is a worse name, and a whole write keeps its stale-write check (`markCollaborative` overrides). A keystroke rides an act that writes the field and would run on the record now — its `allowedWhen`, its `allowedOn`, or its `apply` asked — so a record the act refuses is read only to typing too.
 
-**On a phone this face is the answer.** `Shell` carries `pagesHref`.
+**On a phone it is the same face**: Nearby's panel is a sheet from the foot.
 
 ### Rung one: a page in the app's own words
 
 `createPageRegistry(schema)` replaces pages per kind and surfaces per app:
 
 ```tsx
-import { createPageRegistry, DerivedForm, kindFacts, PageMain, pageStyles, recordFacts, SceneLink, useStoreTick } from "@graview/pages";
+import { createPageRegistry, DerivedForm, kindFacts, PageMain, pageStyles, recordFacts, useStoreTick } from "@graview/pages";
 
 function PlotPage({ context }: { context: PageContext<S> }) {
   const { store, principal } = context;
@@ -77,7 +77,7 @@ export const pages = createPageRegistry<S, PageComponent<S>>(schema)
 
 **Claim a declared block, keep the rest.** A block may say `"key": "rewrites"` (unsaid, its sort and place: `list.2`); `<BlockSlots.Provider value={{ "change.page": { rewrites: Timeline } }}>` draws yours for it and every other block as declared; a blocks lens is claimed by its address (`"the-offers"`). Never pick a block by its title's words.
 
-`.route(path, Component)` gives a page that is NOT about a kind an address — onboarding, settings, import — matched before `/:plural`. **Every `to` is basename-relative** (`to="/survey"`, never `to="/pages/survey"`), and so is `initialPath`, so a test renders the hrefs a browser will.
+`.route(path, Component)` gives a page that is NOT about a kind an address — onboarding, settings, import — matched before `/:plural`. **Every `to` is basename-relative** (`to="/survey"`, never with the base before it), and so is `initialPath`, so a test renders the hrefs a browser will.
 
 Rules for a page at this rung:
 
@@ -86,7 +86,7 @@ Rules for a page at this rung:
 3. **`pageStyles`** for the parts you did not design: one face, derived or not.
 4. **Prefill, never wire.** `DerivedForm` with `prefilled` is how a record offers an act about itself; the form asks for the rest.
 5. **Read permission before drawing an act.** `store.permits({ name, args }, principal)`, struck through with `verdict.refusal.message`. A form that refuses on submit is the bug this prevents.
-6. **Link to a PICTURE, not only to a node.** `spatialHref(id)` opens the scene on one thing; `placeHref(as)` (`/#view=the-grounds`) on one named place. A scene not at `/`: set `sceneHref` in the PagesApp context; both take it second.
+6. **Link to a PICTURE, not only to a node**: `placeHref(as)`. `SceneLink` draws nothing on the one face; on the pages alone it goes to `sceneHref`.
 7. **Take the act LIST from the derivation, not from the mutations.** `recordFacts(store, id, { principal }).actions` is the `AffordanceSet` the scene's strip reads: `affordances` can act here, `args` decided and `open` questions left; `withheld` are this seat's refusals, with the reason. `store.allMutations()` offers acts with nothing to act on. A **list** page asks it of a kind instead — `kindFacts(store, kind, { principal }).actions`, the acts that can BEGIN it.
 
 ### Rung two: a product design
@@ -95,7 +95,7 @@ Replacing every surface — the shell under the bar, the home, the problems, eac
 
 ### On somebody else's page
 
-`graview-embed` mounts the app, this face included (`face: "pages"`, `path`, `routing`), into one element of any page.
+`graview-embed` mounts the app into one element of any page (`face: "pages"`, `path`, `routing`): the routed face in a box, without the city. A host whose page IS the app passes `sceneUnderPages: true` to `mount`.
 
 ### Then find out whether it worked
 

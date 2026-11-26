@@ -60,7 +60,7 @@ The checker holds every titled lens and says, at its path, what it will not draw
 - `lens-not-shipped` — a title on a lens the framework does not draw; `lens-title-taken` — two pictures on one kind under one title. `add-lens` names the lens that holds the title, hidden or not (hiding frees no title); `"replace": "<that title>"` draws yours in its place, kept off the lists if that one was, until set-lens-hidden shows it; `lens-options-not-an-object`, `lens-sort`, `lens-horizon`, `lens-create` and `lens-hidden-untitled` say the rest.
 - The bindings themselves: `lens-role-unbound`, `lens-binding-missing-field` and `lens-binding-undeclared-kind`.
 
-`graview describe` lists the places that draw, saying which are hidden. Report the output, then open each place on both faces and look.
+`graview describe` lists the places that draw, saying which are hidden. Report the output, then open each place, as a page and on the Map, and look.
 
 ### Let the owner choose
 

@@ -42,6 +42,9 @@ the project's `pnpm typecheck` covers the embed from day one.
    Under a product's own
    bar, `bar: { faces: false, name: false }` (and `heading: false`) keeps
    the places, Find, the standing and the person, never CSS hiding them.
+   In a box the embed draws the routed face without the city: the one
+   face that `PagesApp` draws by default stands against the window, so
+   only a host whose page IS the app draws it (`graview-host-page`).
 3. **Name it.** Two embeds on one page carry the same landmarks — the
    relation key, the inspector, the pages' navigation — and a landmark must
    be unique by role and name. `label` names every one of them after the
@@ -97,7 +100,7 @@ it with `guestView` from `@graview/guest/host`:
 ```ts
 views.register("package", { cardinality: "many", fidelity: "full" },
   guestView({ url, name: "prices", title: "The price sheet", reads: { kinds: ["offer"], edges: ["includes"] } }),
-  { title: "The price sheet" });   // a place on both faces, by its title
+  { title: "The price sheet" });   // a place, by its title
 views.home(guestView({ url: frontUrl, name: "front", reads: { kinds: ["package"] } }));
 ```
 

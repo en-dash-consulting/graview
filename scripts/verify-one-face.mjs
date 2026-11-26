@@ -425,7 +425,7 @@ const press = async (page, selector) => {
 /* ------------------------------------------------------------------ */
 
 async function noSwitch(page, where) {
-  await page.goto(`${at("todo")}/pages/tasks/t-deposit?${DAY}`, { waitUntil: "load" });
+  await page.goto(`${at("todo")}/tasks/t-deposit?${DAY}`, { waitUntil: "load" });
   await ready(page);
   await page.locator('[data-testid="app-menu-open"]').first().click();
   const opened = await page.waitForSelector('[data-testid="app-menu"]:not([hidden])', { timeout: 5_000 }).then(() => true, () => false);
@@ -442,21 +442,19 @@ async function noSwitch(page, where) {
 
 async function rootIsTheOneFace(browser, where) {
   const context = await browser.newContext({ viewport: DESK });
-  // A person, not a driven browser: the app's root sends a person to the one face.
-  await context.addInitScript(() => Object.defineProperty(Navigator.prototype, "webdriver", { get: () => false }));
   const page = await context.newPage();
   page.on("pageerror", (error) => errors.push(`${where.device} root: ${error.message}`));
+  // The app's root is the one face, for a person and a driven browser alike: its home, at Page, with no Scene's own face anywhere.
   await page.goto(`${at("todo")}/?${DAY}`, { waitUntil: "load" });
-  await page.waitForURL(/\/pages\//, { timeout: 30_000 });
   await ready(page);
-  await restAt(page, 2, 15_000).catch(() => {});
+  await restAt(page, 0, 15_000).catch(() => {});
   const landed = { url: new URL(page.url()).pathname, level: await levelOf(page), shell: await page.locator(".graview-shell, [data-testid=\"lines-key\"]").count() };
   await context.close();
-  return { where, ...landed, ok: /^\/pages\/?$/.test(landed.url) && landed.level === 2 && landed.shell === 0 };
+  return { where, ...landed, ok: landed.url === "/" && landed.level === 0 && landed.shell === 0 };
 }
 
 async function theButton(page, where, phone) {
-  await page.goto(`${at("todo")}/pages/tasks/t-deposit?${DAY}`, { waitUntil: "load" });
+  await page.goto(`${at("todo")}/tasks/t-deposit?${DAY}`, { waitUntil: "load" });
   await ready(page);
   const read = () =>
     page.evaluate(() => {
@@ -555,7 +553,7 @@ async function theButton(page, where, phone) {
 
 async function sameNode(page, where, phone) {
   // A phone's sheet shows the top of a record's page, where no part names another record: its list's rows do.
-  await page.goto(`${at("todo")}${phone ? "/pages/tasks" : "/pages/tasks/t-deposit"}?${DAY}`, { waitUntil: "load" });
+  await page.goto(`${at("todo")}${phone ? "/tasks" : "/tasks/t-deposit"}?${DAY}`, { waitUntil: "load" });
   await ready(page);
   await startRecording(page);
   for (const [button, level] of [["rise", 1], ["rise", 2], ["descend", 1], ["descend", 0]]) {
@@ -567,7 +565,7 @@ async function sameNode(page, where, phone) {
   const jump = jumps(frames);
   seen.lines.push({ where, ...lineMisses(frames, phone), ok: lineMisses(frames, phone).counted > 0 && lineMisses(frames, phone).worst <= 2 });
   const crossing = linesInside(frames);
-  seen.crossing.push({ where, path: phone ? "/pages/tasks" : "/pages/tasks/t-deposit", ...crossing, ok: crossing.counted > 0 && crossing.crossed === 0 });
+  seen.crossing.push({ where, path: phone ? "/tasks" : "/tasks/t-deposit", ...crossing, ok: crossing.counted > 0 && crossing.crossed === 0 });
   const shear = frames.filter((f) => !shearless(f.matrix) || f.boards.some((b) => b.face && !shearless(b.face)));
   seen.shear.push({ where, frames: frames.length, sheared: shear.length, first: shear[0] ? { altitude: shear[0].altitude, matrix: shear[0].matrix } : null, reachedTheCity: frames.some((f) => f.altitude > 1.99), ok: shear.length === 0 && frames.some((f) => f.altitude > 1.99) });
   return { where, frames: frames.length, moved: moving.length, same: frames.every((f) => f.same), jump, ok: frames.length > 30 && frames.every((f) => f.same) && jump.worst <= 0.25 && jump.steepest < 0.5 && jump.flash === null && jump.altitudeLeap === null && moving.length > 20 };
@@ -588,9 +586,9 @@ async function toCity(page, path) {
  * bar and above the control; every kind's name in sight and readable.
  */
 async function views(page, where) {
-  await page.goto(`${at("todo")}/pages/?${DAY}`, { waitUntil: "load" });
+  await page.goto(`${at("todo")}/?${DAY}`, { waitUntil: "load" });
   await ready(page);
-  const offered = await page.evaluate(() => ["/", ...new Set([...document.querySelectorAll('nav[aria-label="The app’s places"] a[href], [data-testid="app-places"] a[href]')].map((a) => new URL(a.href, location.href).pathname).filter((path) => path.startsWith("/pages")).map((path) => path.slice("/pages".length) || "/"))]);
+  const offered = await page.evaluate(() => ["/", ...new Set([...document.querySelectorAll('nav[aria-label="The app’s places"] a[href], [data-testid="app-places"] a[href]')].map((a) => new URL(a.href, location.href).pathname).filter((path) => !path.startsWith("/scene")))]);
   await press(page, '[data-testid="altitude-stop-2"]');
   await restAt(page, 2);
   const seenNow = await page.evaluate(() => {
@@ -651,7 +649,7 @@ async function views(page, where) {
 async function chosen(page, where) {
   const results = [];
   for (const how of ["press", "keys", "control", "building", "find"]) {
-    await toCity(page, "/pages/tasks/t-deposit");
+    await toCity(page, "/tasks/t-deposit");
     const target = await page.evaluate(() => {
       const b = [...document.querySelectorAll("[data-graview-board]")].find((one) => one.getAttribute("title") === "The week");
       const r = b?.getBoundingClientRect();
@@ -764,7 +762,7 @@ async function chosen(page, where) {
  * City and back — the move starting and ending from it.
  */
 async function resize(page, where, phone) {
-  await page.goto(`${at("todo")}${phone ? "/pages/tasks" : "/pages/tasks/t-deposit"}?${DAY}`, { waitUntil: "load" });
+  await page.goto(`${at("todo")}${phone ? "/tasks" : "/tasks/t-deposit"}?${DAY}`, { waitUntil: "load" });
   await page.evaluate(() => {
     try {
       localStorage.removeItem("graview.one-face.panel.desk");
@@ -825,7 +823,7 @@ async function resize(page, where, phone) {
  * the camera up toward the City.
  */
 async function pinch(page, where) {
-  await page.goto(`${at("todo")}/pages/tasks/t-deposit?${DAY}`, { waitUntil: "load" });
+  await page.goto(`${at("todo")}/tasks/t-deposit?${DAY}`, { waitUntil: "load" });
   await ready(page);
   const cdp = await page.context().newCDPSession(page);
   const fingers = async (at, from, to) => {
@@ -876,7 +874,7 @@ async function pinch(page, where) {
  * page's flow rather than over it.
  */
 async function chosenRecord(page, where) {
-  await page.goto(`${at("todo")}/pages/tasks/t-deposit?${DAY}`, { waitUntil: "load" });
+  await page.goto(`${at("todo")}/tasks/t-deposit?${DAY}`, { waitUntil: "load" });
   await ready(page);
   await press(page, '[data-testid="altitude-stop-1"]');
   await restAt(page, 1);
@@ -910,7 +908,7 @@ async function chosenRecord(page, where) {
  */
 async function offSight(page, where) {
   const size = page.viewportSize();
-  await page.goto(`${at("todo")}/pages/tasks/t-book?${DAY}`, { waitUntil: "load" });
+  await page.goto(`${at("todo")}/tasks/t-book?${DAY}`, { waitUntil: "load" });
   await ready(page);
   await startRecording(page);
   await press(page, '[data-testid="altitude-stop-1"]');
@@ -921,10 +919,10 @@ async function offSight(page, where) {
   const last = frames.at(-1)?.lines ?? [];
   const pointed = last.filter((line) => line.under).length;
   const inSight = last.filter((line) => !line.under && line.to.x >= 0 && line.to.y >= 0 && line.to.x <= size.width && line.to.y <= size.height).length;
-  seen.crossing.push({ where, path: "/pages/tasks/t-book", pointed, inSight, ...crossing, ok: crossing.counted > 0 && crossing.crossed === 0 && pointed === 0 && inSight > 0 });
+  seen.crossing.push({ where, path: "/tasks/t-book", pointed, inSight, ...crossing, ok: crossing.counted > 0 && crossing.crossed === 0 && pointed === 0 && inSight > 0 });
   // In a window too small for Nearby to take it all in: the record's own building stays in the city's side, and a line points from its edge toward what is out of sight.
   await page.setViewportSize({ width: 610, height: 760 });
-  await page.goto(`${at("todo")}/pages/tasks/t-book?${DAY}`, { waitUntil: "load" });
+  await page.goto(`${at("todo")}/tasks/t-book?${DAY}`, { waitUntil: "load" });
   await ready(page);
   await press(page, '[data-testid="altitude-stop-1"]');
   await restAt(page, 1);
@@ -936,7 +934,7 @@ async function offSight(page, where) {
     const clear = r && p && (r.right <= p.left + 2 || r.left >= p.right - 2 || r.bottom <= p.top + 2 || r.top >= p.bottom - 2);
     return { lines: lines.length, pointed: lines.filter((g) => g.hasAttribute("data-graview-line-under")).length, ownInSight: Boolean(r && clear && r.left >= 0 && r.top >= 0 && r.right <= innerWidth && r.bottom <= innerHeight) };
   });
-  seen.pointsOut.push({ where, path: "/pages/tasks/t-book at 610×760", ...small, ok: small.pointed > 0 && small.ownInSight });
+  seen.pointsOut.push({ where, path: "/tasks/t-book at 610×760", ...small, ok: small.pointed > 0 && small.ownInSight });
   await page.setViewportSize(size);
   return { where, ok: true };
 }
@@ -949,7 +947,7 @@ async function offSight(page, where) {
  * taken, and no level moves. In a field the keys type.
  */
 async function shortcuts(page, where) {
-  await page.goto(`${at("todo")}/pages/tasks/t-deposit?${DAY}`, { waitUntil: "load" });
+  await page.goto(`${at("todo")}/tasks/t-deposit?${DAY}`, { waitUntil: "load" });
   await ready(page);
   await page.locator("h1").last().click();
   const moves = [];
@@ -1004,7 +1002,7 @@ async function shortcuts(page, where) {
  * and the choice is kept when the page is opened again.
  */
 async function slider(page, where) {
-  await page.goto(`${at("todo")}/pages/tasks/t-deposit?${DAY}`, { waitUntil: "load" });
+  await page.goto(`${at("todo")}/tasks/t-deposit?${DAY}`, { waitUntil: "load" });
   await ready(page);
   const areaOf = () => page.evaluate(() => {
     const r = document.querySelector('[data-testid="altitude"] [role="group"]').getBoundingClientRect();
@@ -1056,7 +1054,7 @@ async function slider(page, where) {
  * the legend, keys and all.
  */
 async function legend(page, where) {
-  await page.goto(`${at("todo")}/pages/tasks/t-deposit?${DAY}`, { waitUntil: "load" });
+  await page.goto(`${at("todo")}/tasks/t-deposit?${DAY}`, { waitUntil: "load" });
   await ready(page);
   const states = [];
   for (const state of ["whole", "slider"]) {
@@ -1094,7 +1092,7 @@ async function legend(page, where) {
  * the level stays the city.
  */
 async function freeCity(page, where) {
-  await toCity(page, "/pages/tasks");
+  await toCity(page, "/tasks");
   const ground = await page.evaluate(() => {
     for (let y = innerHeight - 120; y > 80; y -= 23)
       for (let x = innerWidth - 40; x > 40; x -= 31) {
@@ -1145,7 +1143,7 @@ const innerWidthOf = (where) => (where.device.startsWith("desk") ? DESK.width : 
  * where they stop and back.
  */
 async function noOvershoot(page, where) {
-  await page.goto(`${at("todo")}/pages/tasks/t-deposit?${DAY}`, { waitUntil: "load" });
+  await page.goto(`${at("todo")}/tasks/t-deposit?${DAY}`, { waitUntil: "load" });
   await ready(page);
   const moves = [];
   for (const [to, how] of [[1, "control"], [2, "control"], [1, "keys"], [0, "keys"], [2, "control"], [0, "control"]]) {
@@ -1199,7 +1197,7 @@ async function noOvershoot(page, where) {
  * opens over the city and its History opens the timeline.
  */
 async function bar(page, where) {
-  await page.goto(`${at("todo")}/pages/tasks/t-deposit?${DAY}`, { waitUntil: "load" });
+  await page.goto(`${at("todo")}/tasks/t-deposit?${DAY}`, { waitUntil: "load" });
   await ready(page);
   const check = () =>
     page.evaluate(() => {
@@ -1242,7 +1240,7 @@ async function bar(page, where) {
  */
 async function linesOfEveryView(page, where) {
   const results = [];
-  for (const path of ["/pages/tasks", "/pages/places/the-week", "/pages/places/the-month", "/pages/places/the-lists", "/pages/places/what-is-left"]) {
+  for (const path of ["/tasks", "/places/the-week", "/places/the-month", "/places/the-lists", "/places/what-is-left"]) {
     await page.goto(`${at("todo")}${path}?${DAY}`, { waitUntil: "load" });
     await ready(page);
     await press(page, '[data-testid="altitude-stop-1"]');
@@ -1303,7 +1301,7 @@ const KEEP_THE_STORE = () => {
 };
 async function history(page, where) {
   await page.addInitScript(KEEP_THE_STORE);
-  await page.goto(`${at("todo")}/pages/tasks?${DAY}&fresh=1`, { waitUntil: "load" });
+  await page.goto(`${at("todo")}/tasks?${DAY}&fresh=1`, { waitUntil: "load" });
   await ready(page);
   await page.waitForFunction(() => (window.__oneFaceStores ?? []).some((store) => store.schema.kinds.includes("task")), undefined, { timeout: 30_000 });
   const reason = await page.evaluate(() => {
@@ -1477,7 +1475,7 @@ async function history(page, where) {
 async function strip(browser, options, name) {
   const context = await browser.newContext(options);
   const page = await context.newPage();
-  await page.goto(`${at("todo")}/pages/tasks/t-deposit?${DAY}`, { waitUntil: "load" });
+  await page.goto(`${at("todo")}/tasks/t-deposit?${DAY}`, { waitUntil: "load" });
   await ready(page);
   const shots = [];
   const take = async (label) => shots.push({ label, png: (await page.screenshot()).toString("base64") });
@@ -2490,7 +2488,7 @@ async function recordInPlace(browser) {
       await page.waitForTimeout(900);
       const after = await readDistrict(page, linkKind);
       const most = await mostFaded(page);
-      const path = new URL(page.url()).pathname.replace(/^\/pages/, "");
+      const path = new URL(page.url()).pathname;
       await nearby(path);
       const fresh = await readDistrict(page, linkKind);
       runs.push({ by: "a link in the page", opened: link, landed: after.url, moved: movedIn(beforeLink.at, after.at), lit: after.lit, chosenOnTheScene: after.chosenOnTheScene, faded: { afterThePress: after.faded, mostWhileItMoved: most, freshLoad: fresh.faded }, words: after.words, freshMoved: movedIn(after.at, fresh.at) });
@@ -2630,7 +2628,7 @@ async function ctrlWheel(page, at, deltaY, turns, read) {
  * the camera back to Nearby's framing.
  */
 async function nearbyByHand(page, where) {
-  await page.goto(`${at("todo")}/pages/tasks/t-deposit?${DAY}`, { waitUntil: "load" });
+  await page.goto(`${at("todo")}/tasks/t-deposit?${DAY}`, { waitUntil: "load" });
   await ready(page);
   await press(page, '[data-testid="altitude-stop-1"]');
   await restAt(page, 1);
@@ -2714,7 +2712,7 @@ async function nearbyByHand(page, where) {
  * and moves no level.
  */
 async function panelByHand(page, where) {
-  await page.goto(`${at("todo")}/pages/tasks?${DAY}`, { waitUntil: "load" });
+  await page.goto(`${at("todo")}/tasks?${DAY}`, { waitUntil: "load" });
   await ready(page);
   await page.keyboard.press("2");
   await restAt(page, 1);
@@ -2745,7 +2743,7 @@ async function panelByHand(page, where) {
  * level stay where they are.
  */
 async function phoneCityByHand(page, where) {
-  await page.goto(`${at("todo")}/pages/tasks/t-deposit?${DAY}`, { waitUntil: "load" });
+  await page.goto(`${at("todo")}/tasks/t-deposit?${DAY}`, { waitUntil: "load" });
   await ready(page);
   await press(page, '[data-testid="altitude-stop-1"]');
   await restAt(page, 1);
@@ -2919,7 +2917,7 @@ function goesOnAfter(frames, released) {
 }
 async function panStill(page, where, { level, phone }) {
   where = { ...where, level };
-  await page.goto(`${at("todo")}/pages/tasks/t-deposit?${DAY}`, { waitUntil: "load" });
+  await page.goto(`${at("todo")}/tasks/t-deposit?${DAY}`, { waitUntil: "load" });
   await ready(page);
   await press(page, `[data-testid="altitude-stop-${level}"]`);
   await restAt(page, level, 15_000);
@@ -3159,7 +3157,7 @@ async function panStill(page, where, { level, phone }) {
  */
 async function panelWidth(page, where) {
   await page.setViewportSize({ width: 2560, height: 1440 });
-  await page.goto(`${at("todo")}/pages/tasks/t-deposit?${DAY}`, { waitUntil: "load" });
+  await page.goto(`${at("todo")}/tasks/t-deposit?${DAY}`, { waitUntil: "load" });
   await ready(page);
   await page.keyboard.press("2");
   await restAt(page, 1);
@@ -3443,7 +3441,7 @@ function fastened(frames, from, to) {
 }
 async function pinchAndPan(page, where, { level }) {
   where = { ...where, level };
-  await page.goto(`${at("todo")}/pages/tasks/t-deposit?${DAY}`, { waitUntil: "load" });
+  await page.goto(`${at("todo")}/tasks/t-deposit?${DAY}`, { waitUntil: "load" });
   await ready(page);
   await press(page, `[data-testid="altitude-stop-${level}"]`);
   await restAt(page, level, 15_000);

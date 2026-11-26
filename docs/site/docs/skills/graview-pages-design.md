@@ -6,7 +6,7 @@ Installed into a project by `graview skills install .`, and read by whichever as
 
 ## The skill
 
-## A product design over the pages face
+## A product design over the routed face
 
 `graview-pages` takes the routed face from derived to one page in the app's own words. This is the rung after: the registry's three surfaces and two page types, all replaced, read as a product rather than an admin panel.
 

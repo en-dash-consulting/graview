@@ -46,6 +46,8 @@ const APPS = [
     name: "todo",
     port: portFor("todo"),
     ready: "__todoReady",
+    // Things' root is the one face; the Scene's own face, which this shrinks, is at /scene/.
+    scene: "/scene",
     query: "&today=2026-09-01",
     places: [
       { label: "The lists", switchTo: null, lens: null },
@@ -135,7 +137,7 @@ try {
     try {
       for (const scheme of ["dark", "light"]) {
         const page = await browser.newPage({ viewport: { width: 1560, height: 940 } });
-        await page.goto(`http://localhost:${app.port}/?theme=${scheme}${app.query ?? ""}`, { waitUntil: "load" });
+        await page.goto(`http://localhost:${app.port}${app.scene ?? ""}/?theme=${scheme}${app.query ?? ""}`, { waitUntil: "load" });
         await page.waitForFunction((flag) => flag in window, app.ready, { timeout: 120_000 });
 
         for (const place of app.places) {
