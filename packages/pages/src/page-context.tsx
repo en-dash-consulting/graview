@@ -4,6 +4,7 @@ import { freshAddress, sceneTitle, type AnySchema, type Brand, type GraviewApp, 
 import { useCallback, useRef, useSyncExternalStore, type CSSProperties, type ReactNode } from "react";
 import type { AwaySummary, FieldTyping, KeepLensHost, ProposeChangeHost, ComposeChangeHost, DraftChangeHost, HostMenuItem, MenuSectionSource, OnExport, ReactViewRegistry } from "@graview/react/provider";
 import type { HostAi } from "@graview/tools/frame";
+import type { ToolCall } from "@graview/tools";
 import { Onward } from "./onward.js";
 
 
@@ -298,6 +299,23 @@ export interface PageContext<S extends AnySchema> {
    * it (`describe_place`). Unsaid, the app of the provider around them.
    */
   readonly app?: GraviewApp<S>;
+  /**
+   * THE APP'S AGENT SEAT (Graview HQ feature:f-studio-and-seat-on-the-one-face),
+   * as the Scene's `Shell` takes it: handed the call recorder, it draws the
+   * seat — `AgentSeat`, a `ChatPanel` — and the bar's inbox holds it in
+   * Activity under "The agent's seat", with the calls it makes, whether or
+   * not anything has happened yet. Read where the face was handed `views`.
+   */
+  readonly seat?: (onCall: (call: ToolCall) => void) => ReactNode;
+  /**
+   * THE WAY INTO THE APP'S OWN DECLARATION (Graview HQ
+   * feature:f-studio-and-seat-on-the-one-face): `<StudioPlace app={…} />`
+   * from `@graview/studio`, drawn in the person's menu under "Keeping this
+   * app", as on the Scene's own face. Taken as a node because the studio
+   * lives in a package this one must not depend on. Read where the face was
+   * handed `views`.
+   */
+  readonly studio?: ReactNode;
 }
 
 /**

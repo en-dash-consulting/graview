@@ -1815,7 +1815,7 @@ main.landing > section.agent-hero { padding-top: clamp(40px, 6vh, 72px); gap: va
 <li><strong>Pick a transport.</strong> <code>createInAppAdapter(runtime)</code> for a seat inside the interface; <code>createMcpAdapter(runtime)</code> for an external client. Both are thin wrappers over the same runtime — that is the whole design.</li>
 </ol>
 <ol>
-<li><strong>Show the calls.</strong> <code>runtime.onCall(listener)</code> announces every call as it starts and as it settles. Feed it to <code>ActivityRail</code>. A diff says what changed and never what was *considered*, so an agent turn without this is a spinner and a toast.</li>
+<li><strong>Show the calls.</strong> <code>runtime.onCall(listener)</code> announces every call as it starts and as it settles. Hand the face the seat (<code>seat</code> on <code>PagesApp</code>'s context, or <code>Shell</code>'s): the bar's inbox holds it in Activity, with its calls. A diff says what changed and never what was *considered*, so an agent turn without this is a spinner and a toast.</li>
 </ol>
 <ol>
 <li><strong>Report what it READ.</strong> <code>useAttention(runtime)</code> pipes a settled read-only call's node ids into the picture, so a kind lights faintly where the agent looked. That is the half a diff cannot show, and the half that says whether to trust what it then did.</li>

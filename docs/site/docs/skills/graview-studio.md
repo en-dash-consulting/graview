@@ -34,7 +34,7 @@ Without the studio, `editDocument` covers the rest of a document too: `add-lens`
 
 1. **Let an agent propose.** `studio.propose(call, agentPrincipal, intent)` applies under the agent's seat in a batch of its own; `studio.proposals()` lists what stands; `studio.decline(batchId)` undoes one; accepting is applying. In the interface, the trail shows the agent's turn with its undo, like any turn. The app's own conversation proposes the same way from words ("we also need who's driving"): `@graview/tools/reshape` reads them as traits to add and parts to drop, the person accepts a card, and the host's `onProposeChange` composes the edits (`composeReshape`, `@graview/core/compose`) and applies them — offered to whoever the studio's door is offered to (`mayChangeDeclaration`), and to nobody else.
 
-1. **Put it on a page.** The studio is an app: mount `studioApp()` with `declarationToGraph(app)` as the seed, and register `createStudioLens(app).View` over `kind` with a title — a place, "What the checker says", one press from anywhere.
+1. **Put it on a page.** On the app's own bar: `studio: <StudioPlace app={app} />` on `PagesApp`'s context (or `Shell`'s `studio`) is a way in under "Keeping this app" in the person's menu, and in development Apply writes the files into `src/domain` through `studioDoor()` in vite.config.ts. Or as an app of its own: mount `studioApp()` with `declarationToGraph(app)` as the seed, and register `createStudioLens(app).View` over `kind` with a title — a place, "What the checker says", one press from anywhere.
 
 ### Then find out whether it worked
 

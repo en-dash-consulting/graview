@@ -215,7 +215,8 @@ function OwnBar<S extends AnySchema>({ context }: { readonly context: PageContex
               * inbox there, so drawing it here too put two side by side on todo's routed face.
               */}
             {toldFind ? null : <PagesInbox context={context} />}
-            {context.views ? <Profile {...(context.signature ? { signature: true } : {})} /> : null}
+            {/* Who you are — and, for whoever keeps the app, the way into its own declaration (`studio`), as on the Scene's own face. */}
+            {context.views ? <Profile {...(context.signature ? { signature: true } : {})} {...(context.studio !== undefined ? { keeping: context.studio } : {})} /> : null}
           </>
         }
       />

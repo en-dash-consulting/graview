@@ -1825,6 +1825,7 @@ npm create graview@latest my-app        # or: pnpm create graview my-app</code><
   ui/
     views.tsx        # registerDefaultViews, then your own where you care
     pages.tsx        # your own pages over the derived ones
+    seat.tsx         # the agent's seat and the studio, on the bar
   main.tsx           # one PagesApp at /: the one face</code></pre></div>
 <p><code>graview check</code> reads <code>defineApp</code>; a React import in <code>domain/</code> would drag a UI package into the checker.</p>
 <p><strong>Or as one JSON document:</strong> <code>app.json</code> (<code>"format": "graview-document"</code>, <code>$schema</code> <code>node_modules/@graview/core/dist/document.schema.json</code>, which types lenses and view blocks), then <code>graview check --document app.json</code>, <code>graview describe --document app.json</code>, <code>graview preview app.json --seed seed.json</code>. Kinds, acts and rules are kebab-case (<code>tool-note</code>), fields and relations camelCase (<code>supersededBy</code>). <code>preview --data</code> holds its folder: stop it to <code>sync-seed --apply</code>. In a framework checkout, <code>pnpm graview:link</code> puts <code>graview</code> on PATH.</p>

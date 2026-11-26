@@ -272,6 +272,11 @@ first try found, and where it went:
   Things serves the one face at `/`; the Scene's own face stays at
   `/scene/` only for the Scene's own harnesses
   (scene-harnesses-onto-the-one-face, below).
+- The seat and the studio stand on the one face's bar where the Scene's own
+  face had them (f-studio-and-seat-on-the-one-face): the agent's seat in the
+  bell's Activity, with its calls, and the studio in the person's menu under
+  "Keeping this app". `PagesApp` takes them as `seat` and `studio` on its
+  context, and `graview create` writes both in `src/ui/seat.tsx`.
 
 ## Deferred past 0.2.0 (named follow-ups)
 
@@ -285,10 +290,9 @@ first try found, and where it went:
   (navigation, scene-hands, drive-in, chrome, menu, seat and others) still
   drive the Scene's own face, at `/scene/` on Things. A person at the root of
   the discography is sent to the one face; a driven browser is not.
-- **studio-on-the-one-face**: the studio (`StudioPlace`) was a button on the
-  Scene's own bar. The one face's bar has no place for it yet, so a project
-  `graview create` writes opens its declaration through `@graview/studio`'s
-  `createStudio` in code until it does.
+- **show-installation-on-the-one-face**: the Scene's own face put "Show the
+  installation" beside the studio under "Keeping this app"; the one face's
+  person's menu holds the studio alone.
 - **district-views-menu**: the district label's legacy menu of views is not
   drawn on the one face (each view stands as its billboard); removing it from
   the Scene's own face goes with the Scene's own face.

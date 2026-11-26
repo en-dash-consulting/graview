@@ -2,7 +2,7 @@ import { LOCAL_LAYERS, OVERVIEW_PATH, ONE_FACE_LAYERS, counted, hueFor, labelOf,
 import { RECORD_BOXES_ATTRIBUTE, RECORD_BOXES_MOVED, recordBoxesOf } from "@graview/core/record-boxes";
 import { retryingImport } from "@graview/core/retry";
 import { barPlaces, HOME_KEY, PastBar } from "@graview/primitives/pages";
-import { lazyPart, useGraview, usePlayback } from "@graview/react/provider";
+import { lazyPart, useGraview, usePlayback, useTheKeyboardLandsSomewhere } from "@graview/react/provider";
 import { Suspense, useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type FocusEvent as ReactFocusEvent, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent, type ReactNode, type RefObject } from "react";
 import { useHref, useLocation, useNavigate } from "react-router";
 import { recordFacts } from "./facts.js";
@@ -317,6 +317,19 @@ export function OnePlace<S extends AnySchema>({
   const [size, setView] = useState(() => (typeof window === "undefined" ? { width: 1280, height: 800 } : windowSize()));
   /* The app's bar, fixed at the window's top at every level: its slot, and how tall it stands. */
   const [bar, setBar] = useState<HTMLDivElement | null>(null);
+  const barRoot = useRef<HTMLDivElement | null>(null);
+  const holdBar = useCallback((el: HTMLDivElement | null) => {
+    barRoot.current = el;
+    setBar(el);
+  }, []);
+  /*
+   * THE KEYBOARD LANDS SOMEWHERE ON THE BAR TOO. The bar stands outside the
+   * page's root, which keeps the rule for what the page holds; a control in
+   * its menus that goes away or is disabled under the keyboard — the seat's
+   * button once its turn is taken, in the bell's Activity — gives the
+   * keyboard to what still stands around it, as it does on the page.
+   */
+  useTheKeyboardLandsSomewhere(barRoot);
   const [barHeight, setBarHeight] = useState(0);
   useEffect(() => {
     if (!bar || typeof ResizeObserver === "undefined") return;
@@ -865,7 +878,7 @@ export function OnePlace<S extends AnySchema>({
   return (
     <OneFaceContext.Provider value={face}>
       {/* THE APP'S BAR, fixed at the window's top over the page and the city alike: the shell draws it here (`page-shell.tsx`). First in the document, as the derived pages have it, so Tab reaches the bar before the page's own links at every level; its layer, not its place, sets it over the rest. */}
-      <div ref={setBar} data-testid="one-place-bar" data-graview-one-face-bar="" style={{ position: "fixed", left: 0, right: 0, top: 0, zIndex: ONE_FACE_LAYERS.bar, background: "var(--graview-ground, Canvas)" }} />
+      <div ref={holdBar} data-testid="one-place-bar" data-graview-one-face-bar="" style={{ position: "fixed", left: 0, right: 0, top: 0, zIndex: ONE_FACE_LAYERS.bar, background: "var(--graview-ground, Canvas)" }} />
       <Suspense fallback={null}>
         <OnePlaceCity where={where} out={now.away} sheet={sheet} connected={connected} boards={standing} current={current} boardEls={boardEls} boardLayer={boardLayer} fab={fab} view={view} lessMotion={lessMotion()} resolve={resolve} openRecord={openRecord} openKind={openKind} onGround={onGround} motion={motion} onAltitude={onAltitude} {...(context.sceneRules ? { sceneRules: context.sceneRules } : {})} />
       </Suspense>

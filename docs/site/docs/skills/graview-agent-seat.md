@@ -20,7 +20,7 @@ The author is a `Principal` — an author with roles — so what the log blames 
 
 1. **Pick a transport.** `createInAppAdapter(runtime)` for a seat inside the interface; `createMcpAdapter(runtime)` for an external client. Both are thin wrappers over the same runtime — that is the whole design.
 
-1. **Show the calls.** `runtime.onCall(listener)` announces every call as it starts and as it settles. Feed it to `ActivityRail`. A diff says what changed and never what was *considered*, so an agent turn without this is a spinner and a toast.
+1. **Show the calls.** `runtime.onCall(listener)` announces every call as it starts and as it settles. Hand the face the seat (`seat` on `PagesApp`'s context, or `Shell`'s): the bar's inbox holds it in Activity, with its calls. A diff says what changed and never what was *considered*, so an agent turn without this is a spinner and a toast.
 
 1. **Report what it READ.** `useAttention(runtime)` pipes a settled read-only call's node ids into the picture, so a kind lights faintly where the agent looked. That is the half a diff cannot show, and the half that says whether to trust what it then did.
 

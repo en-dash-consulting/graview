@@ -16,7 +16,7 @@ import type { HistoryHost } from "@graview/core/history";
 import { open } from "./open.js";
 import { todoApp } from "./domain/app.js";
 import { thingsBrand } from "./domain/brand.js";
-import { today, TodoApp } from "./ui/app.js";
+import { today, TodoApp, todoSeat, todoStudio } from "./ui/app.js";
 import { thingsDesign } from "./ui/design.js";
 import { todoViews } from "./ui/views.js";
 
@@ -254,6 +254,12 @@ if (!sceneOwnFace) {
         subscriptions,
         ...(history ? { history } : {}),
         ...(onProposeChange ? { onProposeChange } : host ? { onProposeChange: host.onProposeChange, composeChange: host.composeChange, onDraftChange: host.onDraftChange } : {}),
+        /*
+         * THE SEAT AND THE STUDIO, on the one bar: the seat in the bell's
+         * Activity, the studio in the person's menu under "Keeping this app".
+         */
+        seat: todoSeat,
+        studio: todoStudio,
       }}
       /*
        * THE APP'S OWN FACE, over the same derivations. Every surface is

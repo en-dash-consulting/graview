@@ -38,6 +38,7 @@ src/
   ui/
     views.tsx        # registerDefaultViews, then your own where you care
     pages.tsx        # your own pages over the derived ones
+    seat.tsx         # the agent's seat and the studio, on the bar
   main.tsx           # one PagesApp at /: the one face
 ```
 

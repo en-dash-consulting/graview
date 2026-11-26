@@ -10,9 +10,11 @@
  *             passes; the checker says so in its own words; the skills land
  *             where both assistants look; and a real browser walks the first
  *             hour on the one face — the home's way in, its derived form, the
- *             control at the foot out to the map and back, a reload that
- *             remembers, the way back to empty, the keyboard alone, the
- *             pages at phone width, the embed, and axe-core in both schemes.
+ *             seat's starter data from the bar's Activity, the studio from
+ *             the person's menu writing a field into src/domain, the control
+ *             at the foot out to the map and back, a reload that remembers,
+ *             the way back to empty, the keyboard alone, the pages at phone
+ *             width, the embed, and axe-core in both schemes.
  *   2. pnpm.  The same project through the other package manager.
  *   3. door.  `create-graview` — what `npm create graview` runs — installed
  *             from its tarball, makes the same project.
@@ -32,6 +34,7 @@ import { engineName, launchEngine } from "./lib/engine.mjs";
 import { packTarballs, pinToTarballs } from "./lib/tarballs.mjs";
 import { portFor } from "./lib/ports.mjs";
 import { vacant } from "./lib/serve.mjs";
+import { openActivity } from "./lib/bar.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, "..");
@@ -69,9 +72,13 @@ const tree = (dir, prefix = "") =>
     )
     .sort();
 
+/* The key the dev server's doors ask for (`@graview/ship/dev`), said to the server this run starts and carried by the page it opens. */
+const DOOR_KEY = `smoke-create-${process.pid}-${Date.now()}-door`;
+
 function startVite(cwd, port) {
   const child = spawn("npx", ["vite", "--port", String(port), "--strictPort"], {
     cwd,
+    env: { ...process.env, GRAVIEW_DOOR_KEY: DOOR_KEY },
     stdio: ["ignore", "pipe", "pipe"],
     detached: true,
   });
@@ -247,6 +254,79 @@ try {
     b.wayInOffers = await page.locator('[data-testid="begin-add-note"]').textContent().catch(() => "");
     b.wordmarkSaysTheName = (await page.evaluate(() => (document.querySelector("[data-graview-app-bar]") ?? document.querySelector("header"))?.textContent ?? "")).includes("Field Notes");
     b.axeEmptyLight = await axe(page);
+
+    /* ---- the seat at zero: starter data, proposed from the declaration, from the bar's Activity */
+    b.theSeatIsOnTheBar = (await page.locator('[data-graview-app-bar] [data-testid="inbox-button"]').count()) > 0;
+    await openActivity(page);
+    await page.waitForTimeout(300);
+    b.seatOffered = ((await page.locator('[data-testid="agent-seat-row"] [data-testid="agent-starter"]').textContent().catch(() => "")) ?? "").trim();
+    await page.click('[data-testid="agent-seat-row"] [data-testid="agent-starter"]');
+    await page.locator('[data-testid="activity"] li').first().waitFor({ state: "attached", timeout: 15_000 }).catch(() => {});
+    await page.waitForTimeout(1000);
+    b.seatLog = await page.evaluate(() => [...document.querySelectorAll('[data-testid="activity"] li')].map((li) => li.textContent.trim()).slice(0, 4));
+    await page.keyboard.press("Escape");
+    await page.waitForTimeout(300);
+    // The home's way in stands down once the kind has something in it.
+    b.seatPlantedSomething = (await wayIn(page)) === 0;
+
+    /* ---- the studio: the app's own declaration from the person's menu, a field added and written into src/domain */
+    await page.goto(`${base}/?fresh=1&graview_door=${encodeURIComponent(DOOR_KEY)}`, { waitUntil: "networkidle" });
+    await ready(page);
+    await oneFace(page);
+    await page.click('[data-graview-app-bar] [data-testid="profile-button"]');
+    await page.waitForTimeout(400);
+    b.studioInTheMenu = (await page.locator('[data-testid="profile-keeping"] [data-testid="studio-place"]').count()) > 0;
+    const schemaPath = resolve(app, "src/domain/schema.ts");
+    // Every file the door may write, as the project was made, to put back after.
+    const domainDir = resolve(app, "src/domain");
+    const domainBefore = new Map(readdirSync(domainDir).map((name) => [name, readFileSync(resolve(domainDir, name), "utf8")]));
+    try {
+      await page.click('[data-testid="profile-keeping"] [data-testid="studio-place"]');
+      await page.waitForSelector('[data-testid="studio"]', { timeout: 20_000 });
+      await page.waitForTimeout(1200);
+      b.studioOpened = true;
+      // The kinds' district, opened into its members, then the note kind, chosen from the keyboard as any record is.
+      await page.locator('[data-testid="studio"] [data-graview-view="kind:kind"] button', { hasText: "open" }).first().click();
+      await page.waitForSelector('[data-graview-pick="declared:note"]', { timeout: 10_000 });
+      await page.waitForTimeout(600);
+      await page.focus('[data-graview-pick="declared:note"]');
+      await page.keyboard.press("Enter");
+      await page.waitForSelector('[data-testid="studio"] [data-testid="inspector-strip"] [data-affordance]', { timeout: 10_000 });
+      await page.locator('[data-testid="studio"] [data-testid="inspector-strip"] [data-affordance]', { hasText: "Add a field" }).first().click();
+      await page.waitForSelector("[data-graview-asking]", { timeout: 10_000 });
+      await page.keyboard.type("weather");
+      await page.keyboard.press("Enter");
+      await page.waitForTimeout(400);
+      for (let step = 0; step < 4 && (await page.$("[data-graview-asking]")) !== null; step++) {
+        // Whether it must be given: no, so the act the project wrote to make a note still compiles as written.
+        const no = page.locator("[data-graview-asking] button:not([disabled])", { hasText: /^\s*(no|false|optional)\s*$/i });
+        const choice = (await no.count()) > 0 ? await no.first().elementHandle() : await page.$("[data-graview-asking] button:not([disabled])");
+        if (choice) await choice.click();
+        else {
+          await page.keyboard.type("x");
+          await page.keyboard.press("Enter");
+        }
+        await page.waitForTimeout(400);
+      }
+      await page.waitForTimeout(600);
+      await page.click('[data-testid="studio-apply"]');
+      /*
+       * Written through the dev server's door into the project's own file; the
+       * dev server then reloads the page onto it, so the file is what is read.
+       */
+      for (const end = Date.now() + 30_000; Date.now() < end && !readFileSync(schemaPath, "utf8").includes("weather"); ) await page.waitForTimeout(250);
+      b.studioWroteTheField = readFileSync(schemaPath, "utf8").includes("weather");
+      if (!b.studioWroteTheField) b.studioSeen = await page.evaluate(() => (document.querySelector('[data-testid="studio-applied"]') ?? document.querySelector('[data-testid="studio"]'))?.textContent?.trim().slice(0, 300) ?? null).catch(() => null);
+    } catch (error) {
+      b.studioFailed = String(error.message ?? error).split("\n")[0];
+      b.studioSeen = await page.evaluate(() => (document.querySelector('[data-testid="studio-applied"]') ?? document.querySelector('[data-testid="studio"]'))?.textContent?.trim().slice(0, 300) ?? null).catch(() => null);
+    } finally {
+      // The project is put back as it was made, for every step after this one.
+      for (const [name, text] of domainBefore) writeFileSync(resolve(domainDir, name), text);
+      for (const name of readdirSync(domainDir)) if (!domainBefore.has(name)) rmSync(resolve(domainDir, name), { force: true });
+    }
+    // The dev server reloads onto the schema as it was; the steps after this one begin on their own page.
+    await page.waitForTimeout(1500);
 
     /* ---- the derived form: the way in's offer, answered in words */
     await page.goto(`${base}/?remember=1`, { waitUntil: "networkidle" });
@@ -706,7 +786,7 @@ const clean = (violations) => Array.isArray(violations) && violations.length ===
 report.verdict = {
   // The profile pane opens wholly on screen and on top in a narrow embed, not off its side or cut by its box (W-119, FR-76).
   theProfileIsWholeAndOnTop: b.profileInEmbed?.pane === true && b.profileInEmbed?.inside === true && b.profileInEmbed?.onTop === true,
-  theScaffoldWroteAProject: (report.npm.tree ?? []).length === 21,
+  theScaffoldWroteAProject: (report.npm.tree ?? []).length === 22,
   anUntitledMutationIsOneFinding: JSON.stringify(report.npm.untitled) === JSON.stringify(["mutation-untitled"]),
   itInstalledFromTheTarballsWithNpm: report.npm.installed === true && report.npm.lockfile === true,
   itsOwnVerifyPassed: report.npm.verified === true,
@@ -724,6 +804,8 @@ report.verdict = {
           b.onTheOneFace?.switchToAScene === false &&
           b.onTheOneFace?.path === "/",
         theBrandIsTheProductsName: b.wordmarkSaysTheName === true,
+        theSeatPlantsStarterDataFromTheDeclaration: b.theSeatIsOnTheBar === true && b.seatOffered === "Add some starter data" && b.seatPlantedSomething === true && (b.seatLog ?? []).length > 0,
+        theStudioIsInThePersonsMenuAndWritesIntoTheCheckout: b.studioInTheMenu === true && b.studioOpened === true && b.studioWroteTheField === true,
         theHomesWayInOffersTheFirstNote: (b.wayInOffers ?? "").includes("Add a note"),
         theAskNamesItsFieldInWords: b.asksInWords?.name === "Name",
         theDerivedFormAddsIt: b.theFormAddedIt === true,

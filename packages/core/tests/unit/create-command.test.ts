@@ -55,7 +55,7 @@ describe("graview create", () => {
     expect(readdirSync(resolve(scratch, "notes")).sort()).toEqual(
       [".github", ".gitignore", "AGENTS.md", "CLAUDE.md", "README.md", "embed.html", "index.html", "package.json", "src", "tests", "tsconfig.build.json", "tsconfig.json", "vite.config.ts"].sort(),
     );
-    expect(t.out()).toContain("21 files → notes");
+    expect(t.out()).toContain("22 files → notes");
     expect(t.out()).toContain("npm run dev");
     expect(t.out()).toContain("npm run verify");
     expect(t.ran).toEqual([]);

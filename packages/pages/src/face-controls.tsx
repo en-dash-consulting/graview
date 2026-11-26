@@ -217,7 +217,8 @@ function Fallbacks<S extends AnySchema>({
         </div>
       ) : null}
       {!undoPlaced && !without.has("undo") ? <WayBack context={context} docked at={location.pathname + location.search} /> : null}
-      {bar?.own && !without.has("undo") ? <PagesInbox context={context} own={bar.own} /> : null}
+      {/* The inbox goes with the way back, and stays wherever the app gives a seat: Activity holds it. */}
+      {bar?.own && (!without.has("undo") || context.seat !== undefined) ? <PagesInbox context={context} own={bar.own} /> : null}
     </>
   );
 }
