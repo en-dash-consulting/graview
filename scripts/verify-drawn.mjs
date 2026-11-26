@@ -161,6 +161,7 @@ addEventListener("message", (event) => {
   const hello = event.data;
   if (!hello || hello.graview !== "host-hello" || !event.ports[0]) return;
   const port = event.ports[0];
+  window.__helloAt = performance.timeOrigin + performance.now();
   let drawn = false;
   port.onmessage = (message) => {
     if (!message.data || message.data.type !== "props" || drawn) return;
@@ -174,6 +175,8 @@ addEventListener("message", (event) => {
 });
 parent.postMessage({ graview: "guest-ready", protocol: 1 }, "*");
 </script></body></html>`;
+/* How long the guest's page takes to arrive where it is slow (?slow=1): as it is loaded again, longer than a page takes to settle. */
+const GUEST_PAGE_SLOW_MS = 1_000;
 const GUEST_SILENT = `<!doctype html><html><head><meta charset="utf-8"></head><body><p>Never ready.</p></body></html>`;
 const GUEST_READY_MS = 1_500;
 
@@ -196,6 +199,8 @@ const PARTS = [
 const HELD_MS = 5_000;
 /* How long a slow runner may take to draw the page meanwhile: under the ten seconds after which a place is said drawn whatever has come. */
 const LIFT_MS = 8_000;
+/* The most the city may take to be said drawn once the part held back has come: well under those ten seconds, which it waited out before. */
+const CITY_DRAWN_MS = 5_000;
 
 /** A PNG of one color, as small as a PNG of that size can be. */
 function png(width, height) {
@@ -257,6 +262,7 @@ async function buildHost() {
         window.__revise = () => window.__handle.setDraftView({ manifest: revised.manifest, source: revised.source, author: "Proposed by Claude" });
         const framed = (registry) =>
           guest === "late" ? registry.register("feature", { cardinality: "one", fidelity: "full" }, guestView({ url: "/guest-late.html", name: "late-card", title: "Late card" }))
+          : guest === "late-slow" ? registry.register("feature", { cardinality: "one", fidelity: "full" }, guestView({ url: "/guest-late.html?slow=1", name: "late-card", title: "Late card" }))
           : guest === "silent" ? registry.register("feature", { cardinality: "one", fidelity: "full" }, guestView({ url: "/guest-silent.html", name: "silent-card", title: "Silent card", limits: { readyMs: ${GUEST_READY_MS} } }))
           : registry;
         // The host's keeper, writing down every ask: a draft must ask it nothing.
@@ -323,6 +329,7 @@ async function buildHost() {
   const host = createServer((request, response) => {
     const path = decodeURIComponent((request.url ?? "/").split("?")[0]);
     if (path === IMAGE_PATH) return later(IMAGE_LATE_MS, () => (response.writeHead(200, { "content-type": "image/png", "cache-control": "no-store" }), response.end(image)));
+    if (path === "/guest-late.html" && /[?&]slow=1/.test(request.url ?? "")) return later(GUEST_PAGE_SLOW_MS, () => (response.writeHead(200, { "content-type": "text/html", "cache-control": "no-store" }), response.end(GUEST_LATE)));
     if (path === "/guest-late.html" || path === "/guest-silent.html") return (response.writeHead(200, { "content-type": "text/html" }), response.end(path === "/guest-late.html" ? GUEST_LATE : GUEST_SILENT));
     if (path === "/late-face.woff2") return later(FONT_LATE_MS, () => (response.writeHead(200, { "content-type": "font/woff2", "cache-control": "no-store" }), response.end(font)));
     const name = path.replace(/^\/+/, "") || "index.html";
@@ -522,22 +529,29 @@ try {
       }
       {
         // The opening screen over the one face, a part of it held back: lifted when the page has drawn, the place said drawn only once the part has come.
-        const opened = async (path, words) => {
+        const opened = async (path, words, { unmoved = false } = {}) => {
           const context = await browser.newContext({ viewport: { width: screen.width, height: screen.height }, colorScheme: screen.scheme, reducedMotion: "reduce" });
           const page = await context.newPage();
           page.on("pageerror", (error) => errors.push(`${label} ${path}: ${error.message}`));
+          // A browser that cannot move an element as it is, as WebKit and an older Firefox: an element moved is taken out and put back, and a frame in it loads again.
+          if (unmoved) await page.addInitScript(() => [Element, Document, DocumentFragment].forEach((type) => delete type.prototype.moveBefore));
           await page.addInitScript(instrument);
           let letGo;
           const until = new Promise((done) => (letGo = done));
           let held = 0;
           await page.route("**/*.js", async (route) => {
-            const response = await route.fetch();
-            const body = await response.text();
-            if (body.includes(words)) {
-              held++;
-              await until;
+            // A script still on its way as the page is closed is nobody's to fulfill.
+            try {
+              const response = await route.fetch();
+              const body = await response.text();
+              if (body.includes(words)) {
+                held++;
+                await until;
+              }
+              await route.fulfill({ response, body });
+            } catch (error) {
+              if (!page.isClosed()) throw error;
             }
-            await route.fulfill({ response, body });
           });
           // Firefox holds the page's `load` event for a script still on its way.
           await page.goto(`${at("drawn-host")}${path}`, { waitUntil: "commit" });
@@ -566,22 +580,46 @@ try {
           await shot(run.page, `whole-${part}`);
           await run.close();
         }
-        for (const [name, path, words] of [
+        for (const [name, path, words, unmoved] of [
           // A frame guest, which the face loads again as it takes the page in, where the browser cannot move an element as it is.
-          ["guest", "/features/f1?guest=late&one=1&splash=1", PARTS[0].words],
+          ["guest", "/features/f1?guest=late&one=1&splash=1", PARTS[0].words, false],
+          // The same where this browser could: as one that cannot (HQ f-frame-guest-mark-after-move).
+          ["guest-unmoved", "/features/f1?guest=late-slow&one=1&splash=1", PARTS[0].words, true],
           // Opened over the city, the page under it is not what was asked for.
-          ["city", "/places/overview?one=1&splash=1", PARTS[0].words],
-          ["city-part", "/places/overview?one=1&splash=1", PARTS[1].words],
+          ["city", "/places/overview?one=1&splash=1", PARTS[0].words, false],
+          ["city-part", "/places/overview?one=1&splash=1", PARTS[1].words, false],
         ]) {
-          const run = await opened(path, words);
+          const run = await opened(path, words, { unmoved });
           let lift = await run.lifted(3_500);
           const early = lift !== null;
           const movesWhole = await run.page.evaluate(() => "moveBefore" in document.body);
           const drawnWhileHeld = await run.wasSaid();
           const heldBack = run.held() > 0;
+          const letGoAt = await run.page.evaluate(() => performance.now());
           run.letGo();
           lift ??= await run.lifted(20_000);
-          seen.waits.push({ engine, screen: screen.name, name, movesWhole, early, heldBack, drawnWhileHeld, lifted: lift ? { at: lift.at, drawn: lift.drawn, level: lift.level, camera: lift.camera, frame: lift.seen.frame, busy: lift.seen.busy } : null });
+          const mark = await run.saidDrawn();
+          // The guest's page as it stands now, the one loaded again where it was: when it drew.
+          const guestFrame = run.page.frames().find((frame) => !frame.isDetached() && /\/guest-late\.html(\?|$)/.test(frame.url()));
+          const { helloAt = null, drewAt = null } = guestFrame ? await guestFrame.evaluate(() => ({ helloAt: window.__helloAt ?? null, drewAt: window.__drewAt ?? null })).catch(() => ({})) : {};
+          const loads = await run.page.evaluate(() => performance.getEntriesByType("resource").filter((entry) => /\/guest-late\.html(\?|$)/.test(entry.name)).length);
+          seen.waits.push({
+            engine,
+            screen: screen.name,
+            name,
+            movesWhole,
+            early,
+            heldBack,
+            drawnWhileHeld,
+            lifted: lift ? { at: lift.at, atAbs: Math.round(lift.seen.atAbs), drawn: lift.drawn, level: lift.level, camera: lift.camera, frame: lift.seen.frame, busy: lift.seen.busy } : null,
+            letGoAt: Math.round(letGoAt),
+            drawnAt: mark ? Math.round(mark.at) : null,
+            drawnAtAbs: mark ? Math.round(mark.seen.atAbs) : null,
+            drawnFrame: mark?.seen.frame ?? null,
+            helloAt: helloAt === null ? null : Math.round(helloAt),
+            drewAt: drewAt === null ? null : Math.round(drewAt),
+            loads,
+          });
           await run.close();
         }
       }
@@ -842,8 +880,19 @@ report.checks.nothingAPersonReadsMovesAsTheHeldPartComesAfterTheScreenHasLifted 
 };
 const waited = (name) => seen.waits.filter((one) => one.name === name);
 report.checks.theOpeningScreenStaysUpOverAFrameGuestUntilTheFaceThatTakesItInHasCome = {
-  seen: waited("guest"),
-  ok: every(waited("guest"), (one) => one.heldBack && one.early === one.movesWhole && one.drawnWhileHeld === false && one.lifted?.frame?.drawn === true && !one.lifted.busy),
+  seen: [...waited("guest"), ...waited("guest-unmoved")],
+  ok: ["guest", "guest-unmoved"].every((name) => every(waited(name), (one) => one.heldBack && one.early === one.movesWhole && one.drawnWhileHeld === false && one.lifted?.frame?.drawn === true && !one.lifted.busy)) && every(waited("guest-unmoved"), (one) => !one.movesWhole),
+};
+/* HQ f-frame-guest-mark-after-move: a frame the face loads again as it takes the page in is said drawn by the page it loaded, not the one before. */
+report.checks.aFrameGuestLoadedAgainAsTheFaceTakesItInIsSaidPaintedAndDrawnOnlyOnceItHasDrawnAgain = {
+  seen: [...waited("guest"), ...waited("guest-unmoved")].map(({ engine, screen, name, movesWhole, loads, helloAt, drewAt, lifted, drawnAtAbs, drawnFrame }) => ({ engine, screen, name, movesWhole, loads, helloAt, drewAt, liftedAt: lifted?.atAbs ?? null, drawnAtAbs, drawnFrame })),
+  // Said once the page the frame stands with now has been handed what it shows: never over the page before it, gone, or one still on its way.
+  ok: ["guest", "guest-unmoved"].every((name) => every(waited(name), (one) => one.helloAt !== null && one.lifted !== null && one.lifted.atAbs >= one.helloAt && one.drawnAtAbs !== null && one.drawnAtAbs >= one.helloAt && one.drawnFrame?.drawn === true)) && every(waited("guest-unmoved"), (one) => one.loads >= 2),
+};
+/* HQ f-city-drawn-waits-its-cap: the city is said drawn once it has come and settled, well before the ten seconds a place that never settles waits. */
+report.checks.theCityIsSaidDrawnSoonAfterItHasComeNotAtTheTenSeconds = {
+  seen: [...waited("city"), ...waited("city-part")].map(({ engine, screen, name, letGoAt, drawnAt }) => ({ engine, screen, name, letGoAt, drawnAt, afterLetGo: drawnAt === null ? null : drawnAt - letGoAt })),
+  ok: ["city", "city-part"].every((name) => every(waited(name), (one) => one.drawnAt !== null && one.drawnAt - one.letGoAt < CITY_DRAWN_MS)),
 };
 report.checks.theOpeningScreenStaysUpOverTheCityUntilTheCityHasComeAndLiftsBeforeThePlaceIsSaidDrawn = {
   seen: [...waited("city"), ...waited("city-part")],
