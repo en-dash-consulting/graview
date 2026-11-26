@@ -36,8 +36,9 @@ describe("the client", () => {
     expect(() => new Script(file)).not.toThrow();
     expect(file).toMatch(/^\/\*![^\n]*\*\/\n"use strict";/);
     expect(file).not.toMatch(/\bimport\s*\(|\bimportScripts\b|\bimport\s+[{*\w]/);
-    // 4 000 until the client said which records it marks, for the one face's lines (Graview HQ feature:f-one-face-lines-from-frame-views): about 1.5 KB more.
-    expect(file.length).toBeLessThan(5_000);
+    // 4 000 until the client said which records it marks, for the one face's lines (Graview HQ feature:f-one-face-lines-from-frame-views): about 1.5 KB more;
+    // 5 000 until a kept frame was told it is off the page and its media paused (Graview HQ feature:f-kept-frame-told-off-page): about 0.5 KB more.
+    expect(file.length).toBeLessThan(5_500);
   });
 
   it("is in the package's tarball and its exports, at a fixed path", () => {
