@@ -15,11 +15,10 @@
  */
 export { EDIT_MESSAGE, LONGEST_MESSAGE, LONGEST_ROOM_TITLE, MESSAGE_KIND, MOST_ROOMS, POST_MESSAGE, REMOVE_MESSAGE, ROOM_ACTS, ROOMS_READ_STATE, roomKey } from "./rooms/shape.js";
 export type { AppRooms, MessageRecord, RoomDeclaration } from "./rooms/shape.js";
-export { isPlaceless, messageKind, roomActs, roomSights, roomsFolded, roomsPolicy, ROOMS_GRANT, unfoldedApp, withoutTalk, withRooms } from "./rooms/kind.js";
+export { isPlaceless, messageKind, roomActs, roomSights, isRoomsOwn, roomsFolded, roomsPolicy, ROOMS_GRANT, unfoldedApp, withoutTalk, withRooms, mentionsOnIn } from "./rooms/kind.js";
 export { allMessages, appRooms, hasRooms, mayEdit, mayPostIn, mayReadRoom, mayRemove, mentionablesOf, mentionsIn, messagesIn, readUpToOf, roomsOf, threadOf, threadsOf, unreadFor } from "./rooms/read.js";
 export type { Mentionable, ReadUpTo, ResolvedRoom, Unread } from "./rooms/read.js";
 export { appRoomFindings, documentRoomFindings, roomFindings, roomWorldOfApp } from "./rooms/findings.js";
 export type { RoomFinding, RoomFindingCode, RoomWorld } from "./rooms/findings.js";
 export { supportContextOf, memorySupport, SUPPORT_CONTEXT_FRICTION } from "./rooms/support.js";
 export type { MemorySupport, SupportContext, SupportDraft, SupportMessage, SupportReply, SupportTransport, SupportDeclaration } from "./rooms/support.js";
-export { keepRecentFriction } from "./friction-record.js";

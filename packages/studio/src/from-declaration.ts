@@ -1,3 +1,4 @@
+import { unfoldedApp } from "@graview/core/rooms";
 import { bindsOf, isPlacePoint, isRepeatField, linkedRelationOf, nodeRefArgs, placeSlug, repeatedBy, repeatKey, requiredRolesOf, type LensDeclaration } from "@graview/core";
 import { computedOf, documentOf } from "@graview/core/document";
 import { fieldSpecOf } from "@graview/core/blocks";
@@ -85,7 +86,9 @@ const shapeOf = (fields: unknown): Record<string, unknown> =>
   ((fields as { shape?: Record<string, unknown> }).shape ?? {}) as Record<string, unknown>;
 
 /** The app's declaration as the studio's graph. */
-export function declarationToGraph<S extends AnySchema>(app: GraviewApp<S>): GraphSnapshot {
+export function declarationToGraph<S extends AnySchema>(folded: GraviewApp<S>): GraphSnapshot {
+  // The app as its author declared it: its rooms' message kind and acts are the framework's, folded in again when it is written back (Graview HQ feature:f-chat-rooms).
+  const app = unfoldedApp(folded);
   const nodes: Node[] = [];
   const edges: GraphEdge[] = [];
   const kinds = app.schema.definitions;

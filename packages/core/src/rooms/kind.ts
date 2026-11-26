@@ -1,13 +1,15 @@
-import * as z from "zod";
+import * as z from "../schema/zod.js";
+// The type defineMutation reads an input by; the runtime is zod/mini.
+import type { ZodType as ClassicType } from "zod";
 import type { GraviewApp } from "../app.js";
 import { defineMutation } from "../mutations/define-mutation.js";
-import { nodeRef } from "../mutations/node-ref.js";
+import { refTo } from "../mutations/node-ref.js";
 import type { ActingSeat, AnyMutationDefinition, MutationContext } from "../mutations/types.js";
 import { rolesSaid } from "../permissions/policy.js";
 import type { Grant, Policy, Sight } from "../permissions/types.js";
 import { ActRefusal } from "../refused.js";
 import { createSchema, type AnySchema } from "../schema/schema.js";
-import { defineNode } from "../schema/define-node.js";
+import { defineNode, labelOf, withArticle } from "../schema/define-node.js";
 import type { AnyNodeDefinition } from "../schema/types.js";
 import { excerpt } from "../excerpt.js";
 import { EDIT_MESSAGE, LONGEST_MESSAGE, MESSAGE_KIND, POST_MESSAGE, REMOVE_MESSAGE, ROOM_ACTS, type AppRooms, type MessageRecord, type RoomDeclaration } from "./shape.js";
@@ -31,8 +33,29 @@ export const isPlaceless = (definition: unknown): boolean => typeof definition =
 /** The app as its author declared it, before its rooms were folded in: what `toDocument` writes. */
 const UNFOLDED = new WeakMap<object, GraviewApp<AnySchema>>();
 
-/** The app before `withRooms`, or the app itself. */
-export const unfoldedApp = <A extends object>(app: A): A => (UNFOLDED.get(app) as A | undefined) ?? app;
+/** The framework's own acts, grant and sights, by object: what an app copied after it was folded is told apart by. */
+const FRAMEWORK = new WeakSet<object>();
+
+/** Whether an act, a grant or a sight is one `withRooms` folded in. */
+export const isRoomsOwn = (part: unknown): boolean => typeof part === "object" && part !== null && FRAMEWORK.has(part);
+
+/**
+ * THE APP BEFORE `withRooms`: the one it was folded from, or — for a copy
+ * of a folded app (`{ ...app, lenses }`) — the copy without the message
+ * kind, the three acts, their grant and their sights. Any other app is
+ * itself.
+ */
+export function unfoldedApp<A extends object>(app: A): A {
+  const held = UNFOLDED.get(app) as A | undefined;
+  if (held) return held;
+  const folded = app as unknown as GraviewApp<AnySchema>;
+  if (!folded.rooms || !folded.schema?.definitions?.some(isPlaceless)) return app;
+  const schema = createSchema(folded.schema.definitions.filter((definition) => !isPlaceless(definition)) as never, (folded.schema as { readonly computed?: never }).computed);
+  const policy = folded.policy && { ...folded.policy, grants: folded.policy.grants.filter((grant) => !FRAMEWORK.has(grant)), ...(folded.policy.sees ? { sees: folded.policy.sees.filter((sight) => !FRAMEWORK.has(sight)) } : {}) };
+  const own = { ...folded, schema, mutations: (folded.mutations ?? []).filter((act) => !FRAMEWORK.has(act)), ...(policy ? { policy: policy.sees?.length === 0 ? (({ sees: _, ...rest }) => rest)(policy) : policy } : {}) };
+  UNFOLDED.set(app, own as never);
+  return own as unknown as A;
+}
 
 /** Whether an app had its rooms folded in. */
 export const roomsFolded = (app: object): boolean => UNFOLDED.has(app);
@@ -50,25 +73,33 @@ export function mentionsOnIn(schema: AnySchema, room: unknown): boolean {
   return declared !== undefined && declared.mentions !== false;
 }
 
+/** The rooms an app's schema was given its message kind for: what a page reads them from when it holds only the store. */
+export const roomsOfSchema = (schema: AnySchema): AppRooms | undefined => {
+  const definition = schema.tryDefinition(MESSAGE_KIND);
+  return definition ? ROOMS_OF_KIND.get(definition) : undefined;
+};
+
 /** The framework's message kind, for these rooms. */
 export function messageKind(rooms: AppRooms): AnyNodeDefinition {
   const ids = Object.keys(rooms) as [string, ...string[]];
   const definition = defineNode(MESSAGE_KIND, {
     description: "Something somebody said in one of the app's rooms, or in the thread on one of its records.",
+    // In zod/mini, as a compiled document's kinds are: a page that draws a room carries no classic zod.
     fields: z.object({
       room: ids.length > 0 ? z.enum(ids) : z.string(),
-      about: z.string().optional(),
-      body: z.string().max(LONGEST_MESSAGE),
-      author: z.string().min(1),
-      authorName: z.string().optional(),
-      authorKind: z.string().optional(),
-      at: z.string().min(1),
-      replyTo: z.string().optional(),
-      editedAt: z.string().optional(),
-      removed: z.boolean().optional(),
-    }),
+      about: z.optional(z.string()),
+      body: z.string().check(z.maxLength(LONGEST_MESSAGE)),
+      author: z.string().check(z.minLength(1)),
+      authorName: z.optional(z.string()),
+      authorKind: z.optional(z.string()),
+      at: z.string().check(z.minLength(1)),
+      replyTo: z.optional(z.string()),
+      editedAt: z.optional(z.string()),
+      removed: z.optional(z.boolean()),
+    }) as never,
     plural: "Messages",
-    label: (node) => (node.removed ? "A removed message" : excerpt(node.body, 60) || "A message"),
+    display: { glance: ["body", "authorName", "at"] },
+    label: (node: MessageRecord) => (node.removed ? "A removed message" : excerpt(node.body, 60) || "A message"),
     // A message is talk: kept, changed by its author, taken out by its tombstone — never archived, merged or tidied.
     archives: false,
     tidying: "never",
@@ -110,7 +141,7 @@ function bodyOf(body: string): string {
 }
 
 /** The three acts of an app's rooms: post, edit your own, remove your own (or anybody's, for a role a room lets moderate). */
-export function roomActs(rooms: AppRooms): AnyMutationDefinition<AnySchema>[] {
+export function roomActs(rooms: AppRooms, schema?: AnySchema): AnyMutationDefinition<AnySchema>[] {
   const ids = Object.keys(rooms) as [string, ...string[]];
   const threads = threadKinds(rooms);
   const post = defineMutation(POST_MESSAGE, {
@@ -119,14 +150,16 @@ export function roomActs(rooms: AppRooms): AnyMutationDefinition<AnySchema>[] {
     creates: [MESSAGE_KIND],
     input: z.object({
       room: ids.length > 0 ? z.enum(ids) : z.string(),
-      ...(threads.length > 0 ? { about: nodeRef(threads).optional() } : {}),
-      body: z.string().min(1).max(LONGEST_MESSAGE),
-      replyTo: nodeRef([MESSAGE_KIND]).optional(),
-    }),
+      ...(threads.length > 0 ? { about: z.optional(refTo(threads)) } : {}),
+      body: z.string().check(z.minLength(1), z.maxLength(LONGEST_MESSAGE)),
+      replyTo: z.optional(refTo([MESSAGE_KIND])),
+    }) as unknown as ClassicType<{ room: string; about?: string; body: string; replyTo?: string }>,
     describe: (args, graph) => {
       const room = rooms[args.room];
       const about = "about" in args && typeof args.about === "string" ? graph.getNode(args.about) : undefined;
-      return `Post in ${room?.title ?? args.room}${about ? ` about ${String((about as Record<string, unknown>)["label"] ?? args.about)}` : ""}: “${excerpt(args.body, 60)}”`;
+      // The record's name as its kind says it, never its id.
+      const named = about ? labelOf(schema?.tryDefinition(String((about as { kind: unknown }).kind)) as never, about as never) : undefined;
+      return `Post in ${room?.title ?? args.room}${named && named !== (about as { id?: string }).id ? ` about ${named}` : ""}: ${excerpt(args.body, 60)}`;
     },
     apply(ctx, args) {
       const room = roomNamed(rooms, args.room);
@@ -165,8 +198,8 @@ export function roomActs(rooms: AppRooms): AnyMutationDefinition<AnySchema>[] {
     subject: { kinds: [MESSAGE_KIND], arg: "id" },
     writes: ["body", "editedAt"],
     idempotent: true,
-    input: z.object({ id: nodeRef([MESSAGE_KIND]), body: z.string().min(1).max(LONGEST_MESSAGE) }),
-    describe: (args) => `Edit a message: “${excerpt(args.body, 60)}”`,
+    input: z.object({ id: refTo([MESSAGE_KIND]), body: z.string().check(z.minLength(1), z.maxLength(LONGEST_MESSAGE)) }) as unknown as ClassicType<{ id: string; body: string }>,
+    describe: (args) => `Edit a message: ${excerpt(args.body, 60)}`,
     apply(ctx, args) {
       const message = messageNamed(ctx as never, args.id);
       if (message.removed) throw new ActRefusal("That message was removed; there is nothing to edit.", "invalid");
@@ -183,7 +216,7 @@ export function roomActs(rooms: AppRooms): AnyMutationDefinition<AnySchema>[] {
     writes: ["body", "removed"],
     destructive: true,
     idempotent: true,
-    input: z.object({ id: nodeRef([MESSAGE_KIND]) }),
+    input: z.object({ id: refTo([MESSAGE_KIND]) }) as unknown as ClassicType<{ id: string }>,
     describe: () => "Remove a message",
     apply(ctx, args) {
       const message = messageNamed(ctx as never, args.id);
@@ -195,6 +228,7 @@ export function roomActs(rooms: AppRooms): AnyMutationDefinition<AnySchema>[] {
       ctx.patchNode(args.id, { body: "", removed: true });
     },
   });
+  for (const act of [post, edit, remove]) FRAMEWORK.add(act);
   return [post, edit, remove] as unknown as AnyMutationDefinition<AnySchema>[];
 }
 
@@ -205,16 +239,23 @@ export const ROOMS_GRANT: Grant = {
   kinds: "*",
   describe: "Whoever a room lets in may post in it, and change or take out what they said.",
 };
+FRAMEWORK.add(ROOMS_GRANT);
 
 /** Each room's sight over its messages: its readers, and a thread's messages only where the record is seen too. */
 export function roomSights(rooms: AppRooms): Sight[] {
-  return Object.entries(rooms).map(([id, room]) => ({
+  return Object.entries(rooms).map(([id, room]) => framework({
     roles: room.read ?? "*",
     kinds: [MESSAGE_KIND],
     where: { field: "room", is: [id] },
     ...(room.about ? { follows: "about" } : {}),
-    describe: `${room.read ? `Only ${rolesSaid(room.read)}` : "Everybody"} may read ${room.title}${room.about ? `, and only on a ${room.about} they can see` : ""}.`,
+    describe: `${room.read ? `Only ${rolesSaid(room.read)}` : "Everybody"} may read ${room.title}${room.about ? `, and only on ${withArticle(room.about)} they can see` : ""}.`,
   }));
+}
+
+/** A part of the policy the framework folded in, known as such. */
+function framework<T extends object>(part: T): T {
+  FRAMEWORK.add(part);
+  return part;
 }
 
 /**
@@ -225,9 +266,9 @@ export function roomSights(rooms: AppRooms): Sight[] {
 export function roomsPolicy(policy: Policy | undefined, rooms: AppRooms, kinds: readonly string[]): Policy | undefined {
   const restricted = Object.values(rooms).some((room) => room.read !== undefined);
   if (!policy && !restricted) return undefined;
-  const base: Policy = policy ?? { grants: [{ roles: "*", mutations: "*", describe: "Everybody may do everything here." }] };
+  const base: Policy = policy ?? { grants: [framework({ roles: "*", mutations: "*", describe: "Everybody may do everything here." } as Grant)] };
   const grants = base.grants.some((grant) => grant === ROOMS_GRANT) ? base.grants : [...base.grants, ROOMS_GRANT];
-  const sights = base.sees?.length ? base.sees : restricted ? [{ roles: "*", kinds: kinds.filter((kind) => kind !== MESSAGE_KIND), describe: "Everybody sees everything else here." } as Sight] : undefined;
+  const sights = base.sees?.length ? base.sees : restricted ? [framework({ roles: "*", kinds: kinds.filter((kind) => kind !== MESSAGE_KIND), describe: "Everybody sees everything else here." } as Sight)] : undefined;
   return { ...base, grants, ...(sights ? { sees: [...sights.filter((sight) => !sight.kinds.includes(MESSAGE_KIND)), ...roomSights(rooms)] } : {}) };
 }
 
@@ -244,7 +285,7 @@ export function withRooms<A extends GraviewApp<AnySchema>>(app: A): A {
   const kind = messageKind(rooms);
   const schema = createSchema([...app.schema.definitions, kind] as never, (app.schema as { readonly computed?: never }).computed) as unknown as A["schema"];
   const taken = new Set((app.mutations ?? []).map((mutation) => mutation.name));
-  const acts = roomActs(rooms).filter((act) => !taken.has(act.name));
+  const acts = roomActs(rooms, schema as AnySchema).filter((act) => !taken.has(act.name));
   const policy = roomsPolicy(app.policy, rooms, schema.kinds as readonly string[]);
   const folded = { ...app, schema, mutations: [...(app.mutations ?? []), ...acts], ...(policy ? { policy } : {}) } as A;
   UNFOLDED.set(folded, app);

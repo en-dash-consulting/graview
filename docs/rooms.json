@@ -1,0 +1,238 @@
+{
+  "at": "2026-11-26T17:30:57.186Z",
+  "engine": "chromium",
+  "checks": {
+    "twoSeatsSeeEachOtherLive": {
+      "samSaw": true,
+      "noraSaw": true,
+      "log": [
+        "Who has the van keys?",
+        "On the hook by the door."
+      ],
+      "logRegion": {
+        "role": "log",
+        "live": "polite",
+        "label": "Messages in Household"
+      },
+      "ok": true
+    },
+    "aThreadOnARecord": {
+      "threadSeen": true,
+      "heading": "Talk about it · 1",
+      "composerLabel": "Write about Book the van",
+      "ok": true
+    },
+    "editAndRemoveOwn": {
+      "samMayEditNoras": false,
+      "editSeen": true,
+      "saidEdited": true,
+      "removedSeen": true,
+      "removedSays": "This message was removed.",
+      "ok": true
+    },
+    "unreadCounts": {
+      "bell": "Inbox — 1 needs you: 1 rule broken",
+      "listed": [
+        "1 new in Household, unreadSam: Bins go out tonight.Nov 26, 12:31 PM"
+      ],
+      "afterReading": [],
+      "ok": true
+    },
+    "aMentionReachesTheirNotices": {
+      "bell": "Inbox — 2 need you: 1 rule broken",
+      "listed": [
+        "Sam mentioned you in Household, unreadSam: @Nora can you take the van back on Monday?Nov 26, 12:31 PM"
+      ],
+      "shownAsMention": [
+        "@Nora:user-nora"
+      ],
+      "ok": true
+    },
+    "aPhone": {
+      "phoneSaid": true,
+      "send": {
+        "x": 298.1875,
+        "y": 642.9375,
+        "width": 54.21875,
+        "height": 44
+      },
+      "roomOverflows": false,
+      "thread": {
+        "x": 17.59375,
+        "y": 415.484375,
+        "width": 354.796875,
+        "height": 364.453125
+      },
+      "threadOverflows": false,
+      "ok": true
+    },
+    "keyboardOnly": {
+      "reached": true,
+      "twoLines": "Line one\nline two",
+      "sentByEnter": true,
+      "multiline": true,
+      "afterSend": {
+        "body": false,
+        "on": "composer-field"
+      },
+      "editFocused": true,
+      "escaped": true,
+      "ok": true
+    },
+    "supportSendsWithContextAndShowsAReply": {
+      "focusedField": true,
+      "later": "Write to Things support here. Replies can take a while: they arrive here, and you can close this and come back.",
+      "context": {
+        "app": "todo",
+        "appTitle": "Things",
+        "place": "/tasks/t-book",
+        "record": {
+          "id": "t-book",
+          "kind": "task",
+          "label": "Book the van"
+        },
+        "person": {
+          "kind": "human",
+          "id": "user-sam",
+          "name": "Sam"
+        },
+        "roles": [
+          "member"
+        ],
+        "version": "0.2.17",
+        "friction": [],
+        "at": "2026-11-26T17:31:19.777Z"
+      },
+      "reply": true,
+      "panel": {
+        "x": 1032,
+        "y": 312,
+        "width": 400,
+        "height": 580
+      },
+      "closed": true,
+      "back": {
+        "body": false,
+        "on": "profile-button"
+      },
+      "ok": true
+    },
+    "supportSendsWithContextAndShowsAReplyOnAPhone": {
+      "focusedField": true,
+      "later": "Write to Things support here. Replies can take a while: they arrive here, and you can close this and come back.",
+      "context": {
+        "app": "todo",
+        "appTitle": "Things",
+        "place": "/tasks/t-book",
+        "record": {
+          "id": "t-book",
+          "kind": "task",
+          "label": "Book the van"
+        },
+        "person": {
+          "kind": "human",
+          "id": "user-sam",
+          "name": "Sam"
+        },
+        "roles": [
+          "member"
+        ],
+        "version": "0.2.17",
+        "friction": [],
+        "at": "2026-11-26T17:31:22.723Z"
+      },
+      "reply": true,
+      "panel": {
+        "x": 8,
+        "y": 256,
+        "width": 374,
+        "height": 580
+      },
+      "closed": true,
+      "back": {
+        "body": false,
+        "on": "profile-button"
+      },
+      "ok": true
+    },
+    "aSeatWithoutSightSeesNone": {
+      "chairSaid": true,
+      "staff": {
+        "id": "staff:aiyana-whitehorse",
+        "messages": 2
+      },
+      "visitorRoom": {
+        "missing": true,
+        "said": false
+      },
+      "visitorSees": {
+        "messages": 0,
+        "staff": 0,
+        "held": 2
+      },
+      "ok": true
+    }
+  },
+  "pageErrors": [],
+  "passed": true,
+  "timing": {
+    "wall": 31,
+    "cpu": 29.2,
+    "serverStartup": 0,
+    "servers": [
+      {
+        "name": "todo",
+        "port": 5703,
+        "ms": 153,
+        "borrowed": true
+      },
+      {
+        "name": "gauntlet",
+        "port": 5701,
+        "ms": 154,
+        "borrowed": true
+      }
+    ],
+    "beforeFirstBrowser": 483,
+    "browsers": 1,
+    "browserLaunch": 109,
+    "fixedWaits": 14750,
+    "fixedWaitCount": 20,
+    "fixedWaitSites": [
+      {
+        "at": "verify-rooms.mjs:112",
+        "ms": 10400,
+        "count": 13
+      },
+      {
+        "at": "verify-rooms.mjs:393",
+        "ms": 1500,
+        "count": 1
+      },
+      {
+        "at": "verify-rooms.mjs:130",
+        "ms": 900,
+        "count": 3
+      },
+      {
+        "at": "verify-rooms.mjs:231",
+        "ms": 800,
+        "count": 1
+      },
+      {
+        "at": "verify-rooms.mjs:247",
+        "ms": 750,
+        "count": 1
+      },
+      {
+        "at": "verify-rooms.mjs:223",
+        "ms": 400,
+        "count": 1
+      }
+    ],
+    "settledWaits": 0,
+    "settledWaitCount": 0,
+    "settledWaitSites": [],
+    "worker": 0
+  }
+}

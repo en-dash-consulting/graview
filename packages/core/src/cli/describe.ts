@@ -141,7 +141,7 @@ export function describeApp<S extends AnySchema>(
     for (const room of rooms) {
       lines.push(`  ${room.id} — "${room.title}": ${room.about ? `a thread on each ${room.about}` : "one room for the whole app"}; read by ${who(room.read, room.about ? `whoever may see the ${room.about}` : "everyone")}, posted in by ${who(room.post ?? room.read, "whoever may read it")}${room.moderate ? `, moderated by ${who(room.moderate, "")}` : ""}${room.mentions ? "; @Name tells that person" : ""}.`);
     }
-    lines.push(`  What is said is a ${MESSAGE_KIND}, made with post-message, changed with edit-message (its author's) and taken out with remove-message.`);
+    lines.push(`  What is said is ${withArticle(MESSAGE_KIND)}, made with post-message, changed with edit-message (its author's) and taken out with remove-message.`);
   }
 
   /*

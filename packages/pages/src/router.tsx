@@ -1,4 +1,4 @@
-import { numberAsRead, pluralLabel, type AnySchema, type Store } from "@graview/core";
+import { numberAsRead, pluralLabel, type AnySchema, type Principal, type Store } from "@graview/core";
 import { BrowserRouter, Link, MemoryRouter, Navigate, Route, Routes } from "react-router";
 import { HOME_SLUG, openingOf, OVERVIEW_PATH, OVERVIEW_SLUG, sayIn } from "@graview/core";
 import { narrowedPath } from "@graview/core/navigate";
@@ -22,6 +22,15 @@ import { OneFaceComing, OneFaceContext, useOneFace, useOneFaceComing, type OneFa
 import { createPortal } from "react-dom";
 import { heldHost, HeldHere } from "./held-element.js";
 const OnePlace = lazyPart(() => import("./one-place.js").then((module) => ({ default: module.OnePlace })), { under: true });
+// A room, the rooms, a record's thread and the support panel (Graview HQ feature:f-chat-rooms, f-support-chat): fetched when one is first drawn.
+const RoomPage = lazyPart(() => import("./chat.js").then((module) => ({ default: module.RoomPage })));
+const RoomsPage = lazyPart(() => import("./chat.js").then((module) => ({ default: module.RoomsPage })));
+const RecordThreads = lazyPart(() => import("./chat.js").then((module) => ({ default: module.RecordThreads })), { under: true });
+const SupportPanel = lazyPart(() => import("./support-panel.js").then((module) => ({ default: module.SupportPanel })), { under: true });
+import { roomsOfSchema, whenSupportOpened } from "@graview/core";
+type HostNotificationLike = NonNullable<GraviewContextValue<AnySchema>["notifications"]>[number];
+import { roomReadsFor, useRoomReads } from "./room-reads.js";
+import { SupportHereContext, supportRowLabel, supportThreadOf, useSupportThread, type SupportHere } from "./support-door.js";
 import { appKeyOf, BarFindContext, FirstLookDoor, HeadingsUnder, PastBar, registerReaderLenses, SpecLinks, type BarFind, type FirstLook } from "@graview/primitives/pages";
 
 /** Who reads the face when the host names nobody. */
@@ -297,7 +306,19 @@ function KindSwitch<S extends AnySchema>({
   const Fallback = page === "list" ? DefaultListPage : DefaultRecordPage;
   const Registered = kind ? registry?.lookup(kind, page) : undefined;
   const Component = (Registered ?? Fallback) as PageComponent<S>;
-  return <Component context={context} />;
+  // A record of a kind a room is about has its thread under its page, whoever designed the page (Graview HQ feature:f-chat-rooms).
+  const threaded = page === "record" && kind !== undefined && Object.values(roomsOfSchema(context.store.schema) ?? {}).some((room: { readonly about?: string }) => room.about === kind);
+  const node = threaded ? context.store.graph.getNode(decodeURIComponent(params["id"] ?? "")) : undefined;
+  return (
+    <>
+      <Component context={context} />
+      {node ? (
+        <Suspense fallback={null}>
+          <RecordThreads context={context as unknown as PageContext<AnySchema>} record={{ id: node.id, kind: node.kind as string }} />
+        </Suspense>
+      ) : null}
+    </>
+  );
 }
 
 /*
@@ -676,6 +697,9 @@ export function PagesRoutes<S extends AnySchema>({
         {/* On the one face the overview is the city over the home: the face takes its address there itself (`one-place.tsx`), keeping what it carries. */}
         {placesOf(inside).some((place) => place.as === OVERVIEW_SLUG) || onTheOneFace(inside) ? null : <Route path={OVERVIEW_PATH} element={<Navigate to="/" replace />} />}
         <Route path="/places/:as" element={<DefaultPlacePage context={inside} />} />
+        {/* Where the app's people talk (Graview HQ feature:f-chat-rooms): each room at its address word, and the rooms together. */}
+        {roomsOfSchema(inside.store.schema) ? <Route path="/rooms" element={<Suspense fallback={null}><RoomsPage context={inside as unknown as PageContext<AnySchema>} /></Suspense>} /> : null}
+        {roomsOfSchema(inside.store.schema) ? <Route path="/rooms/:room" element={<Suspense fallback={null}><RoomPage context={inside as unknown as PageContext<AnySchema>} /></Suspense>} /> : null}
         <Route path="/:slug" element={<KindSwitch context={inside} registry={registry} page="list" />} />
         <Route
           path="/:slug/:id"
@@ -834,11 +858,29 @@ export function PagesApp<S extends AnySchema>({
   const viewed = shown.seenBy(seat);
   const context = viewed === given.store ? given : { ...given, store: viewed };
   useTheWatchKnowsWhatIsUnseen(given.store, given.principal);
+  /*
+   * WHAT IS NEW IN THE ROOMS, ON THE BELL (Graview HQ feature:f-chat-rooms),
+   * beside what a host or the provider around this face hands it; and a
+   * reply from the host's staff that came while the support panel was shut
+   * (Graview HQ feature:f-support-chat).
+   */
+  const [roomNotices, setRoomNotices] = useState<readonly HostNotificationLike[]>([]);
+  const [supportOpen, setSupportOpen] = useState(false);
+  const supportHere = useMemo<SupportHere | null>(() => (given.support ? { support: given.support, open: () => setSupportOpen(true) } : null), [given.support]);
+  // A bar above this face (an embed's) offers the row too, and opens this face's panel.
+  useEffect(() => (given.support ? whenSupportOpened(given.support, () => setSupportOpen(true)) : undefined), [given.support]);
+  const notifications = useMemo(() => (roomNotices.length > 0 ? [...(outer?.notifications ?? []), ...roomNotices] : undefined), [roomNotices, outer?.notifications]);
   const routed = (
     <>
       {/* Always drawn, so a path a host first hands after the face opened (a handle's setPath) is gone to, not taken for where it began. */}
       <Reported onNavigate={onNavigate} path={path} />
       {steering ? <Steered steering={steering} /> : null}
+      {roomsOfSchema(context.store.schema) || given.support ? <RoomNotices context={context as unknown as PageContext<AnySchema>} onNotices={setRoomNotices} /> : null}
+      {supportOpen && given.support ? (
+        <Suspense fallback={null}>
+          <SupportPanel context={context as unknown as PageContext<AnySchema>} support={given.support} onClose={() => setSupportOpen(false)} />
+        </Suspense>
+      ) : null}
       {context.presence || outer ? <SaysWhere context={context} to={outer} /> : null}
       {onTheOneFace(context) ? (
         <OneFacePage context={context as unknown as PageContext<AnySchema>} registry={registry as unknown as PageRegistry<AnySchema, PageComponent<AnySchema>> | undefined} />
@@ -892,6 +934,7 @@ export function PagesApp<S extends AnySchema>({
       linkedRecords={context.linkedRecords ?? outer?.linkedRecords /* And to read its records, as this viewer (FR-171). */}
       {...(context.app ? { app: context.app } : {})}
       {...(context.menuSections ? { menuSections: context.menuSections } : {})}
+      {...(notifications ? { notifications } : {})}
     >
       {routed}
       {/* Its card goes the way this face goes: a panel to `/~draft`, a place to its page. */}
@@ -908,7 +951,8 @@ export function PagesApp<S extends AnySchema>({
   const stateHeld = context.viewerState ? <HostViewerStateContext.Provider value={context.viewerState}>{filesHeld}</HostViewerStateContext.Provider> : filesHeld;
   /* Always held, so a reel handed, changed or taken away moves only the value: the views under it are pushed again, never mounted afresh (HQ f-reel-mount-tests-and-frames). */
   const hosted = <HostReelContext.Provider value={context.reel ?? reelAround}>{stateHeld}</HostReelContext.Provider>;
-  const filed = hrefOf === undefined ? hosted : <HrefOfContext.Provider value={hrefOf}>{hosted}</HrefOfContext.Provider>;
+  const linked = hrefOf === undefined ? hosted : <HrefOfContext.Provider value={hrefOf}>{hosted}</HrefOfContext.Provider>;
+  const filed = supportHere ? <SupportHereContext.Provider value={supportHere}>{linked}</SupportHereContext.Provider> : linked;
   if (initialPath !== undefined) {
     /*
      * THE TEST ROUTER CARRIES THE BASENAME TOO, OR THE TESTS ARE A LIE.
@@ -937,3 +981,37 @@ export function PagesApp<S extends AnySchema>({
 }
 
 export { createPageRegistry };
+
+/*
+ * THE BELL'S ROOM NOTICES, worked out under the router so each can go where
+ * it opens: fetched once the app has rooms, and worked out again as what
+ * was said, or where the person read up to, moves.
+ */
+function RoomNotices({ context, onNotices }: { readonly context: PageContext<AnySchema>; readonly onNotices: (notices: readonly HostNotificationLike[]) => void }) {
+  const navigate = useNavigate();
+  const principal: Principal = context.principal ?? ANYONE;
+  const reads = useRoomReads(roomReadsFor(context.viewerState, principal.id));
+  const [tick, setTick] = useState(0);
+  useEffect(() => context.store.subscribe(() => setTick((n) => n + 1)), [context.store]);
+  const [work, setWork] = useState<typeof import("./room-notices.js") | null>(null);
+  const rooms = roomsOfSchema(context.store.schema);
+  useEffect(() => {
+    if (rooms) void import("./room-notices.js").then(setWork, () => undefined);
+  }, [Boolean(rooms)]);
+  const support = useContext(SupportHereContext);
+  const [replies, setReplies] = useState(0);
+  useEffect(() => {
+    const said = work ? work.roomNotices(context.store as never, principal, reads) : [];
+    const notices: HostNotificationLike[] = said.map((one) => ({ id: one.id, title: one.title, ...(one.body ? { body: one.body } : {}), ...(one.at ? { at: one.at } : {}), read: false, ...(one.needs ? { needs: true } : {}), onSelect: () => navigate(one.path) }));
+    if (support && replies > 0) notices.unshift({ id: "support:replies", title: `${supportRowLabel(support.support.title).replace(/^Chat with /, "")} replied`, body: replies === 1 ? "A reply is waiting in your chat." : `${replies} replies are waiting in your chat.`, read: false, needs: true, onSelect: support.open });
+    onNotices(notices);
+  }, [work, tick, reads, principal, context.store, replies, support]);
+  return support ? <SupportCount here={support} onCount={setReplies} /> : null;
+}
+
+/** How many replies from staff wait unseen: what the bell says while the panel is shut. */
+function SupportCount({ here, onCount }: { readonly here: SupportHere; readonly onCount: (count: number) => void }) {
+  const { unseen } = useSupportThread(supportThreadOf(here.support));
+  useEffect(() => onCount(unseen), [unseen]);
+  return null;
+}

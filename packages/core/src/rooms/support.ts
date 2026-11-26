@@ -1,4 +1,5 @@
 import type { FrictionDraft } from "../friction-record.js";
+import { withArticle } from "../schema/define-node.js";
 import type { MessageRecord } from "./shape.js";
 
 /*
@@ -81,7 +82,7 @@ function frictionLine(draft: FrictionDraft): string {
     case "unanswered":
       return `Asked “${draft.question}” and was not answered${draft.lacks ? `: ${draft.lacks}` : "."}`;
     case "refused":
-      return `Pressed ${draft.act}${draft.kind ? ` on a ${draft.kind}` : ""} and was refused (${draft.code}).`;
+      return `Pressed ${draft.act}${draft.kind ? ` on ${withArticle(draft.kind)}` : ""} and was refused (${draft.code}).`;
     case "tool-invalid":
       return `An agent's call of ${draft.tool} was refused: ${draft.message}`;
   }

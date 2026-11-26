@@ -40,7 +40,8 @@ describe("a todo list is enough to show the whole shape", () => {
   it("declares a kind, a mutation, a rule and a lens, and passes its own check", () => {
     // The domain's four, and the installation's two — who is here is in the
     // graph, as ordinary kinds, drawn only for the seat that keeps them.
-    expect(todoApp.schema.kinds).toEqual(["list", "task", "rule", "reason", "user", "invitation"]);
+    // The rooms' message kind, folded in by `defineApp` (Graview HQ feature:f-chat-rooms).
+    expect(todoApp.schema.kinds).toEqual(["list", "task", "rule", "reason", "user", "invitation", "message"]);
     expect(todoApp.mutations?.length).toBeGreaterThan(5);
     expect(todoApp.invariants?.length).toBe(3);
     expect(todoApp.lenses?.map((lens) => lens.name)).toEqual(["reach", "calendar", "timeline"]);
