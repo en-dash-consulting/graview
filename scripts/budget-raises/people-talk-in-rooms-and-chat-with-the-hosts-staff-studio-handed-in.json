@@ -1,0 +1,6 @@
+{
+  "budget": "embed with the studio handed in",
+  "minified": 20660,
+  "gzipped": 8290,
+  "note": "Raised with the whole 0.2.18 batch together (2026-11-26): rooms an app declares, with the message kind and its three acts, a sight that reads where and follows, the mentioned subscription, a room page at /~rooms/<word> offered from the person's menu and a thread under a record's page, and the host's support panel opened from the person's menu. 20,587 / 8,225 B over; held to 20660 / 8290 for the spread between builds of the same tree. Measured at 2,109,176 / 743,587 B against 2,088,589 / 735,362 B."
+}
