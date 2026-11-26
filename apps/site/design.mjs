@@ -18,6 +18,7 @@
  */
 import { createHash } from "node:crypto";
 import { escape, inline, render, REPOSITORY, section } from "./prose.mjs";
+import { sharedHead, siteFooter, siteHeader } from "./chrome.mjs";
 import { releasesBody } from "./releases.mjs";
 
 /** The address the site is served at, and the one every canonical, card and twin names. */
@@ -102,9 +103,6 @@ export function toMarkdown(html, base) {
 const SEO_START = "<!-- site-seo:start — written by scripts/site-docs.mjs. -->";
 const SEO_END = "<!-- site-seo:end -->";
 const SEO_BLOCK = /<!-- site-seo:start[\s\S]*?<!-- site-seo:end -->\n?/;
-const RECIPES_START = "<!-- site-recipes:start — written by scripts/site-docs.mjs. -->";
-const RECIPES_END = "<!-- site-recipes:end -->";
-const RECIPES_BLOCK = /<!-- site-recipes:start[\s\S]*?<!-- site-recipes:end -->/;
 
 /** JSON for a `<script>`: nothing in it can close the element it sits in. */
 const ldScript = (data) => `<script type="application/ld+json">\n${JSON.stringify(data, null, 1).replace(/</g, "\\u003c")}\n</script>`;
@@ -327,47 +325,65 @@ const RAIL = [
   ["site.html", "This site, as an app"],
 ];
 
+/** What the share image shows, said for whoever cannot see it. */
+export const OG_ALT = "The graview.dev home page: the headline Any agent can draw the screen. Look behind it., over a table of modules an agent drew, with a round hole in it showing the map of the records behind it.";
+
 /**
  * Every docs page is the same document with different content in it. The
- * head comes off the landing page so the fonts, the icon and the color
- * scheme cannot drift; `..` gets the stylesheet and the mark right from one
- * directory down. What is the page's own — its title, its description, its
- * address, its card, its Markdown twin and its structured data — replaces
- * the landing page's, so no two pages on the site say the same thing about
- * themselves.
+ * head's shared part, the header and the footer are the site's one chrome
+ * (`apps/site/chrome.mjs`), the same the home, the tour and the long version
+ * carry, so the fonts, the icons and the links cannot drift; `css` is the
+ * site's stylesheet, inline because the artifact host blocks a `<link>`.
+ * What is the page's own — its title, its description, its address, its
+ * card, its Markdown twin and its structured data — is written here, so no
+ * two pages on the site say the same thing about themselves.
  */
-function shell(landing, { path, title, blurb, here, body, scripts = [], data = "" }) {
-  const HEAD_START = landing.indexOf("<!doctype html>");
-  const HEAD_END = landing.indexOf('<a class="skip"');
-  /* The Graview logo off the landing page's header: the kit's outlines, inline so it takes the page's ink. */
-  const LOGO = /<a class="logo"[\s\S]*?<\/a>/.exec(landing)?.[0] ?? "";
-  if (!LOGO) throw new Error("the landing page has no <a class=\"logo\"> in its header to put on the docs pages");
+function shell(css, { path, title, blurb, here, body, scripts = [], data = "" }) {
   const up = path.includes("/") ? "../.." : "..";
+  const base = `${up}/`;
   const url = `${SITE}/docs/${path}`;
   const twin = path.split("/").pop().replace(/\.html$/, ".md");
-  const meta = landing
-    .slice(HEAD_START, HEAD_END)
-    .replace(SEO_BLOCK, "")
-    .replace(/<title>[\s\S]*?<\/title>/, `<title>${escape(title)} — Graview docs</title>`)
-    .replace(/<meta name="description"[^>]*>/, `<meta name="description" content="${escape(blurb)}">`)
-    .replace(/<meta property="og:title"[^>]*>/, `<meta property="og:title" content="${escape(title)} — Graview docs">`)
-    .replace(/<meta property="og:description"[^>]*>/, `<meta property="og:description" content="${escape(blurb)}">`)
-    .replace(/<meta property="og:type"[^>]*>/, `<meta property="og:type" content="article">`)
-    .replace(/<meta property="og:url"[^>]*>/, `<meta property="og:url" content="${url}">`)
-    .replace(/<link rel="canonical"[^>]*>/, `<link rel="canonical" href="${url}">`)
-    .replace("</head>", `<link rel="alternate" type="text/markdown" href="${twin}" title="This page as Markdown">\n${ldScript(articleData({ path, title, blurb }))}\n</head>`)
-    // The site's own files (the face, the icons) are `brand/` at the root: `up` from here.
-    .replaceAll('"brand/', `"${up}/brand/`);
   /* A package's or a skill's page is one directory down, so the nav's
      links to the docs root are one `../` longer there — a nav that forgot
      this sent every nested page's "Docs home" to a file that does not exist. */
   const docsRoot = up === ".." ? "" : "../";
-  return `${meta}<a class="skip" href="#main">Skip to content</a>
+  return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+${sharedHead({ base })}
+<title>${escape(title)} — Graview docs</title>
+<meta name="description" content="${escape(blurb)}">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#F7F7F2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0A0F1F" media="(prefers-color-scheme: dark)">
+<meta property="og:site_name" content="Graview">
+<meta property="og:title" content="${escape(title)} — Graview docs">
+<meta property="og:description" content="${escape(blurb)}">
+<meta property="og:type" content="article">
+<meta property="og:url" content="${url}">
+<meta property="og:image" content="${SITE}/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="${escape(OG_ALT)}">
+<meta property="og:locale" content="en_US">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="${url}">
+<link rel="alternate" type="text/markdown" href="${twin}" title="This page as Markdown">
+${ldScript(articleData({ path, title, blurb }))}
+</head>
+<body class="docs-page">
+<style>
+${css}
+</style>
+
+<a class="skip" href="#main">Skip to content</a>
+
+${siteHeader({ base, here: "docs" })}
 
 <div class="wrap" lang="en">
   <nav class="rail" aria-label="Documentation">
     <div class="brand">
-      ${LOGO.replace('href="index.html"', `href="${up}/index.html"`)}
       <span class="sub">Documentation</span>
     </div>
 
@@ -377,29 +393,15 @@ ${RAIL.map(([href, label]) => `      <a href="${docsRoot}${href}"${href === here
       <a href="${up}/progression.html">The garden, grown</a>
       <a href="${up}/index.html">&larr; graview.dev</a>
     </div>
-
-    <div class="railfoot">
-      records of a Graview app,<br>
-      written out of the repository,<br>
-      never by hand
-    </div>
   </nav>
 
   <main class="col" id="main" tabindex="-1">
 ${body}
   </main>
 
-  <footer class="docfoot">
-    <p class="sm dim">
-      Graview is built by <a href="https://endash.us">En&nbsp;Dash</a>, which also runs
-      <a href="https://graview.cloud">Graview Cloud</a>, the hosted product built on it. This site is
-      itself a Graview app: every page is a record of <a href="${DECLARATION}">its declaration</a>,
-      written out of the repository by <code>node scripts/site-docs.mjs</code> and rendered by
-      <code>renderPlace</code>, so nothing on it can disagree with the code it describes.
-      <a href="${docsRoot}site.html">Open it as an app</a>.
-    </p>
-  </footer>
 </div>
+
+${siteFooter({ base })}
 <script>
 /*
  * A REGION THAT SCROLLS NEEDS A WAY INTO IT.
@@ -871,21 +873,6 @@ function scriptsOf(design) {
 
 /* ── the hand-designed pages, filled from records ─────────────────────── */
 
-/**
- * THE FRONT PAGE'S RECIPES, between their markers: one line each under the
- * products built on Graview — the task, linked to its live page, and what
- * it declared, counted from its record so the line cannot drift from it.
- */
-function recipeRows(rcps) {
-  const rows = rcps.map((r) =>
-    `      <li><a href="docs/recipes/${r.slug}.html"><b>${escape(r.title)}</b>` +
-    `<span>${r.kinds.length} kinds &middot; ${r.rules.length} rules &middot; ${r.records} records${r.check.some((line) => line.startsWith("!")) ? " &middot; warnings" : ""}</span></a></li>`);
-  return (
-    `${RECIPES_START}\n    <ul class="recipe-list">\n${rows.join("\n")}\n    </ul>\n` +
-    `    <p class="recipes-note">Each made by an agent from the prompt alone, over a made-up repository, and checked on every push. <a class="inl" href="docs/recipes.html">How they were made&nbsp;&rarr;</a></p>\n    ${RECIPES_END}`
-  );
-}
-
 /* ── for the crawlers and the models ──────────────────────────────────── */
 
 const START_HERE = ["getting-started.html", "concepts.html", "agents.html", "cli.html", "checks.html", "stability.html", "releases.html", "index.html"];
@@ -917,7 +904,7 @@ function preamble(site) {
     "",
     `> ${summary(site)}`,
     "",
-    `- Start with an agent: ${SITE}/start.md is the procedure, written for the agent — hand it "Read ${SITE}/start.md, then turn this repo's docs into a Graview app."`,
+    `- Start with an agent: ${SITE}/start.md is the procedure, written for the agent — hand it "Read ${SITE}/start.md, then map this repo as a Graview app and show me what's in it."`,
     "- Start a product: `npm create graview@latest my-app` (Node 22 or later)",
     "- License: Elastic License 2.0 — source-available, free to build with and to ship products on",
     `- Source: ${REPOSITORY}`,
@@ -938,7 +925,7 @@ function preamble(site) {
  */
 export function siteDesign({ template, served, today, declaration, data }) {
   const pageByPath = (site, path) => pagesOf(site).find((page) => page.fields.path === path);
-  const landingTemplate = (site) => template(pageByPath(site, "index.html").fields.template);
+  const css = () => template("docs/site/site.css").trimEnd();
 
   /** A docs page's body: what goes in its <main>. */
   const docsBody = (page, site) => {
@@ -949,7 +936,7 @@ export function siteDesign({ template, served, today, declaration, data }) {
 
   /** A docs page, whole. */
   const docsPage = (page, site) =>
-    shell(landingTemplate(site), {
+    shell(css(), {
       path: docsPath(page),
       title: page.fields.title,
       blurb: page.fields.description ?? "",
@@ -966,9 +953,7 @@ export function siteDesign({ template, served, today, declaration, data }) {
   };
 
   const landing = (page, site) => {
-    const rcps = recipesOf(site);
-    // The hero's tabs are written by hand: a recipe is one of them, the rota and the garden the others.
-    const filled = template(page.fields.template).replace(RECIPES_BLOCK, recipeRows(rcps));
+    const filled = template(page.fields.template);
     return withSeo(filled, landingData(filled, versionOf(site)));
   };
 

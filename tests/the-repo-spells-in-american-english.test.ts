@@ -31,6 +31,9 @@ const OUT_OF_SCOPE = new RegExp(
     // Generated from the tree by `pnpm site:build:all` and `pnpm site:build`; tests/site.test.ts holds them to it.
     String.raw`^docs/site/docs/`,
     String.raw`^docs/site/chapters\.js$`,
+    // Someone else's code and text, vendored as published and pinned by checksum (tests/the-site-serves-its-own-faces-and-three-and-wears-one-chrome.test.ts).
+    String.raw`^docs/site/vendor/`,
+    String.raw`^docs/site/brand/OFL-`,
     // Stored stores, and Graview Cloud's own documents kept verbatim as fixtures.
     String.raw`^apps/[^/]+/data/`,
     String.raw`^packages/core/tests/document/fixtures/`,

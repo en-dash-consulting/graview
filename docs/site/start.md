@@ -1,11 +1,18 @@
 # Start a Graview app (for the agent)
 
-You are a coding agent. Someone has asked you for a Graview app: either one
-made from part of the repository you are in (its docs, its decisions, its
-dependencies, its issues), or one for something they named in words (a
-volunteer rota, a community garden, a tender response). This page is the
-procedure for both. Follow the steps in order, run every
-command, and report what each command actually printed.
+You are a coding agent. Someone has asked you for a Graview app. It is one
+of three asks, and this page is the procedure for all of them:
+
+- **Map this repo and show me what is in it.** The repository is the
+  subject and the part is yours to choose (step 3 says how): map it, then
+  show the person the app and report.
+- **An app from a named part of the repository**: its docs, its
+  decisions, its dependencies, its issues.
+- **An app for something named in words**: a volunteer rota, a community
+  garden, a tender response.
+
+Follow the steps in order, run every command, and report what each command
+actually printed.
 
 Graview is a TypeScript framework. An app is one declaration: the kinds of
 record, their fields and relations, the acts that change them, and the rules
@@ -67,7 +74,18 @@ ideas carry over unchanged: `defineNode` is an entry under `kinds`,
 
 Decide in this order:
 
-1. **Read the part of the repository the task names before you design
+1. **If the task is to map the repository, choose the part first.** Look
+   around before you design: the top-level folders, the workspace and
+   package manifests, CODEOWNERS, `docs/`, decision records, the issue
+   templates. Choose the one part that maps most clearly: things a person
+   would point at, two to four kinds of them with relations between them
+   (modules, their owners and the docs that cover them is a common one;
+   decisions and the modules they affect is another), and a gap the
+   repository really has, so a rule has something to find. Prefer a part
+   with tens of records over one with thousands; seed what is there, not a
+   sample you made up. Say what you chose and why, in a sentence, before
+   you declare it, and again in the report.
+2. **Read the part of the repository the task names (or you chose) before you design
    anything.** The records come from what is actually there: file paths,
    headings, CODEOWNERS, status lines, versions in `package.json`. Invent
    nothing. Where the repository says nothing, leave the field empty and let
@@ -76,19 +94,19 @@ Decide in this order:
    haven't said, and seed a small set of plainly made-up example records
    (say so in the report) that leave at least one rule broken, so the app
    opens with a problem and its repair.
-2. **A kind for each thing a person would point at.** A field for each fact
+3. **A kind for each thing a person would point at.** A field for each fact
    about it, and an edge for each relation between two of them. Give every
    edge a `description` (what it means read forward) and an `inverse` (read
    backward).
-3. **A rule for each thing that should be true and isn't always.** A rule
+4. **A rule for each thing that should be true and isn't always.** A rule
    goes `over` a kind, can take a `when`, has a `require` expression and a
    `says` sentence, and lists `repairs`: the acts that fix it. A gap the
    repository really has should show up as a problem with a way out.
-4. **An act for each change a person would make.** Creating each kind,
+5. **An act for each change a person would make.** Creating each kind,
    making and unmaking each relation (`connects` and `severs`), setting each
    status (`"sets": { "status": "accepted" }`, one act per status), and
    every act a repair names.
-5. **A repair acts on the record the rule is about.** A rule `over` a doc
+6. **A repair acts on the record the rule is about.** A rule `over` a doc
    offers acts that are `on` a doc. If the fix is a relation declared on
    another kind, declare a second act `on` the rule's kind that `connects`
    that same edge from its far end; `graview check` does not catch a repair
@@ -216,8 +234,12 @@ holds `data.violations`, and says how many more there are. Ask again with
 
 ## 6. Report back
 
-Tell the person, briefly:
+Show the person the app first: give them the preview's address to open,
+or, if they can't open it, the photographs `graview shots` took. Then tell
+them, briefly:
 
+- which part of the repository you mapped and why you chose it, if the
+  choice was yours;
 - what you declared: the kinds, and each rule in one sentence;
 - how many records the seed holds, and where in the repository each kind
   came from (or that they are made-up examples);
