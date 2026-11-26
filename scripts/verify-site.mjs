@@ -419,6 +419,10 @@ async function own() {
   await own.click('footer a[href="docs/site.html"]');
   await own.waitForLoadState("load");
   await own.locator('[data-graview-document="site-app"]').scrollIntoViewIfNeeded();
+  // It opens on the site's home; its city is the Map, a level's key pressed in its box away.
+  await own.waitForSelector('[data-graview-document="site-app"] [data-testid="altitude"] button', { timeout: 30_000 }).catch(() => {});
+  await own.evaluate(() => document.querySelector('[data-graview-document="site-app"] [data-testid="altitude"] button')?.focus({ preventScroll: true }));
+  await own.keyboard.press("3");
   await own
     .waitForFunction(() => document.querySelectorAll('[data-graview-document="site-app"] [data-graview-view^="kind:"]').length >= 4, null, { timeout: 30_000 })
     .catch(() => {});
