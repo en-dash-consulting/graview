@@ -4,6 +4,7 @@ This is what came in each Graview version, newest first, in a few plain lines fo
 
 Each version links its release and its full changelog. **Before you upgrade** says what breaks or moves for a host; [Stability](https://graview.dev/docs/stability.html) says what a version may change at all.
 
+- [`0.2.18`](https://graview.dev/docs/releases.html#v0-2-18)
 - [`0.2.17`](https://graview.dev/docs/releases.html#v0-2-17)
 - [`0.2.16`](https://graview.dev/docs/releases.html#v0-2-16)
 - [`0.2.15`](https://graview.dev/docs/releases.html#v0-2-15)
@@ -94,9 +95,28 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 - [`0.1.2`](https://graview.dev/docs/releases.html#v0-1-2)
 - [`0.1.0`](https://graview.dev/docs/releases.html#v0-1-0)
 
-## 0.2.17
+## 0.2.18
 
 Published November 26, 2026 · the current version
+
+People talk inside an app: rooms a declaration names, threads on a record, @mentions that tell a person, and a chat with the host's staff from any app's menu.
+
+- **Rooms an app declares.** A declaration says its `rooms` beside its kinds: one room for the whole app, or `about: "<kind>"` for a thread on each record of that kind, with the roles that may read, post and moderate in each. `graview check` judges them and `graview describe` says them.
+- **A message is a record.** An app with rooms gains the framework's `message` kind and three acts, `post-message`, `edit-message` (its author's own) and `remove-message` (its author's, or anybody's for a role the room lets moderate). Who may read it, history and undo hold of it as of any record, and an agent's seat posts as itself.
+- **A thread sees what its record sees.** A sight gains two keys, `where` (a field holding one of some values) and `follows` (a field naming a record the seat sees), so a thread is kept from whoever cannot see the record it is on.
+- **An act knows who runs it and when.** `MutationContext` carries `by`, the seat acting as itself, and `now`, the store's clock.
+- **@Name tells that person.** A subscription may say `when: { on: "mentioned" }`, and the bell counts what a person has not read yet.
+- **Rooms have a page of their own.** Each app-wide room is at `/~rooms/<word>`, offered from the person's menu, and a record with a thread shows it under its page. Enter sends and Shift+Enter starts a new line, at a desk and on a phone.
+- **`@graview/core/rooms`** carries what a host needs for rooms off the page, `withoutTalk` among it, which takes messages out of a snapshot before it becomes a template or a remix.
+- **A chat with the host's staff.** `PagesApp` and `mount` take `support: { title, transport }`; the person's menu then says "Chat with <title>" and opens a panel whose thread the host carries, never the app's graph, with where the person was sent along. A reply that arrives while the panel is shut waits on the bell.
+
+**Before you upgrade:** Breaks: nothing. An app without rooms, and a host that passes no `support`, are drawn and stored as before. A hosted page carries about 8 KB more up front. Gains, all additive: `rooms` on the declaration, `where` and `follows` on a sight, `{ "on": "mentioned" }` as a subscription's `when`, the `room-*` check finding codes, the derived tools `post-message`, `edit-message` and `remove-message` for an app with rooms, `MutationContext.by` and `now`, `roomsOfSchema`, the `@graview/core/rooms` entry (`withoutTalk`, `memorySupport`, `supportContextOf`), and `support` on `PagesApp`'s context and on `mount` with `SupportDeclaration`, `SupportTransport` and `SupportContext`. Stored formats, ops and the wire are unchanged: a message is an ordinary record of the kind `message`, made and changed by ordinary acts.
+
+[The release on GitHub](https://github.com/en-dash-consulting/graview/releases/tag/graview%400.2.18) · [The full changelog for 0.2.18](https://github.com/en-dash-consulting/graview/blob/main/packages/core/CHANGELOG.md#0218)
+
+## 0.2.17
+
+Published November 26, 2026
 
 The one face is what Graview ships: a new project, a PagesApp and every embed draw Page, Nearby and Map over the same records, and an embed keeps it to its own box.
 
