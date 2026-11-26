@@ -1,6 +1,7 @@
+import { supportRowLabel, useSupportHere } from "./support-door.js";
 import { AppBar, barPlaceAt, barPlaces, focusInto, Profile, SkipLinks, StandingDot, standingWords, toolStyle, useFavicon, useThemeColor } from "@graview/primitives/pages";
 import { PagesInbox } from "./pages-activity.js";
-import { assetSrc, faviconHref, pagesTitle, pluralLabel, sceneTitle } from "@graview/core";
+import { assetSrc, faviconHref, pagesTitle, pluralLabel, roomsOfSchema, sceneTitle } from "@graview/core";
 import type { AnySchema } from "@graview/core";
 import { Link, useHref, useLocation, useNavigate, useSearchParams } from "react-router";
 import { createContext, useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
@@ -142,12 +143,26 @@ function OwnBar<S extends AnySchema>({ context }: { readonly context: PageContex
   const base = useHref("/").replace(/\/$/, "");
   const toldFind = useContext(OwnBarFind);
   // A shell with a rail of its own (`without: ["places"]`) keeps the bar and its tools; the bar names no place.
-  const places = toldFind?.places === false ? [] : barPlaces({ store: store as never, principal: context.principal, views: context.views });
+  const derived = toldFind?.places === false ? [] : barPlaces({ store: store as never, principal: context.principal, views: context.views });
+  const places = derived;
+  /*
+   * THE APP'S ROOMS, IN THE PERSON'S MENU (Graview HQ feature:f-chat-rooms):
+   * each app-wide room this seat may read, a press away. Not on the bar: a
+   * room is no picture standing in the city. A thread is on its record's
+   * page, and what is new in any of them waits on the bell.
+   */
+  const rooms = roomsOfSchema(store.schema);
+  const roles = context.principal?.roles ?? [];
+  const talk = Object.entries(rooms ?? {})
+    .filter(([, room]) => !room.about && (room.read === undefined || room.read.some((role) => roles.includes(role))))
+    .map(([id, room]) => ({ label: `Talk in ${room.title}`, onSelect: () => navigate(`/~rooms/${id}`) }));
   const arrangement = context.views?.arrangement?.();
   const here = `${location.pathname}${location.search}`;
   const broken = store.violations(invariantContext);
   const problems = broken.length;
   const said = standingWords(broken, "All rules hold");
+  // Chat with the host's staff, in the person's menu, where the host gives it (Graview HQ feature:f-support-chat).
+  const support = useSupportHere();
   // A record's own page: `/<its kind's plural>/<its id>`.
   const segments = location.pathname.split("/").filter(Boolean);
   const onRecord = segments.length === 2 && kindOfSlug(store.schema, segments[0]!) !== undefined && store.graph.getNode(decodeURIComponent(segments[1]!)) !== undefined;
@@ -216,7 +231,7 @@ function OwnBar<S extends AnySchema>({ context }: { readonly context: PageContex
               */}
             {toldFind ? null : <PagesInbox context={context} />}
             {/* Who you are — and, for whoever keeps the app, the way into its own declaration (`studio`), as on the Scene's own face. */}
-            {context.views ? <Profile {...(context.signature ? { signature: true } : {})} {...(context.studio !== undefined ? { keeping: context.studio } : {})} /> : null}
+            {context.views ? <Profile {...(context.signature ? { signature: true } : {})} {...(context.studio !== undefined ? { keeping: context.studio } : {})} {...(support || talk.length > 0 ? { hostActions: [...talk, ...(support ? [{ label: supportRowLabel(support.support.title), onSelect: support.open }] : [])] } : {})} /> : null}
           </>
         }
       />

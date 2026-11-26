@@ -36,6 +36,7 @@ import {
 import { coverageRule, expressionRule } from "@graview/core/document";
 import { isMarkdownField } from "@graview/core/words";
 import { screenPlaceOf } from "@graview/core/devices";
+import { withRooms } from "@graview/core/rooms";
 import * as z from "zod";
 import { DECLARED_KIND, type FieldType } from "./meta.js";
 import { fieldTypeOf, lensNodeId } from "./from-declaration.js";
@@ -623,7 +624,14 @@ export function graphToDeclaration(snapshot: GraphSnapshot | Reading, options: D
     }
     return screenPlaceOf(declared, screen.place) ? [screen] : [];
   });
-  return strip.length > 0 ? { ...declared, devices: { ...(base?.devices ?? {}), screens: strip } } : declared;
+  const screened = strip.length > 0 ? { ...declared, devices: { ...(base?.devices ?? {}), screens: strip } } : declared;
+  /*
+   * ITS ROOMS ARE CARRIED, a renamed kind's thread following it and a
+   * removed kind's let go, and folded in again as `defineApp` folds them —
+   * the message kind and its acts (Graview HQ feature:f-chat-rooms).
+   */
+  const rooms = base?.rooms ? Object.fromEntries(Object.entries(base.rooms).flatMap(([id, room]) => (room.about === undefined ? [[id, room]] : liveKinds.has(follow(room.about)) ? [[id, { ...room, about: follow(room.about) }]] : []))) : undefined;
+  return rooms && Object.keys(rooms).length > 0 ? withRooms({ ...screened, rooms }) : screened;
 }
 
 /** The same input, with every node reference to a renamed kind pointing at its new name. */

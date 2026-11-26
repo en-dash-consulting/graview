@@ -1,6 +1,6 @@
 # graview-todoist
 
-`graview-todoist` is one of Graview's 32 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Keep a kind of a Graview app in step with a Todoist project, or one section or label of it, declared as a connection — a task's content, due date, deadline, priority, labels, section, assignee, parent and completion each in a field, both ways through a personal API token the host holds — and verify with graview check and a scripted Todoist that the first run sends nothing and a task completed there removes no record.
+`graview-todoist` is one of Graview's 33 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Keep a kind of a Graview app in step with a Todoist project, or one section or label of it, declared as a connection — a task's content, due date, deadline, priority, labels, section, assignee, parent and completion each in a field, both ways through a personal API token the host holds — and verify with graview check and a scripted Todoist that the first run sends nothing and a task completed there removes no record.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 

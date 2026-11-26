@@ -109,6 +109,21 @@ export interface Sight {
    */
   readonly via?: string;
   /**
+   * ONLY THE RECORDS WHOSE FIELD HOLDS ONE OF THESE VALUES (Graview HQ
+   * feature:f-chat-rooms): `{ kinds: ["message"], where: { field: "room",
+   * is: ["staff"] } }` shows the staff room's messages and no other room's.
+   * A record whose field holds none of them, or that is gone, is not shown
+   * by this sight.
+   */
+  readonly where?: { readonly field: string; readonly is: readonly unknown[] };
+  /**
+   * ONLY THE RECORDS WHOSE FIELD NAMES A RECORD THE SEAT SEES, or names
+   * none: a thread's message follows the sight of the record it is on
+   * (`follows: "about"`), so a seat that may not see the record sees none
+   * of what was said about it.
+   */
+  readonly follows?: string;
+  /**
    * ONLY THESE FIELDS of the records it shows (Roadmap f-field-sight): an
    * allow list, so a field added tomorrow is kept from these roles until a
    * sight shows it. Absent, every field.

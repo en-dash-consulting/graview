@@ -1,3 +1,5 @@
+import type { AppRooms } from "./rooms/shape.js";
+import { withRooms } from "./rooms/kind.js";
 import type { ConnectionSpec } from "./document/connection-spec.js";
 import type { ArrangementWords } from "./arrangement.js";
 import type { InvariantDefinition } from "./invariants/types.js";
@@ -316,6 +318,18 @@ export interface GraviewApp<S extends AnySchema = AnySchema> {
    */
   readonly workflows?: AppWorkflows;
   /**
+   * WHERE ITS PEOPLE TALK TO EACH OTHER (Graview HQ feature:f-chat-rooms):
+   * rooms by address word, each a title, and `about: "<kind>"` for a
+   * thread on each record of that kind; `read`, `post` and `moderate` name
+   * the roles each admits. `defineApp` folds in what they need — the
+   * framework's `message` kind, `post-message`, `edit-message` and
+   * `remove-message`, and their grant and sights. `graview check` holds
+   * each to the declaration (`room-*`); `@graview/core/rooms` reads them.
+   *
+   *   rooms: { household: { title: "Household" }, "task-talk": { title: "Talk about it", about: "task" } }
+   */
+  readonly rooms?: AppRooms;
+  /**
    * THE SCREENS A DEVICE OFFERS (Roadmap f-device-nav-bar): a fixed screen
    * — an e-ink reader on a wall — draws a strip along its bottom with a
    * press for each, in order, and Refresh. Each names a place (`home`,
@@ -484,5 +498,6 @@ export interface IntelligenceProviderDeclaration {
 }
 
 export function defineApp<S extends AnySchema>(app: GraviewApp<S>): GraviewApp<S> {
-  return app;
+  // Its rooms bring the message kind, its three acts and their grant and sights (Graview HQ feature:f-chat-rooms).
+  return app.rooms ? (withRooms(app as never) as unknown as GraviewApp<S>) : app;
 }

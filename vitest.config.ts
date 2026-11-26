@@ -45,6 +45,7 @@ export default defineConfig({
       "@graview/core/catalog": fileURLToPath(new URL("./packages/core/src/catalog.ts", import.meta.url)),
       "@graview/core/jobs": fileURLToPath(new URL("./packages/core/src/jobs.ts", import.meta.url)),
       "@graview/core/devices": fileURLToPath(new URL("./packages/core/src/devices.ts", import.meta.url)),
+      "@graview/core/rooms": fileURLToPath(new URL("./packages/core/src/rooms.ts", import.meta.url)),
       "@graview/core/workflows": fileURLToPath(new URL("./packages/core/src/workflows.ts", import.meta.url)),
       "@graview/core/compose": fileURLToPath(new URL("./packages/core/src/compose.ts", import.meta.url)),
       "@graview/core/traits": fileURLToPath(new URL("./packages/core/src/trait-vocabulary.ts", import.meta.url)),

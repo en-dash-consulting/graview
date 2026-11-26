@@ -1,3 +1,5 @@
+import { roomsOf } from "../rooms/read.js";
+import { MESSAGE_KIND } from "../rooms/shape.js";
 import { capitalize } from "../capital.js";
 import { gridSortOf } from "../grid-sort.js";
 import { jobIsFor } from "../job-shape.js";
@@ -124,6 +126,22 @@ export function describeApp<S extends AnySchema>(
       lines.push(`  ${name} — ${workflow.words}${workflow.status === "paused" ? " (paused)" : ""}; its changes are ${workflow.approve === "apply" ? "applied" : workflow.approve === "suggest" ? "applied or suggested by how sure it is" : "asked about first"}.`);
       workflow.steps.forEach((step, at) => lines.push(`    ${at + 1}. ${stepKindOf(step)?.words(step, world.noun) ?? "a step Graview does not run"}`));
     }
+  }
+
+  /*
+   * WHERE ITS PEOPLE TALK (Graview HQ feature:f-chat-rooms): each room by
+   * its address word, who reads and posts in it, and a thread on each
+   * record of a kind; what is said is a record of the framework's
+   * `message` kind, made by `post-message`.
+   */
+  const rooms = roomsOf(app);
+  if (rooms.length > 0) {
+    lines.push("", "## Where its people talk");
+    const who = (roles: readonly string[] | undefined, everyone: string) => (roles ? list(roles.map((role) => `"${role}"`)) : everyone);
+    for (const room of rooms) {
+      lines.push(`  ${room.id} — "${room.title}": ${room.about ? `a thread on each ${room.about}` : "one room for the whole app"}; read by ${who(room.read, room.about ? `whoever may see the ${room.about}` : "everyone")}, posted in by ${who(room.post ?? room.read, "whoever may read it")}${room.moderate ? `, moderated by ${who(room.moderate, "")}` : ""}${room.mentions ? "; @Name tells that person" : ""}.`);
+    }
+    lines.push(`  What is said is ${withArticle(MESSAGE_KIND)}, made with post-message, changed with edit-message (its author's) and taken out with remove-message.`);
   }
 
   /*

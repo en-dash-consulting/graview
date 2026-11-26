@@ -1,3 +1,4 @@
+import type { AppRooms } from "../rooms/shape.js";
 import * as z from "../schema/zod.js";
 import { LINKED_TARGET } from "../schema/linked.js";
 import type { AppPurpose } from "../job-shape.js";
@@ -696,6 +697,12 @@ function build() {
      * none; their shape (`WorkflowSpec`, `./workflow-spec.ts`) is the checker's to judge and an edit's to hold.
      */
     workflows: z.optional(z.record(name("workflow"), loose) as unknown as z.ZodMiniType<AppWorkflows>),
+    /**
+     * Where the app's people talk to each other (Graview HQ feature:f-chat-rooms, `rooms/shape.ts`): rooms by
+     * address word, each a title, and `about` for a thread on each record of a kind. Read loosely here; their
+     * shape is the checker's to judge (`room-*`), and the compile folds in the message kind and its acts.
+     */
+    rooms: z.optional(z.record(name("room"), loose) as unknown as z.ZodMiniType<AppRooms>),
     /** Forms for visitors, by name: each one act, its fields, and what the visitor is told once it is received. */
     forms: z.optional(z.record(name("form"), FormSpec)),
     /**

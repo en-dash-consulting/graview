@@ -189,6 +189,15 @@ Everything a Graview app declares, and the checker that verifies it.
   words for one it cannot offer (`deviceFindings`), held to
   `MOST_DEVICE_SCREENS` and `LONGEST_SCREEN_LABEL`. `@graview/pages/device`
   draws it.
+- **Rooms** — `@graview/core/rooms`, fetched by a page that draws one:
+  an app's `rooms` read with their defaults (`roomsOf`), the thread a
+  record has (`threadOf`), what was said as a seat is served it
+  (`messagesIn`), what a person has not read (`unreadFor`) and whom a
+  message names (`mentionsIn`); `withRooms`, which `defineApp` and a
+  compiled document call, folds in the `message` kind and its acts;
+  `roomFindings` is the checker's; `withoutTalk` takes messages out of a
+  snapshot; `memorySupport` is a support transport for tests and
+  development.
 - **Conformance** — `@graview/core/conformance`: fixtures a host runs against
   a version (`conformance()`) to prove it reads, compiles and derives the same.
 - **A status board's moves** — `@graview/core/describe`: `columnReach` says

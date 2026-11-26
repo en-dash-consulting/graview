@@ -184,7 +184,7 @@ function seenWholeByEveryone(document: GraviewDocument, kind: string): boolean {
   const sees = (document.policy as { readonly sees?: readonly { readonly roles: readonly string[] | "*"; readonly kinds: readonly string[]; readonly own?: boolean; readonly via?: string }[] } | undefined)?.sees;
   if (!sees) return true;
   // Every seat: one that holds no role (a visitor, an agent acting for nobody) as well, which only a sight for everyone (`"*"`) reaches.
-  return sees.some((sight) => sight.roles === "*" && sight.kinds.includes(kind) && !sight.own && sight.via === undefined);
+  return sees.some((sight) => sight.roles === "*" && sight.kinds.includes(kind) && !sight.own && sight.via === undefined && !("where" in sight) && !("follows" in sight));
 }
 
 /** The plural English makes of a noun, as the `plural` formatter makes it: offers, parties, boxes. */
