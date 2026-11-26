@@ -1,6 +1,6 @@
-import { checkKitContrast, resolveKit, type AnySchema, type GraviewApp, type KitOverrides, type Principal } from "@graview/core";
+import { accentProblem, documentSchemes, type AnySchema, type GraviewApp, type KitOverrides, type Principal } from "@graview/core";
 import { compileDocument } from "@graview/core/check";
-import { mount, mountWhenNear, type EmbedFace, type EmbedHandle } from "@graview/embed";
+import { mount as mountEmbed, mountWhenNear, type EmbedFace, type EmbedHandle, type EmbedOptions } from "@graview/embed";
 import { registerWorkerView, type WorkerViewManifest } from "@graview/guest/host/views";
 import { rotaApp } from "@graview/rota";
 import { rotaViews } from "@graview/rota/views";
@@ -23,6 +23,15 @@ import newspaperSource from "@site-asks/season/newspaper.js?raw";
 import { seedbedBrand as SEEDBED_BRAND } from "./domain/brand.js";
 import { CHAPTERS, type Chapter } from "./domain/chapters.js";
 import { seedbedDesign } from "./ui/design.js";
+
+/*
+ * THE FACES COME FROM THE PAGE. graview.dev serves the garden's Figtree and
+ * Fraunces itself (apps/site/chrome.mjs declares them beside its own), so a
+ * frame on it never asks Google Fonts for a brand's faces.
+ */
+function mount<S extends AnySchema>(element: HTMLElement, options: EmbedOptions<S>): EmbedHandle {
+  return mountEmbed(element, { fonts: false, ...options });
+}
 import { seedbedPages } from "./ui/pages.js";
 import { seedbedViews } from "./ui/views.js";
 
@@ -31,10 +40,11 @@ import { seedbedViews } from "./ui/views.js";
  *
  * `docs/site/index.html` used to show a photograph per chapter. This is the
  * bundle that replaces each with the chapter itself: the same declaration,
- * the same seed, opened at the same stop the photograph was taken at, with
- * the three faces a click away. Built by `vite build --config
- * vite.site.config.ts` into `docs/site/chapters.js`; the page's own copy
- * loads it by name and the artifact build inlines it.
+ * the same seed, opened at the same stop the photograph was taken at, as
+ * the one face: the page over the garden's own city, Page · Nearby · Map,
+ * held to its box. Built by `vite build --config vite.site.config.ts` into
+ * `docs/site/chapters.js`; the page's own copy loads it by name and the
+ * artifact build inlines it.
  */
 declare global {
   interface Window {
@@ -52,13 +62,21 @@ declare global {
       chapters: readonly Chapter[];
       /** Every embed the page has mounted, by its element, so the page can re-dress or re-seat one. */
       handles: Map<HTMLElement, EmbedHandle>;
-      /** Dress one mounted chapter in a kit: the chapter's own brand with the kit laid over it. */
+      /** Dress one mounted chapter in a look: the chapter's own brand with the type, the accent, the shape and the kit laid over it. */
       dress: typeof dress;
-      /** What `graview check` would say about a kit's colors against this chapter's grounds. */
-      kitFindings: typeof kitFindings;
+      /** What `graview check` would say about a look's accent. */
+      lookFindings: typeof lookFindings;
     };
   }
 }
+
+/*
+ * A FRAME ON THE SITE OPENS ON ITS PAGE. A stop that names the overview
+ * would open the one face at its Map, whose boards are drawn small in a
+ * frame of a column; on graview.dev the frame opens on the app's home
+ * instead, and the Map is the control at its foot away.
+ */
+const onItsPage = (stop: string | undefined): { readonly path?: string } => (stop && /(^#|&)overview=1(&|$)/.test(stop) ? { path: "/" } : {});
 
 /** The embeds the page holds, so a control on the page can reach the one it stands next to. */
 export const handles = new Map<HTMLElement, EmbedHandle>();
@@ -70,11 +88,13 @@ export function mountChapter(element: HTMLElement, n: number, face?: EmbedFace, 
   const handle = mount(element, {
     app: chapter.app,
     seed: chapter.seed,
-    // The page's own say first, then the chapter's face (a pages chapter
-    // opens on its pages), else the stop decides — altitude or the scene.
+    // The page's own say first (a picture stays a picture), then the
+    // chapter's. Every other face is the one face: a chapter with a page
+    // opens on it, and one without opens where its stop names — the Map for
+    // the overview, a record's page for a record, a kind's list for a kind.
     ...(face ? { face } : chapter.face === "pages" ? { face: "pages" as const } : {}),
     ...(stop ?? chapter.stop ? { stop: (stop ?? chapter.stop)! } : {}),
-    path: (chapter.path ?? "/pages").replace(/^\/pages/, "") || "/",
+    ...(chapter.path ? { path: chapter.path.replace(/^\/pages/, "") || "/" } : onItsPage(stop ?? chapter.stop)),
     ...(chapter.principal ? { principal: chapter.principal } : {}),
     // The page's scheme where it says one: a frame on a night band is dark whatever the reader's setting.
     ...(scheme ? { scheme } : {}),
@@ -105,29 +125,52 @@ export function mountChapter(element: HTMLElement, n: number, face?: EmbedFace, 
   return handle;
 }
 
-/** The chapter's brand with a kit laid over it, on the embed in this element. */
-export function dress(element: HTMLElement, n: number, kit: KitOverrides): void {
+/** The typefaces the kit offers, each a stack every system has. */
+const TYPEFACES = {
+  serif: 'Georgia, "Times New Roman", serif',
+  sans: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
+  mono: 'ui-monospace, "SF Mono", Menlo, Consolas, monospace',
+} as const;
+
+/**
+ * A LOOK, AS THE KIT ON THE PAGE DECLARES IT: the brand's type, accent and
+ * shape, and the kit's word on what the city draws — each optional, the
+ * chapter's own where it is unsaid.
+ */
+export interface Look {
+  readonly typeface?: keyof typeof TYPEFACES;
+  readonly accent?: string;
+  readonly radius?: number;
+  readonly density?: number;
+  readonly kit?: KitOverrides;
+}
+
+/**
+ * Dress one mounted chapter in a look: the chapter's own brand with the
+ * look laid over it, on the one face — its page in the type, the accent
+ * and the shape, the city at its Map in the kit. An accent that cannot
+ * be read leaves the chapter's colors, as `graview check` says it would.
+ */
+export function dress(element: HTMLElement, n: number, look: Look): void {
   const chapter = CHAPTERS[n - 1];
   const handle = handles.get(element);
   if (!chapter || !handle) return;
   const brand = chapter.app.brand ?? SEEDBED_BRAND;
-  handle.setBrand({ ...brand, kit });
+  const colors = look.accent && !accentProblem(look.accent) ? documentSchemes(look.accent) : null;
+  const face = look.typeface ? TYPEFACES[look.typeface] : undefined;
+  handle.setBrand({
+    ...brand,
+    ...(colors?.ok ? { schemes: colors.schemes } : {}),
+    ...(face ? { typography: { ...brand.typography, body: face, display: face } } : {}),
+    ...(look.radius !== undefined || look.density !== undefined ? { shape: { ...brand.shape, ...(look.radius !== undefined ? { radius: look.radius } : {}), ...(look.density !== undefined ? { density: look.density } : {}) } } : {}),
+    ...(look.kit ? { kit: look.kit } : {}),
+  });
 }
 
-/** The kit's colors judged against the chapter's grounds, as `graview check` judges them. */
-export function kitFindings(n: number, kit: KitOverrides): readonly { readonly edgeKind: string; readonly scheme: "light" | "dark"; readonly ratio: number; readonly requires: number; readonly unreadable?: string }[] {
-  const chapter = CHAPTERS[n - 1];
-  const brand = chapter?.app.brand ?? SEEDBED_BRAND;
-  const resolved = resolveKit(kit);
-  return (["light", "dark"] as const).flatMap((scheme) =>
-    checkKitContrast(resolved, brand.schemes[scheme]).map((finding) => ({
-      edgeKind: finding.edgeKind,
-      scheme,
-      ratio: finding.ratio,
-      requires: finding.requires,
-      ...(finding.unreadable !== undefined ? { unreadable: finding.unreadable } : {}),
-    })),
-  );
+/** What `graview check` would say about a look's accent (`brand-accent`): its sentence, or nothing when it reads. */
+export function lookFindings(look: Look): readonly { readonly code: string; readonly sentence: string }[] {
+  const refused = look.accent ? accentProblem(look.accent) : null;
+  return refused ? [{ code: "brand-accent", sentence: refused.sentence }] : [];
 }
 
 /*
@@ -228,6 +271,7 @@ export function mountRecipe(element: HTMLElement, slug: string, face?: EmbedFace
     ...(seat ? { principal: seat } : {}),
     ...(face ? { face } : {}),
     ...(stop ?? entry?.stop ? { stop: (stop ?? entry?.stop)! } : {}),
+    ...onItsPage(stop ?? entry?.stop),
     ...(scheme ? { scheme } : {}),
     label: label ?? entry?.title ?? app.name,
   });
@@ -263,6 +307,7 @@ export function mountDocument(element: HTMLElement, documentId: string, seedId: 
     seed: carried(seedId) as never,
     ...(face ? { face } : {}),
     ...(stop ? { stop } : {}),
+    ...onItsPage(stop),
     label: label ?? app.name,
   });
   handles.set(element, handle);
@@ -376,6 +421,6 @@ export function mountAll(root: ParentNode = document): void {
   });
 }
 
-window.graviewChapters = { mount: mountChapter, mountRota, mountRecipe, mountDocument, mountSeason, answer, turns: TURNS, mountAll, chapters: CHAPTERS, handles, dress, kitFindings };
+window.graviewChapters = { mount: mountChapter, mountRota, mountRecipe, mountDocument, mountSeason, answer, turns: TURNS, mountAll, chapters: CHAPTERS, handles, dress, lookFindings };
 if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", () => mountAll());
 else mountAll();

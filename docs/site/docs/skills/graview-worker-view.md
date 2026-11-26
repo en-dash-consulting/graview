@@ -23,7 +23,7 @@ Every view comes with a manifest the host enforces:
 ```
 
 - `name` is lower-case letters, digits and hyphens. Acts are recorded `via: "view:<name>"`.
-- `title` makes it a named place on both faces, with the slug `placeSlug(title)` (`"the-packages"`).
+- `title` makes it a named place, with the slug `placeSlug(title)` (`"the-packages"`).
 - A view is as tall as it draws, measured by the host: set no height. On Pages it flows with the page. On the Scene it is a card held to its box: a fade and More where cut, Open to its page. `flows: false` keeps a frame on Pages; `scene: { maxHeight }` holds the card lower (80–4000px).
 - `attach` is a kind, or `"home"` for the front page's body (cardinality `many`).
 - `reads` lists the other kinds and the edges it is shown. Nothing else is handed to it. A view of one reading an edge from its kind to its kind (rock `becomes` rock) is handed the records linked to it. An edge to a kind it is not handed brings nothing, and the check says so.
@@ -91,7 +91,7 @@ A view with `attach: "home"` given to `registerWorkerView` is the home's own vie
 
 1. `graview check` the app the view names. `checkManifest(manifest, store)` and `checkViewSource(source)` from `@graview/guest/host/views` must both say nothing.
 2. Run it headless, with no network, as each seat, over a seed: `graview view check view.js --app <app> --manifest manifest.json --seed <seed.json> --seats` (or `--roles <role>`, one). It says what it drew, or why it will not do: `error` (what it threw), `nodes`, `flood`, `slow`, `act` (an act its manifest does not name), `manifest` or `source`. A view of one record runs over the first of its kind the seat sees, or `--record <id>`. It presses each control (`graview-view-forms`). So does `runWorkerViewForEachSeat` (`guest/headless`).
-3. Open the place on both faces as that member. Is anything shown that they should not see? Does the region carry no `data-worker-view-failed`? `start` there means it never ran: the note under the plain face names what the page's Content-Security-Policy lacks (`worker-src blob:`).
+3. Open the place as that member, as a page and on the Map. Is anything shown that they should not see? Does the region carry no `data-worker-view-failed`? `start` there means it never ran: the note under the plain face names what the page's Content-Security-Policy lacks (`worker-src blob:`).
 4. Toggle to dark: does it restyle?
 5. Follow each link, and tap each card on a phone, as `graview-view-links` says. A view that writes is pressed as `graview-view-forms` says.
 6. Revising one? Hand both to `compareViewRevision` (`@graview/core/revisions`): it names what the new one stopped styling.

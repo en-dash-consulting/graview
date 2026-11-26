@@ -11,7 +11,9 @@ import { seedbedViews } from "../../src/ui/views.js";
 beforeAll(() => preload());
 
 /**
- * A chapter of the garden, mounted into an element that is not on any page:
+ * A chapter of the garden, mounted into an element that is not on any page,
+ * as the routed face and its scene (`sceneUnderPages: false`; graview.dev
+ * mounts the one face, held by `verify-embed-one-face`):
  * what the marketing page, the docs and a builder's preview all do. The
  * proof is that the framework needs nothing from the document — no viewport,
  * no address bar, no :root theme — to show a declared app.
@@ -58,7 +60,7 @@ describe("a chapter, embedded", () => {
 
   it("mounts from altitude, themed within the element, and the districts are there", async () => {
     const element = into();
-    const handle = mount(element, {
+    const handle = mount(element, { sceneUnderPages: false,
       app: chapter.app,
       seed: chapter.seed,
       face: "graview",
@@ -83,7 +85,7 @@ describe("a chapter, embedded", () => {
 
   it("switches faces: down into a district, and over to the pages", () => {
     const element = into();
-    const handle = mount(element, { app: chapter.app, seed: chapter.seed, face: "graview", principal: chapter.principal, pages: seedbedPages(chapter.app.schema) });
+    const handle = mount(element, { sceneUnderPages: false, app: chapter.app, seed: chapter.seed, face: "graview", principal: chapter.principal, pages: seedbedPages(chapter.app.schema) });
     handle.setFace("scene");
     // Descended: the ground is no longer at altitude, and the shelf is drawn.
     expect(element.querySelector("[data-graview-altitude]")).toBeNull();
@@ -99,7 +101,7 @@ describe("a chapter, embedded", () => {
 
   it("shows one named lens and nothing else on the picture face", () => {
     const element = into();
-    const handle = mount(element, {
+    const handle = mount(element, { sceneUnderPages: false,
       app: chapter.app,
       seed: chapter.seed,
       face: "picture",
@@ -125,7 +127,7 @@ describe("a chapter, embedded", () => {
      * the place's pill unpressed.
      */
     const element = into();
-    const handle = mount(element, {
+    const handle = mount(element, { sceneUnderPages: false,
       app: chapter.app,
       seed: chapter.seed,
       face: "scene",
@@ -142,7 +144,7 @@ describe("a chapter, embedded", () => {
 
   it("lists the lenses among the places, each a place of its own, and the scene one choice in the app menu away (FR-137, FR-138)", async () => {
     const element = into();
-    const handle = mount(element, {
+    const handle = mount(element, { sceneUnderPages: false,
       app: chapter.app,
       seed: chapter.seed,
       face: "scene",
@@ -188,7 +190,7 @@ describe("a chapter, embedded", () => {
   it("lets a reader change seats, and the pages withhold by the seat that sat down", () => {
     const seven = CHAPTERS[6]!;
     const element = into();
-    const handle = mount(element, {
+    const handle = mount(element, { sceneUnderPages: false,
       app: seven.app,
       seed: seven.seed,
       face: "pages",
@@ -224,7 +226,7 @@ describe("a chapter, embedded", () => {
       ...(seven.app.policy ? { policy: seven.app.policy } : {}),
       ...(seven.seed ? { snapshot: seven.seed as never } : {}),
     });
-    const handle = mount(element, {
+    const handle = mount(element, { sceneUnderPages: false,
       app: seven.app,
       store,
       face: "pages",
@@ -256,8 +258,8 @@ describe("a chapter, embedded", () => {
   it("is a region of its own, named, and two of them are two names", () => {
     const one = into();
     const two = into();
-    const first = mount(one, { app: chapter.app, seed: chapter.seed, face: "graview", label: "Chapter 13" });
-    const second = mount(two, { app: chapter.app, seed: chapter.seed, face: "graview", label: "Chapter 1" });
+    const first = mount(one, { sceneUnderPages: false, app: chapter.app, seed: chapter.seed, face: "graview", label: "Chapter 13" });
+    const second = mount(two, { sceneUnderPages: false, app: chapter.app, seed: chapter.seed, face: "graview", label: "Chapter 1" });
     const rootOf = (element: HTMLElement) => element.firstElementChild as HTMLElement;
     expect(rootOf(one).tagName).toBe("SECTION");
     expect(rootOf(one).getAttribute("aria-label")).toBe("Chapter 13");
@@ -283,14 +285,14 @@ describe("a chapter, embedded", () => {
     const one = into();
     const two = into();
     const design = seedbedDesign(chapter.app.schema as never);
-    const first = mount(one, {
+    const first = mount(one, { sceneUnderPages: false,
       app: chapter.app,
       seed: chapter.seed,
       face: "pages",
       pages: design,
       label: "Chapter 13",
     });
-    const second = mount(two, {
+    const second = mount(two, { sceneUnderPages: false,
       app: chapter.app,
       seed: chapter.seed,
       face: "pages",
@@ -307,7 +309,7 @@ describe("a chapter, embedded", () => {
 
   it("falls back to the app's own name when the page does not say", () => {
     const element = into();
-    const handle = mount(element, { app: chapter.app, seed: chapter.seed, face: "graview" });
+    const handle = mount(element, { sceneUnderPages: false, app: chapter.app, seed: chapter.seed, face: "graview" });
     expect((element.firstElementChild as HTMLElement).getAttribute("aria-label")).toBe(
       chapter.app.name,
     );
@@ -317,7 +319,7 @@ describe("a chapter, embedded", () => {
   it("never touches the host page's address or theme", () => {
     const before = window.location.href;
     const element = into();
-    const handle = mount(element, { app: chapter.app, seed: chapter.seed, face: "pages", pages: seedbedPages(chapter.app.schema), path: "/plots/plot-2" });
+    const handle = mount(element, { sceneUnderPages: false, app: chapter.app, seed: chapter.seed, face: "pages", pages: seedbedPages(chapter.app.schema), path: "/plots/plot-2" });
     expect(element.querySelector('[data-testid="plot-page"]')).not.toBeNull();
     expect(window.location.href).toBe(before);
     expect(getComputedStyle(document.documentElement).getPropertyValue("--graview-accent")).toBe("");

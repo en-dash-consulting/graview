@@ -43,6 +43,8 @@ window.__failures = [];
 window.__problems = [];
 window.__went = [];
 window.__handle = mount(document.getElementById("app"), {
+  // The routed face and its scene, which this harness holds: an embed draws the one face unless told otherwise.
+  sceneUnderPages: false,
   app: mapApp,
   seed: mapSeed,
   principal: ada,

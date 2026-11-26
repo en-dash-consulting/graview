@@ -46,9 +46,9 @@ graview create <dir> [--name "Field Notes"] [--kind note] [--plural notes]
 
 ## What it writes (22 files)
 
-The declaration split into domain and UI, so the domain has no React in it and `graview check` can read it headless. `src/domain/` is the whole surface you will work in; the shell in `src/ui/` is eighty lines made of framework parts, and every one of them can be replaced.
+The declaration split into domain and UI, so the domain has no React in it and `graview check` can read it headless. `src/domain/` is the whole surface you will work in; `src/main.tsx` mounts one `PagesApp` at `/`, the one face, and `src/ui/` holds the pictures, a page in your own words, and the agent's seat and the studio on the bar, each of them replaceable.
 
-`package.json`, `tsconfig.json`, `tsconfig.build.json`, `vite.config.ts`, `index.html`, `embed.html`, `.gitignore`, `README.md`, `AGENTS.md`, `CLAUDE.md`, `src/domain/schema.ts`, `src/domain/mutations.ts`, `src/domain/invariants.ts`, `src/domain/brand.ts`, `src/domain/app.ts`, `src/ui/views.tsx`, `src/ui/app.tsx`, `src/ui/pages.tsx`, `src/main.tsx`, `src/embed.tsx`, `tests/domain.test.ts`, `.github/workflows/ci.yml`
+`package.json`, `tsconfig.json`, `tsconfig.build.json`, `vite.config.ts`, `index.html`, `embed.html`, `.gitignore`, `README.md`, `AGENTS.md`, `CLAUDE.md`, `src/domain/schema.ts`, `src/domain/mutations.ts`, `src/domain/invariants.ts`, `src/domain/brand.ts`, `src/domain/app.ts`, `src/ui/views.tsx`, `src/ui/pages.tsx`, `src/ui/seat.tsx`, `src/main.tsx`, `src/embed.tsx`, `tests/domain.test.ts`, `.github/workflows/ci.yml`
 
 Dependencies: `@graview/core`, `@graview/layout`, `@graview/tools`, `@graview/render`, `@graview/react`, `@graview/primitives`, `@graview/pages`, `@graview/ship`, `@graview/embed`, `@graview/studio`, `@graview/guest`, `react`, `react-dom`. Dev: `graview`, `@types/node`, `@types/react`, `@types/react-dom`, `typescript`, `vite`, `vitest`. No zod of your own — `@graview/core` re-exports `z`, so a kind's fields are built with exactly the copy the framework was built with.
 
@@ -68,7 +68,7 @@ Dependencies: `@graview/core`, `@graview/layout`, `@graview/tools`, `@graview/re
 | `npm run skills` | `graview skills install .` |
 | `npm run verify` | `npm run typecheck && npm run test && npm run build && npm run check && graview docs ./dist/domain/app.js --out docs` |
 
-**Start with `verify`** — typecheck, tests, build and `graview check`, in that order — and then `dev`: the scene at the root, the routed face at `/pages`.
+**Start with `verify`** — typecheck, tests, build and `graview check`, in that order — and then `dev`: the app at the root, the page over its city, with `Page · Nearby · Map` at the bottom left.
 
 ## The loop from there
 
@@ -77,7 +77,7 @@ Open a session beside the declaration. The skills are already installed where Cl
 - [graview-new-app](https://graview.dev/docs/skills/graview-new-app.html): The shape of the declaration, the shell that comes for free, and the CI that keeps it honest.
 - [graview-node-kind](https://graview.dev/docs/skills/graview-node-kind.html): Add a kind — fields, edges, label, plural, roles — and verify it with graview check.
 - [graview-invariant](https://graview.dev/docs/skills/graview-invariant.html): A rule that names the acts that would repair it, then make it fire.
-- [graview-pages](https://graview.dev/docs/skills/graview-pages.html): The routed face, from the derived pages to a design of your own.
+- [graview-pages](https://graview.dev/docs/skills/graview-pages.html): The pages, from the derived ones to a design of your own.
 - [graview-ship](https://graview.dev/docs/skills/graview-ship.html): Persistence, migrations, export and health, self-hosted or behind a service.
 
 ## One release, run from the project

@@ -123,7 +123,7 @@ try {
   const scene = await browser.newPage({ viewport: { width: 1440, height: 900 } });
   scene.on("pageerror", (error) => errors.push(`scene: ${error.message}`));
   await scene.addInitScript(KEEP_THE_STORE);
-  await scene.goto(`${at("todo")}/?${DAY}&fresh=1`, { waitUntil: "load", timeout: 90_000 });
+  await scene.goto(`${at("todo")}/scene/?${DAY}&fresh=1`, { waitUntil: "load", timeout: 90_000 });
   await ready(scene);
   const record = await subscribeFromTheMenu(scene, () => scene.click('[data-graview-pick="t-deposit"]', { button: "right" }));
   const listed = await notifiedInActivity(scene);
@@ -172,7 +172,7 @@ try {
   const pages = await browser.newPage({ viewport: { width: 1440, height: 900 } });
   pages.on("pageerror", (error) => errors.push(`pages: ${error.message}`));
   await pages.addInitScript(KEEP_THE_STORE);
-  await pages.goto(`${at("todo")}/pages/tasks?${DAY}&fresh=1`, { waitUntil: "load", timeout: 90_000 });
+  await pages.goto(`${at("todo")}/tasks?${DAY}&fresh=1`, { waitUntil: "load", timeout: 90_000 });
   await pages.waitForSelector(HEADING, { timeout: 60_000 });
   await ready(pages);
   // The list's own ground, past its words: WebKit takes a right-click on a word as choosing it, and the browser's menu is then its own.
@@ -188,7 +188,7 @@ try {
 
   /* ---------------------------------------------- an act, on a record's page */
   reach("fromAnActInTwoPresses");
-  await pages.goto(`${at("todo")}/pages/tasks/t-book?${DAY}&fresh=1`, { waitUntil: "load", timeout: 90_000 });
+  await pages.goto(`${at("todo")}/tasks/t-book?${DAY}&fresh=1`, { waitUntil: "load", timeout: 90_000 });
   await pages.waitForSelector('[data-testid="record-actions"] [data-graview-act]', { timeout: 60_000 });
   await ready(pages);
   const actName = await pages.getAttribute('[data-testid="record-actions"] [data-graview-act] >> nth=0', "data-graview-act");
@@ -201,7 +201,7 @@ try {
 
   /* ----------------------------------------------- after an act's form is done */
   reach("offeredAfterAnAct");
-  await pages.goto(`${at("todo")}/pages/tasks/t-book?${DAY}&fresh=1`, { waitUntil: "load", timeout: 90_000 });
+  await pages.goto(`${at("todo")}/tasks/t-book?${DAY}&fresh=1`, { waitUntil: "load", timeout: 90_000 });
   await pages.waitForSelector('[data-testid="record-actions"] [data-affordance]', { timeout: 60_000 });
   await ready(pages);
   // An act beyond the facts, through its form: "Note why this is here", its reason typed ("Mark it done" is the Finished switch now, Roadmap f-facts-by-type).

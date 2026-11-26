@@ -46,7 +46,7 @@ What no harness can say is whether a person can do the app's jobs, and at
 what cost. The journeys (`scripts/verify-journeys.mjs`, `docs/journeys.json`)
 derive the core jobs from the declaration — make one, find one, change one,
 relate two, take it back, see what is wrong and repair it, be refused
-before the press — and drive each in both faces, at a desk and on a phone,
+before the press — and drive each on the one face, at Page, Nearby and Map, at a desk and on a phone,
 by keyboard and by pointer, counting presses and noting where it dead-ends.
 Their friction list, ranked by impact, is where a walk starts. The walk's
 own eyes are for what neither can see: a job that completes and is still
@@ -110,8 +110,9 @@ of the walk is to find where following the skills produces something wrong.
 A second subject already exists at `../roster` (two kinds, an edge, a rule,
 a titled lens) if you want a head start on stages B to D.
 
-Keep a browser open on both faces the whole time: the scene at `/` and the
-pages at `/pages`. Both schemes (`?theme=dark`, `?theme=light`). One narrow
+Keep a browser open on the app the whole time: the one face at `/`, read
+as a Page, at Nearby and on the Map (the control at the bottom left, Alt+↑
+and Alt+↓). Both schemes (`?theme=dark`, `?theme=light`). One narrow
 window (390 wide) and one wide (1280). Reduced motion on at least once.
 
 ## The findings log
@@ -258,27 +259,27 @@ The fourth walk and the days after it added these:
 
 ## The stages
 
-Work them in order. Each stage's criteria must all be true, in both faces,
-both schemes and both widths, before the next.
+Work them in order. Each stage's criteria must all be true at every level of
+the one face, in both schemes and at both widths, before the next.
 
 ### A · The blank app
 
-Do: open the scaffolded app. From altitude, descend, rise. Select the empty
-district. Add the first item through the strip, then through the pages
-form. Rename it in place. Undo. Use Back and Forward. Press Escape from
-every state.
+Do: open the scaffolded app at `/`. Go to the Map and back to the Page;
+choose the empty district. Add the first item from the home's beginning,
+then through the list's form. Rename it in place. Undo. Use Back and
+Forward. Press Escape from every level.
 
 True when:
-- Altitude shows one district with 0; it offers "Add an item …" and nothing
-  else; the ask has a text field, Apply is disabled until there is text.
-- The record appears in the district, the shelf, the pages list and the
-  pages home sentence, with no reload.
+- The Map shows one district with 0; the home offers "Add an item …" and
+  nothing else; the ask has a text field, Apply is disabled until there is text.
+- The record appears in the district, the list and the home's sentence,
+  with no reload, and at Nearby a line runs from its row to its building.
 - Every stop is a URL: Back returns to the previous picture with its
   selection; Forward is offered only when there is somewhere to go.
-- Escape backs out one level at a time in the documented order and never
-  drops a selection while rising.
-- The inspector, menu and strip stay inside the scene's box at 390px.
-- axe reports nothing on either face; the accessibility tree names every
+- Escape comes down one level at a time and never drops a selection while
+  rising.
+- The panel, the menu and the level control stay inside the window at 390px.
+- axe reports nothing at any level; the accessibility tree names every
   card; keyboard alone can do everything above.
 
 ### B · A second kind and an edge

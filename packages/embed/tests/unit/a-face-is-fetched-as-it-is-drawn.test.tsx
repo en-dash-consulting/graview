@@ -26,7 +26,7 @@ async function mounted(options: Partial<EmbedOptions>) {
   document.body.appendChild(host);
   let handle: EmbedHandle | undefined;
   await act(async () => {
-    handle = mount(host, { app, seed, fonts: false, ...options } as EmbedOptions);
+    handle = mount(host, { sceneUnderPages: false, app, seed, fonts: false, ...options } as EmbedOptions);
   });
   return { host, handle: handle!, done: async () => {
     await act(async () => handle!.unmount());
@@ -80,7 +80,7 @@ describe("a face fetched as it is drawn", () => {
     document.body.appendChild(host);
     let handle: EmbedHandle | undefined;
     act(() => {
-      handle = mount(host, { app, seed, fonts: false, face: "pages" } as EmbedOptions);
+      handle = mount(host, { sceneUnderPages: false, app, seed, fonts: false, face: "pages" } as EmbedOptions);
     });
     expect(host.querySelector("[aria-busy=true]")).toBeNull();
     expect(host.textContent).toContain("Tasks");

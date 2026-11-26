@@ -9,9 +9,12 @@
  *             tarballs with no workspace and no path mapping; its OWN verify
  *             passes; the checker says so in its own words; the skills land
  *             where both assistants look; and a real browser walks the first
- *             hour — the empty district, the seat's starter data, the derived
- *             form, a reload that remembers, the way back to empty, the routed
- *             face at phone width, and axe-core in both schemes.
+ *             hour on the one face — the home's way in, its derived form, the
+ *             seat's starter data from the bar's Activity, the studio from
+ *             the person's menu writing a field into src/domain, the control
+ *             at the foot out to the map and back, a reload that remembers,
+ *             the way back to empty, the keyboard alone, the pages at phone
+ *             width, the embed, and axe-core in both schemes.
  *   2. pnpm.  The same project through the other package manager.
  *   3. door.  `create-graview` — what `npm create graview` runs — installed
  *             from its tarball, makes the same project.
@@ -31,7 +34,7 @@ import { engineName, launchEngine } from "./lib/engine.mjs";
 import { packTarballs, pinToTarballs } from "./lib/tarballs.mjs";
 import { portFor } from "./lib/ports.mjs";
 import { vacant } from "./lib/serve.mjs";
-import { chooseScheme, openActivity } from "./lib/bar.mjs";
+import { openActivity } from "./lib/bar.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, "..");
@@ -69,9 +72,13 @@ const tree = (dir, prefix = "") =>
     )
     .sort();
 
+/* The key the dev server's doors ask for (`@graview/ship/dev`), said to the server this run starts and carried by the page it opens. */
+const DOOR_KEY = `smoke-create-${process.pid}-${Date.now()}-door`;
+
 function startVite(cwd, port) {
   const child = spawn("npx", ["vite", "--port", String(port), "--strictPort"], {
     cwd,
+    env: { ...process.env, GRAVIEW_DOOR_KEY: DOOR_KEY },
     stdio: ["ignore", "pipe", "pipe"],
     detached: true,
   });
@@ -220,157 +227,186 @@ try {
       await page.waitForFunction(() => "__graviewReady" in window, null, { timeout: 30_000 });
       await page.waitForTimeout(500);
     };
-    const districtText = (page) => page.locator('[data-graview-view="kind:note"]').first().textContent();
-    // Standing says itself in its name ("Everything is in order"); its count is a badge beside the dot.
-    const standing = async (page) => (await page.locator('[data-testid="standing"]').first().getAttribute("aria-label")) ?? "";
+    // The one face has come once the page has moved into it and the city under it is laid out.
+    const oneFace = async (page) => {
+      await page.waitForSelector("[data-graview-one-place]", { timeout: 30_000 });
+      await page.waitForFunction(() => !document.documentElement.hasAttribute("data-graview-one-face-arriving"), null, { timeout: 30_000 });
+      await page.waitForTimeout(300);
+    };
+    // The home's way in, until there is a way past it (`Begin` in src/ui/pages.tsx).
+    const wayIn = (page) => page.locator('[data-testid="begin"]').count();
 
     const page = watch(await browser.newPage({ viewport: { width: 1280, height: 800 } }));
     const b = report.browser;
 
-    /* ---- the first screen: one district for the one kind, "none yet" */
+    /* ---- the first screen: the app's home on the one face, its way in offering the first note */
     await page.goto(`${base}/`, { waitUntil: "networkidle" });
     await ready(page);
-    b.districts = await page.locator('[data-graview-view^="kind:"]').count();
-    b.saysNoneYet = (await districtText(page)).includes("none yet");
-    b.wordmarkSaysTheName = (await page.locator("header").textContent()).includes("Field Notes");
-    b.standingIsClean = (await standing(page)).trim();
+    await oneFace(page);
+    b.onTheOneFace = await page.evaluate(() => ({
+      face: document.querySelector("[data-graview-one-place]") !== null,
+      // One control at the foot says where you are: Page, Nearby, Map.
+      levels: [0, 1, 2].map((stop) => document.querySelector(`[data-testid="altitude-stop-${stop}"]`)?.textContent?.trim() ?? null),
+      // And nothing switches to another face: the city is the camera rising from the page.
+      switchToAScene: [...document.querySelectorAll("[data-graview-app-bar] a, [data-graview-app-bar] button")].some((el) => /^\s*(the )?scene\s*$/i.test(el.textContent ?? "")),
+      path: location.pathname,
+    }));
+    b.wayInOffers = await page.locator('[data-testid="begin-add-note"]').textContent().catch(() => "");
+    b.wordmarkSaysTheName = (await page.evaluate(() => (document.querySelector("[data-graview-app-bar]") ?? document.querySelector("header"))?.textContent ?? "")).includes("Field Notes");
     b.axeEmptyLight = await axe(page);
 
-    /* ---- the seat at zero: starter data, proposed from the declaration */
+    /* ---- the seat at zero: starter data, proposed from the declaration, from the bar's Activity */
+    b.theSeatIsOnTheBar = (await page.locator('[data-graview-app-bar] [data-testid="inbox-button"]').count()) > 0;
     await openActivity(page);
     await page.waitForTimeout(300);
-    b.seatOffered = (await page.locator('[data-testid="agent-starter"]').textContent()).trim();
-    await page.click('[data-testid="agent-starter"]');
-    await page.waitForTimeout(2000);
-    b.seatLog = await page.evaluate(() =>
-      [...document.querySelectorAll('[data-testid="diff-log"] li')].map((li) => li.textContent.trim()).slice(0, 4),
-    );
+    b.seatOffered = ((await page.locator('[data-testid="agent-seat-row"] [data-testid="agent-starter"]').textContent().catch(() => "")) ?? "").trim();
+    await page.click('[data-testid="agent-seat-row"] [data-testid="agent-starter"]');
+    await page.locator('[data-testid="activity"] li').first().waitFor({ state: "attached", timeout: 15_000 }).catch(() => {});
+    await page.waitForTimeout(1000);
+    b.seatLog = await page.evaluate(() => [...document.querySelectorAll('[data-testid="activity"] li')].map((li) => li.textContent.trim()).slice(0, 4));
     await page.keyboard.press("Escape");
     await page.waitForTimeout(300);
-    b.afterSeat = (await districtText(page)).trim();
-    b.seatPlantedSomething = !b.afterSeat.includes("none yet");
+    // The home's way in stands down once the kind has something in it.
+    b.seatPlantedSomething = (await wayIn(page)) === 0;
 
-    /* ---- back to empty: a driven browser starts fresh, and ?fresh=1 is the way back */
-    await page.goto(`${base}/?fresh=1`, { waitUntil: "networkidle" });
+    /* ---- the studio: the app's own declaration from the person's menu, a field added and written into src/domain */
+    await page.goto(`${base}/?fresh=1&graview_door=${encodeURIComponent(DOOR_KEY)}`, { waitUntil: "networkidle" });
     await ready(page);
-    b.freshIsEmptyAgain = (await districtText(page)).includes("none yet");
+    await oneFace(page);
+    await page.click('[data-graview-app-bar] [data-testid="profile-button"]');
+    await page.waitForTimeout(400);
+    b.studioInTheMenu = (await page.locator('[data-testid="profile-keeping"] [data-testid="studio-place"]').count()) > 0;
+    const schemaPath = resolve(app, "src/domain/schema.ts");
+    // Every file the door may write, as the project was made, to put back after.
+    const domainDir = resolve(app, "src/domain");
+    const domainBefore = new Map(readdirSync(domainDir).map((name) => [name, readFileSync(resolve(domainDir, name), "utf8")]));
+    try {
+      await page.click('[data-testid="profile-keeping"] [data-testid="studio-place"]');
+      await page.waitForSelector('[data-testid="studio"]', { timeout: 20_000 });
+      await page.waitForTimeout(1200);
+      b.studioOpened = true;
+      // The kinds' district, opened into its members, then the note kind, chosen from the keyboard as any record is.
+      await page.locator('[data-testid="studio"] [data-graview-view="kind:kind"] button', { hasText: "open" }).first().click();
+      await page.waitForSelector('[data-graview-pick="declared:note"]', { timeout: 10_000 });
+      await page.waitForTimeout(600);
+      await page.focus('[data-graview-pick="declared:note"]');
+      await page.keyboard.press("Enter");
+      await page.waitForSelector('[data-testid="studio"] [data-testid="inspector-strip"] [data-affordance]', { timeout: 10_000 });
+      await page.locator('[data-testid="studio"] [data-testid="inspector-strip"] [data-affordance]', { hasText: "Add a field" }).first().click();
+      await page.waitForSelector("[data-graview-asking]", { timeout: 10_000 });
+      await page.keyboard.type("weather");
+      await page.keyboard.press("Enter");
+      await page.waitForTimeout(400);
+      for (let step = 0; step < 4 && (await page.$("[data-graview-asking]")) !== null; step++) {
+        // Whether it must be given: no, so the act the project wrote to make a note still compiles as written.
+        const no = page.locator("[data-graview-asking] button:not([disabled])", { hasText: /^\s*(no|false|optional)\s*$/i });
+        const choice = (await no.count()) > 0 ? await no.first().elementHandle() : await page.$("[data-graview-asking] button:not([disabled])");
+        if (choice) await choice.click();
+        else {
+          await page.keyboard.type("x");
+          await page.keyboard.press("Enter");
+        }
+        await page.waitForTimeout(400);
+      }
+      await page.waitForTimeout(600);
+      await page.click('[data-testid="studio-apply"]');
+      /*
+       * Written through the dev server's door into the project's own file; the
+       * dev server then reloads the page onto it, so the file is what is read.
+       */
+      for (const end = Date.now() + 30_000; Date.now() < end && !readFileSync(schemaPath, "utf8").includes("weather"); ) await page.waitForTimeout(250);
+      b.studioWroteTheField = readFileSync(schemaPath, "utf8").includes("weather");
+      if (!b.studioWroteTheField) b.studioSeen = await page.evaluate(() => (document.querySelector('[data-testid="studio-applied"]') ?? document.querySelector('[data-testid="studio"]'))?.textContent?.trim().slice(0, 300) ?? null).catch(() => null);
+    } catch (error) {
+      b.studioFailed = String(error.message ?? error).split("\n")[0];
+      b.studioSeen = await page.evaluate(() => (document.querySelector('[data-testid="studio-applied"]') ?? document.querySelector('[data-testid="studio"]'))?.textContent?.trim().slice(0, 300) ?? null).catch(() => null);
+    } finally {
+      // The project is put back as it was made, for every step after this one.
+      for (const [name, text] of domainBefore) writeFileSync(resolve(domainDir, name), text);
+      for (const name of readdirSync(domainDir)) if (!domainBefore.has(name)) rmSync(resolve(domainDir, name), { force: true });
+    }
+    // The dev server reloads onto the schema as it was; the steps after this one begin on their own page.
+    await page.waitForTimeout(1500);
 
-    /* ---- the derived form: the empty district's acts (a right-click), take its offer, answer it */
+    /* ---- the derived form: the way in's offer, answered in words */
     await page.goto(`${base}/?remember=1`, { waitUntil: "networkidle" });
     await ready(page);
-    await page.click('[data-graview-view="kind:note"]', { button: "right" });
-    await page.waitForTimeout(500);
-    const offers = page.locator('[data-testid="context-menu"] [data-testid="affordances"] button[data-affordance]');
-    b.offers = await offers.allTextContents();
-    await offers.filter({ hasText: "Add a note" }).first().click();
+    await oneFace(page);
+    await page.click('[data-testid="begin-add-note"]');
     await page.waitForTimeout(300);
     /*
      * The ask names its field IN WORDS. `label` is the declaration's
-     * identifier; the pages face has always said "Label", and the scene
-     * asked with the raw key — the same act reading two ways on two faces.
+     * identifier, and a person is asked for a "Name".
      */
     b.asksInWords = await page.evaluate(() => {
-      const input = document.querySelector('[data-testid="context-menu"] input:not([data-testid="menu-type"])');
+      const input = document.querySelector('[data-testid="begin"] form input');
       return input ? { name: input.getAttribute("aria-label"), placeholder: input.placeholder } : null;
     });
-    await page.fill('input[aria-label="Name"]', "Water the ferns");
-    await page.click('form button[type="submit"]');
+    await page.fill('[data-testid="begin"] input[aria-label="Name"]', "Water the ferns");
+    await page.click('[data-testid="begin"] form button[type="submit"]');
     await page.waitForTimeout(700);
-    b.afterForm = (await districtText(page)).trim();
-    b.theFormAddedIt = !b.afterForm.includes("none yet");
+    // The way in stands down once every kind has something in it.
+    b.theFormAddedIt = (await wayIn(page)) === 0;
 
-    /*
-     * ESCAPE, FROM THE SCREEN A SCAFFOLDED APP OPENS ON.
-     *
-     * This app's home is altitude, and the provider lands a focusless
-     * descent back on the overview on purpose — so the overview rung of the
-     * ladder moved nothing and fell through to nothing, and Escape did
-     * nothing at all from the first screen. A selection made here, then one
-     * press: the selection has to come off, and the altitude has to stay.
-     */
-    await page.click('[data-graview-view="kind:note"]');
-    await page.waitForTimeout(400);
-    const escapeState = () =>
-      page.evaluate(() => ({
-        hash: location.hash,
-        atAltitude:
-          document.querySelector('[data-testid="overview"]')?.getAttribute("aria-pressed") === "true",
-      }));
-    b.escape = { selected: await escapeState() };
-    await page.keyboard.press("Escape");
-    await page.waitForTimeout(400);
-    b.escape.pressed = await escapeState();
-    b.axeAfterDark = await (async () => {
-      /* The scheme lives in the app menu, beside the scene and the pages
-         (Roadmap f-app-bar-calm) — Light or Dark on the Shell. */
-      await chooseScheme(page, "dark");
-      await page.waitForTimeout(300);
-      return axe(page);
-    })();
+    /* ---- the control at the foot: the same page out to the whole map of the app */
+    await page.click('[data-testid="altitude-stop-2"]');
+    await page.waitForTimeout(1500);
+    b.theMap = await page.evaluate(() => {
+      const city = document.querySelector('[data-testid="one-place-city"]');
+      return {
+        city: city !== null && getComputedStyle(city).visibility !== "hidden" && getComputedStyle(city).display !== "none",
+        districts: document.querySelectorAll("[data-graview-district-tag]").length,
+        path: location.pathname,
+      };
+    });
+    await page.click('[data-testid="altitude-stop-0"]');
+    await page.waitForTimeout(1200);
+    b.backOnThePage = await page.evaluate(() => document.querySelector('[data-testid="altitude-stop-0"]')?.getAttribute("aria-pressed"));
 
     /* ---- it remembers: the same browser, asking to */
     await page.goto(`${base}/?remember=1`, { waitUntil: "networkidle" });
     await ready(page);
-    b.afterReload = (await districtText(page)).trim();
-    b.survivedAReload = !b.afterReload.includes("none yet");
-    await openActivity(page);
-    await page.waitForTimeout(300);
-    b.saysRemembered = (await page.locator('[data-testid="remembered"]').textContent().catch(() => "")).trim();
+    await oneFace(page);
+    // The note made above is still here.
+    b.survivedAReload = (await wayIn(page)) === 0;
+    b.saysRemembered = (await page.locator('[data-testid="remembered"]').first().textContent().catch(() => "")).trim();
     b.offersStartFresh = (await page.locator('[data-testid="start-fresh"]').count()) > 0;
-    await page.keyboard.press("Escape");
 
-    /* ---- the scene at phone width: chrome must not sit on the content */
+    /* ---- back to empty: a driven browser starts fresh, and ?fresh=1 is the way back */
+    await page.goto(`${base}/?fresh=1`, { waitUntil: "networkidle" });
+    await ready(page);
+    await oneFace(page);
+    b.freshIsEmptyAgain = (await wayIn(page)) === 1;
+
+    /* ---- the dark scheme, as the system or ?theme=dark asks for it */
+    await page.goto(`${base}/?theme=dark`, { waitUntil: "networkidle" });
+    await ready(page);
+    await oneFace(page);
+    b.axeAfterDark = await axe(page);
+
+    /* ---- somebody else's page at phone width: the one face held to its box */
     /*
-     * A rail needs a gutter, and 390 has none. The acts are the menu at the
-     * pointer, and the seat is an ask field across the picture's foot, in a
-     * strip the layout keeps clear — measured from the SCENE's box rather
-     * than the window's, since an embed in a column of an article is narrow
-     * on the widest monitor there is. What must never happen is the seat
-     * sitting on the thing you are acting on.
+     * The project's embed draws the one face, as its own address does, held
+     * to the element it is mounted in: a box about 350 wide, which is the
+     * shape a Graview in a column of an article has on any monitor. Its bar
+     * stands at the box's top, not the window's, and no Ask box is drawn
+     * across the page being acted on: the quick ask replaced it (Roadmap
+     * f-quick-ask-framework).
      */
     const narrow = watch(await browser.newPage({ viewport: { width: 390, height: 844 } }));
-    // The embed page, at phone width: a box about 350 wide, which is the
-    // shape a Graview in a column of an article has on any monitor.
     await narrow.goto(`${base}/embed.html`, { waitUntil: "networkidle" });
-    await narrow.waitForTimeout(1500);
-    // An empty graph has nothing to act on: put one thing in it, then go in.
-    await narrow.click('#here [data-graview-view^="kind:"]', { button: "right" });
-    await narrow.waitForTimeout(400);
-    await narrow.click('[data-testid="context-menu"] [data-testid="affordances"] button[data-affordance]', { timeout: 10_000 }).catch(async (error) => {
-      // What the narrow Graview showed instead is the finding.
-      const seen = await narrow.evaluate(() => ({
-        testids: [...new Set([...document.querySelectorAll("#here [data-testid]")].map((el) => el.getAttribute("data-testid")))].slice(0, 60),
-        affordances: document.querySelectorAll("#here [data-testid='affordances']").length,
-        buttons: [...document.querySelectorAll("#here button")].map((el) => el.textContent?.trim()).filter(Boolean).slice(0, 30),
-      }));
-      throw new Error(`${error.message.split("\n")[0]} — the narrow page showed ${JSON.stringify(seen)}`);
+    await narrow.waitForSelector("#here [data-graview-one-place]", { timeout: 30_000 });
+    await narrow.waitForTimeout(800);
+    b.narrow = await narrow.evaluate(() => {
+      const root = document.querySelector("#here [data-graview-embed]");
+      const box = root?.getBoundingClientRect();
+      const bar = document.querySelector("#here [data-graview-one-face-bar]")?.getBoundingClientRect();
+      const inside = (r) => Boolean(r && box && r.width > 0 && r.left >= box.left - 0.5 && r.right <= box.right + 0.5 && r.top >= box.top - 0.5 && r.bottom <= box.bottom + 0.5);
+      return {
+        askBox: document.querySelector('#here [data-testid="seat"], #here [data-testid="seat-field"]') !== null,
+        inItsBox: root?.hasAttribute("data-graview-one-face-box") === true && inside(bar),
+      };
     });
-    await narrow.waitForTimeout(300);
-    await narrow.fill('[data-testid="context-menu"] input[aria-label="Name"]', "Sweep the path");
-    await narrow.click('[data-testid="context-menu"] button[type="submit"]');
-    await narrow.waitForTimeout(700);
-    /*
-     * Opening the district lists its records beside the map (on a phone, a
-     * sheet): press the one just made there, then go to it — what a person
-     * does now that the district is no longer opened in place as chips.
-     */
-    // The right-click that made it chose its district, whose panel may already be listing it.
-    if ((await narrow.locator('#here [data-testid="district-panel"]').count()) === 0) {
-      await narrow.click('#here [data-testid^="open-"]');
-      await narrow.waitForTimeout(500);
-    }
-    await narrow.click('#here [data-testid="district-panel"] [data-graview-record]');
-    await narrow.waitForTimeout(400);
-    await narrow.click('#here [data-testid="record-panel-go"]');
-    await narrow.waitForTimeout(900);
-    /*
-     * No Ask box stands over the thing being acted on: the quick ask replaced
-     * it (Roadmap f-quick-ask-framework), and nothing is drawn across the foot.
-     */
-    b.narrow = await narrow.evaluate(() => ({
-      askBox: document.querySelector('#here [data-testid="seat"], #here [data-testid="seat-field"]') !== null,
-      focus: document.querySelector('#here [data-graview-plane="0"] [data-graview-primitive="panel"]') !== null,
-    }));
     /*
      * THE PROFILE IS WHOLE AND ON TOP (W-119, FR-76). It hung from its
      * button's right edge, 280 wide: in a 350-wide embed it began off the
@@ -420,64 +456,50 @@ try {
 
     /* ---- the keyboard alone, on a blank app */
     /*
-     * A new product's first record, with no pointer at all.
-     *
-     * The one district is the whole of a blank app's interface: selecting it,
-     * then its acts key, opens the menu where the first act lives.
-     * The card was a tab stop that did nothing, so this could not be done —
-     * and nothing measured it, because every other rehearsal clicks.
+     * A new product's first record, with no pointer at all: Tab to the home's
+     * way in, take its offer, answer it, and the note is made.
      */
     const keys = watch(await browser.newPage({ viewport: { width: 1280, height: 800 } }));
     await keys.goto(`${base}/?fresh=1`, { waitUntil: "networkidle" });
     await ready(keys);
+    await oneFace(keys);
     const tabUntil = async (find) => {
-      for (let press = 0; press < 24; press += 1) {
+      for (let press = 0; press < 40; press += 1) {
         await keys.keyboard.press("Tab");
         await keys.waitForTimeout(80);
         if (await keys.evaluate(find)) return true;
       }
       return false;
     };
-    b.keyboardReachedTheDistrict = await tabUntil(
-      () => document.activeElement?.dataset?.graviewView === "kind:note",
-    );
+    b.keyboardReachedTheOffer = await tabUntil(() => document.activeElement?.getAttribute("data-testid") === "begin-add-note");
     await keys.keyboard.press("Enter");
     await keys.waitForTimeout(400);
-    // Chosen, and its acts one key away: the menu the acts key opens, with the keyboard in it.
-    await keys.keyboard.press("a");
-    await keys.waitForTimeout(400);
-    b.keyboardSelectedIt = (await keys.locator('[data-testid="context-menu"]').count()) === 1;
-    b.keyboardReachedTheOffer =
-      (await keys.evaluate(() => Boolean(document.activeElement?.dataset?.affordance))) ||
-      (await tabUntil(() => Boolean(document.activeElement?.dataset?.affordance)));
-    await keys.keyboard.press("Enter");
-    await keys.waitForTimeout(300);
+    b.keyboardIsInTheAsk = await keys.evaluate(() => document.activeElement?.closest('[data-testid="begin"] form') != null);
     await keys.keyboard.type("Sharpen the shears");
     await keys.keyboard.press("Enter");
     await keys.waitForTimeout(800);
-    b.afterKeyboard = (await districtText(keys)).trim();
-    b.theKeyboardAloneAddedIt = !b.afterKeyboard.includes("none yet");
+    b.theKeyboardAloneAddedIt = (await wayIn(keys)) === 0;
     await keys.close();
 
     /*
-     * ---- the routed face's FIRST screen: an empty graph, the way in alone
+     * ---- the FIRST screen at phone width: an empty graph, the way in alone
      * on a page. axe had never seen it — every pass below seeds first — and
      * it had no level-one heading (W-091).
      */
     const blank = watch(await browser.newPage({ viewport: { width: 390, height: 844 } }));
-    await blank.goto(`${base}/pages`, { waitUntil: "networkidle" });
-    await blank.waitForTimeout(500);
+    await blank.goto(`${base}/`, { waitUntil: "networkidle" });
+    await oneFace(blank);
     b.axePagesEmpty = await axe(blank);
     await blank.close();
 
-    /* ---- the routed face, from the same declaration, at phone width */
+    /* ---- the same pages at phone width: the list, its form and the project's own record page */
     const phone = watch(await browser.newPage({ viewport: { width: 390, height: 844 } }));
-    await phone.goto(`${base}/pages?remember=1`, { waitUntil: "networkidle" });
-    await phone.waitForTimeout(500);
+    await phone.goto(`${base}/?remember=1`, { waitUntil: "networkidle" });
+    await oneFace(phone);
     b.pagesHome = await phone.evaluate(() => document.body.textContent.includes("Notes"));
     b.pagesFitsAPhone = await phone.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1);
-    await phone.goto(`${base}/pages/notes?remember=1`, { waitUntil: "networkidle" });
-    await phone.waitForTimeout(500);
+    await phone.goto(`${base}/notes?remember=1`, { waitUntil: "networkidle" });
+    await oneFace(phone);
     const recordsBefore = await phone.locator('[data-testid="records"] a').count();
     // Adding one is a quiet act at the list's end; its form opens when it is pressed.
     if (!(await phone.locator('[data-testid="form-add-note"]').isVisible().catch(() => false))) await phone.click('[data-testid="act-open-add-note"]');
@@ -494,8 +516,8 @@ try {
     await phone.goBack();
     await phone.waitForTimeout(400);
     b.axePagesLight = await axe(phone);
-    await phone.goto(`${base}/pages/notes?remember=1&theme=dark`, { waitUntil: "networkidle" });
-    await phone.waitForTimeout(500);
+    await phone.goto(`${base}/notes?remember=1&theme=dark`, { waitUntil: "networkidle" });
+    await oneFace(phone);
     b.axePagesDark = await axe(phone);
 
     b.errors = errors;
@@ -684,15 +706,17 @@ process.stdout.write(JSON.stringify(out));
     await page.goto(`http://localhost:${port}/?remember=1`, { waitUntil: "networkidle" });
     await page.waitForFunction(() => "__graviewReady" in window, null, { timeout: 30_000 });
     await page.waitForTimeout(500);
-    await page.click('[data-graview-view="kind:work-order"]', { button: "right" });
-    await page.waitForTimeout(500);
-    await page.locator('[data-testid="context-menu"] [data-testid="affordances"] button[data-affordance]').filter({ hasText: "Add a work order" }).first().click();
+    await page.waitForSelector("[data-graview-one-place]", { timeout: 30_000 });
+    await page.click('[data-testid="begin-add-work-order"]');
     await page.waitForTimeout(300);
-    await page.fill('input[aria-label="Name"]', "Replace the pump");
-    await page.click('form button[type="submit"]');
+    await page.fill('[data-testid="begin"] input[aria-label="Name"]', "Replace the pump");
+    await page.click('[data-testid="begin"] form button[type="submit"]');
     await page.waitForTimeout(700);
+    await page.goto(`http://localhost:${port}/work-orders?remember=1`, { waitUntil: "networkidle" });
+    await page.waitForSelector("[data-graview-one-place]", { timeout: 30_000 });
+    await page.waitForTimeout(500);
     report.linked.browser = {
-      districtAfterAdd: (await page.locator('[data-graview-view="kind:work-order"]').first().textContent()).trim(),
+      listedAfterAdd: await page.locator('[data-testid="records"] a').allTextContents(),
       errors,
     };
     await browser.close();
@@ -744,24 +768,25 @@ report.verdict = {
   itBuiltASite: report.npm.built === true,
   ...(withBrowser
     ? {
-        theFirstScreenIsOneDistrictSayingNoneYet: b.districts === 1 && b.saysNoneYet === true,
+        // The app's own address is one face: the page over the city, the control at the foot, no switch to a Scene.
+        theFirstScreenIsTheHomeOnTheOneFace:
+          b.onTheOneFace?.face === true &&
+          JSON.stringify(b.onTheOneFace?.levels) === JSON.stringify(["Page", "Nearby", "Map"]) &&
+          b.onTheOneFace?.switchToAScene === false &&
+          b.onTheOneFace?.path === "/",
         theBrandIsTheProductsName: b.wordmarkSaysTheName === true,
-        theSeatPlantsStarterDataFromTheDeclaration: b.seatPlantedSomething === true && (b.seatLog ?? []).length > 0,
-        freshIsTheWayBackToEmpty: b.freshIsEmptyAgain === true,
-        theEmptyDistrictOffersTheFirstNote: (b.offers ?? []).some((text) => text.includes("Add a note")),
-        theAskNamesItsFieldInWords: b.asksInWords?.name === "Name" && b.asksInWords?.placeholder === "Name",
+        theSeatPlantsStarterDataFromTheDeclaration: b.theSeatIsOnTheBar === true && b.seatOffered === "Add some starter data" && b.seatPlantedSomething === true && (b.seatLog ?? []).length > 0,
+        theStudioIsInThePersonsMenuAndWritesIntoTheCheckout: b.studioInTheMenu === true && b.studioOpened === true && b.studioWroteTheField === true,
+        theHomesWayInOffersTheFirstNote: (b.wayInOffers ?? "").includes("Add a note"),
+        theAskNamesItsFieldInWords: b.asksInWords?.name === "Name",
         theDerivedFormAddsIt: b.theFormAddedIt === true,
-        // The top rung of the ladder does not swallow the rest of it.
-        escapeDoesSomethingFromTheFirstScreen:
-          b.escape?.selected?.hash?.includes("sel=") === true &&
-          b.escape?.pressed?.hash?.includes("sel=") === false &&
-          b.escape?.selected?.atAltitude === true &&
-          b.escape?.pressed?.atAltitude === true,
+        theControlAtTheFootRisesToTheMapAndBack: b.theMap?.city === true && (b.theMap?.districts ?? 0) >= 1 && b.backOnThePage === "true",
+        freshIsTheWayBackToEmpty: b.freshIsEmptyAgain === true,
         // A quarter of the card is a pane lapping its margin; most of it is
         // the pane sitting on the thing you came to act on.
         noAskBoxCoversWhatYouAreActingOn:
           b.narrow?.askBox === false &&
-          b.narrow?.focus === true,
+          b.narrow?.inItsBox === true,
         theProjectMountsItselfOnSomebodyElsesPage:
           b.embed?.mounted === true &&
           b.embed?.tag === "SECTION" &&
@@ -771,12 +796,11 @@ report.verdict = {
           b.embed?.rootTheme === "" &&
           clean(b.axeEmbed),
         theKeyboardAloneMakesTheFirstRecord:
-          b.keyboardReachedTheDistrict === true &&
-          b.keyboardSelectedIt === true &&
           b.keyboardReachedTheOffer === true &&
+          b.keyboardIsInTheAsk === true &&
           b.theKeyboardAloneAddedIt === true,
         anEditSurvivesAReload: b.survivedAReload === true && b.offersStartFresh === true,
-        thePagesFaceFitsAPhoneAndItsFormApplies: b.pagesHome === true && b.pagesFitsAPhone === true && b.pagesFormApplied === true,
+        thePagesFitAPhoneAndTheirFormApplies: b.pagesHome === true && b.pagesFitsAPhone === true && b.pagesFormApplied === true,
         theProjectsOwnPageReplacesTheDerivedOne: b.ownRecordPage === true,
         axeFindsNothingInEitherScheme: clean(b.axeEmptyLight) && clean(b.axeAfterDark) && clean(b.axePagesLight) && clean(b.axePagesDark) && clean(b.axePagesEmpty),
         nothingErroredInTheBrowser: Array.isArray(b.errors) && b.errors.length === 0,
@@ -811,7 +835,7 @@ report.verdict = {
   ...(withBrowser
     ? {
         theLinkedDevServerRunsInABrowser:
-          report.linked.browser?.errors?.length === 0 && !(report.linked.browser?.districtAfterAdd ?? "none yet").includes("none yet"),
+          report.linked.browser?.errors?.length === 0 && (report.linked.browser?.listedAfterAdd ?? []).some((name) => name.includes("Replace the pump")),
       }
     : {}),
 };

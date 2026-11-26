@@ -18,27 +18,31 @@ import { mount } from "@graview/embed";
 const handle = mount(document.querySelector("#garden")!, {
   app,                        // defineApp(...)
   seed,                       // the graph to open with, or nothing
-  face: "graview",            // "scene" | "graview" | "pages" | "picture" — one named lens, no chrome: stop "#view=<place>"; leave it out and the app opens on its home view, else the scene
-  stop: "#focus=plot-1",      // the scene's view state, as its URL fragment; none, and the scene opens on the overview
-  path: "/plots",             // the routed face's page; on the scene, nothing or "/places/overview" — everything from above
+  path: "/plots",             // the page it opens at; none, and a `stop` names it, else the home
   principal: { kind: "human", id: "june", roles: ["coordinator"] },
-  bar: true,                  // the app bar over every face (the default); { faces: false, name: false } under a host's own bar
-  switch: "words",            // the bar's Scene/Pages switch: its words where they fit (the default), or "icons" for its marks alone
+  height: 560,                // the box the one face is held to; the element's own height by default
+  bar: true,                  // the app bar (the default); { name: false } under a host's own bar
 });
 
 handle.setPath("/plots");     // a place: the plots' list, at the element's width
-handle.setPath("/places/overview"); // the scene, at its own address
-handle.setStop("#overview=1&expand=kind:plot");
+handle.setPath("/places/overview"); // the Map over the home
 handle.unmount();
 ```
 
-A scene with nowhere to be — no `stop`, no `path` but the overview's, no first place in the declaration — opens on the overview, everything from above, as `graview preview` at `/places/overview` does: `mount(stage, { face: "scene" })` under either routing, and `routing: "address"` at a bare base. A `stop` set then or later goes down to it.
+An embed draws the one face: each page over the app's own city, and one control at the box's bottom left moving it from Page to Nearby to Map (see "Pages and the Scene as one face", below). `face: "picture"` is one named lens, no chrome (`stop: "#view=<place>"`). `sceneUnderPages: false` draws the routed face alone instead, with the scene and the Graview as faces of their own, a Scene/Pages switch on the bar (`switch: "words" | "icons"`) and `stop` as the scene's view state:
+
+```ts
+mount(stage, { app, seed, sceneUnderPages: false, face: "graview", stop: "#focus=plot-1" });
+handle.setStop("#overview=1&expand=kind:plot");
+```
+
+There, a scene with nowhere to be — no `stop`, no `path` but the overview's, no first place in the declaration — opens on the overview, everything from above, as `graview preview` at `/places/overview` does: `mount(stage, { face: "scene", sceneUnderPages: false })` under either routing, and `routing: "address"` at a bare base. A `stop` set then or later goes down to it.
 
 `<Embed {...options} />` is the same thing as a React component.
 
 ### The app bar
 
-One bar stands over every face (FR-131). At the left, the app: its mark — the brand's logo, when the document has one — and its name, said once, as the page's heading (`heading`: `1` when the host's page is the app, `2`, the default, inside an article, `false` when the host's own heading says it), and the way home. Right after it, the switch between the app's two faces (FR-137): "Scene" and "Pages", an icon and a word each, two buttons whose `aria-pressed` says which is drawn. The words are drawn where they fit and the icons alone where they do not — on a phone, or in a narrow box beside a long place name — and always their accessible names and their titles; `switch: "icons"` asks for the icons alone at every width, for a host whose box is small or whose own page already says what the two faces are (`[data-testid="app-faces"]` says what was asked in `data-switch` and what is drawn in `data-switch-drawn`). Scene draws the scene under the bar; Pages goes back to the page the reader was on. A declaration may call them something else (`pages: { scene: "The farm", pages: "Lists" }`); the scene's address is `/places/overview` whatever it is called. Then, on Pages, the place you are on as one control — its name and a chevron — that opens every place the app has (FR-138): the home first, then the Lists (one per kind) and the Pictures (each named lens, and how the kinds connect), each with its mark, a long name wrapped. Every place is two presses away, Escape gives the keyboard back to the control, and the bar is one row of 48 px however many places there are; on a phone the place control is the page's first line, under the bar. On the scene the same control names what the scene shows — "Everything", the picture in view, or the district gone into ("Rules") — and lists its pictures (FR-144): choosing one moves the scene's `in.view`, and its address under `routing: "address"`, as any other way to a picture does. Where the bar has room after the name, the switch and the tools, the places themselves stand on the row as words in their order, the one you are on underlined and always among them, and the rest fold into "More" (FR-145); measured from the bar's own width, so a narrow box keeps the one control. A harness reaches any place the same way at every width: `[data-testid="app-place-<key>"]` (with its `data-place-path`) is one element in the embed — press it if it is visible, else press `app-places-open` ("More", or the one control) and then press it in `app-places`; `app-place-current` says where the reader is. At the right, three tools of one size: Find (a small box that says "Find…" and its shortcut, ⌘K on a Mac and Ctrl K elsewhere, and is drawn wide while it is used; a magnifier that opens the box over the row on a phone), the standing (a dot in the tone of the rules, a number only when one is broken, opening what is broken; its name says "Everything is in order" otherwise), and the person (an avatar whose menu holds who is signed in, the seats, the host's own actions and, for whoever keeps the app, the installation and the studio). `bar: false` draws none of it, for a host whose own page already says all of that.
+One bar stands over every face (FR-131). At the left, the app: its mark — the brand's logo, when the document has one — and its name, said once, as the page's heading (`heading`: `1` when the host's page is the app, `2`, the default, inside an article, `false` when the host's own heading says it), and the way home. Right after it, in a box, the switch between the Scene and the Pages (FR-137): "Scene" and "Pages", an icon and a word each, two buttons whose `aria-pressed` says which is drawn. The words are drawn where they fit and the icons alone where they do not — on a phone, or in a narrow box beside a long place name — and always their accessible names and their titles; `switch: "icons"` asks for the icons alone at every width, for a host whose box is small or whose own page already says what Scene and Pages are (`[data-testid="app-faces"]` says what was asked in `data-switch` and what is drawn in `data-switch-drawn`). Scene draws the scene under the bar; Pages goes back to the page the reader was on. A declaration may call them something else (`pages: { scene: "The farm", pages: "Lists" }`); the scene's address is `/places/overview` whatever it is called. Then, on Pages, the place you are on as one control — its name and a chevron — that opens every place the app has (FR-138): the home first, then the Lists (one per kind) and the Pictures (each named lens, and how the kinds connect), each with its mark, a long name wrapped. Every place is two presses away, Escape gives the keyboard back to the control, and the bar is one row of 48 px however many places there are; on a phone the place control is the page's first line, under the bar. On the scene the same control names what the scene shows — "Everything", the picture in view, or the district gone into ("Rules") — and lists its pictures (FR-144): choosing one moves the scene's `in.view`, and its address under `routing: "address"`, as any other way to a picture does. Where the bar has room after the name, the switch and the tools, the places themselves stand on the row as words in their order, the one you are on underlined and always among them, and the rest fold into "More" (FR-145); measured from the bar's own width, so a narrow box keeps the one control. A harness reaches any place the same way at every width: `[data-testid="app-place-<key>"]` (with its `data-place-path`) is one element in the embed — press it if it is visible, else press `app-places-open` ("More", or the one control) and then press it in `app-places`; `app-place-current` says where the reader is. At the right, three tools of one size: Find (a small box that says "Find…" and its shortcut, ⌘K on a Mac and Ctrl K elsewhere, and is drawn wide while it is used; a magnifier that opens the box over the row on a phone), the standing (a dot in the tone of the rules, a number only when one is broken, opening what is broken; its name says "Everything is in order" otherwise), and the person (an avatar whose menu holds who is signed in, the seats, the host's own actions and, for whoever keeps the app, the installation and the studio). `bar: false` draws none of it, for a host whose own page already says all of that.
 
 UNDER A HOST'S OWN BAR. A product with its own shell that mounts the scene in it says what the bar leaves out (`EmbedBar`): `faces: false` draws no switch — its Pages side is Graview's derived pages, not the product's own — and `name: false` no app mark and name, which the product's bar already says. The scene's places, Find, the standing (Activity beside it once anything has happened) and the person stay. Pass `heading: false` too, so nothing in the embed says the app's name as a heading.
 
@@ -58,7 +62,7 @@ A VIEW OF ONE RECORD SITS ABOVE ITS FIELDS (FR-149). A worker view registered th
 
 The frame — the element's region, its theme, the app bar, the provider — is on the page when `mount` returns. Each face is a chunk of its own, fetched the first time it is drawn: a page that opens on the pages never loads the scene, one that opens on the scene never loads the router, and the framework's own cards, rows and record pages come with whichever face draws them first. Until a face's chunk arrives its box stands empty (`aria-busy`), and `handle.drawn()` resolves once the face asked for is on the page — after `mount`, and after every change of face.
 
-A face on the page is not yet a place a person can read: its parts, the fonts, a worker view's drawing and its pictures may still be on their way. Once the place the reader is on has drawn and settled — every part drawn on it arrived, the fonts and images loaded, each worker view drawn (or stopped, what stands in its place drawn), each frame guest drawn (or silent past its `limits.readyMs`, eight seconds by default) and nothing moving for 200 ms — the embed's root wears `data-graview-drawn`, its value the place's path, and `onDrawn(place)` is told where it is as `where()` says it. A move to another place takes the attribute off in the same commit, and the next place puts it back as it settles. A place that never stops moving is said drawn after ten seconds all the same. On the one face a person may be shown the page before that: the root says `data-graview-painted` (`PAINTED_ATTRIBUTE`) the same way but for what stands under the page, and an opening screen (`@graview/pages/splash`) lifts on it, or on `data-graview-drawn`, which is still what a picture waits for; a place said drawn by its ten seconds is never said painted. A host picturing a place headless waits for the attribute rather than a timer:
+A face on the page is not yet a place a person can read: its parts, the fonts, a worker view's drawing and its pictures may still be on their way. Once the place the reader is on has drawn and settled — every part drawn on it arrived, the fonts and images loaded, each worker view drawn (or stopped, what stands in its place drawn), each frame guest drawn (or silent past its `limits.readyMs`, eight seconds by default) and nothing moving for 200 ms — the embed's root wears `data-graview-drawn`, its value the place's path, and `onDrawn(place)` is told where it is as `where()` says it. A move to another place takes the attribute off in the same commit, and the next place puts it back as it settles. An attribute written again as it was — the one face's city writes its own every frame — is no movement. A place that never stops moving is said drawn after ten seconds all the same. On the one face a person may be shown the page before that: the root says `data-graview-painted` (`PAINTED_ATTRIBUTE`) the same way but for what stands under the page, and an opening screen (`@graview/pages/splash`) lifts on it, or on `data-graview-drawn`, which is still what a picture waits for; a place said drawn by its ten seconds is never said painted. A host picturing a place headless waits for the attribute rather than a timer:
 
 ```ts
 await page.waitForSelector("[data-graview-drawn]");
@@ -90,7 +94,7 @@ const doors = firstDrawChunks(built.metafile, "pages").map((chunk) => `/${chunk.
 
 Ask for them once the face's own chunks have arrived, not beside them: on a phone's network a door named beside the face takes its bandwidth, and the face draws later. `graview preview`'s page writes them from a script in its head that waits for each `modulepreload` link's `load`; so asked, the face drew when it did and the place settled about half a second sooner on a slow 4G (`pnpm verify first-load`).
 
-What is fetched before it is wanted — the acts' pane when the page is idle, a date's editor, the other face at a desk — waits until the place has first drawn and settled (`data-graview-drawn`), so on a phone the network is the first draw's until then.
+What is fetched before it is wanted — the acts' pane when the page is idle, a date's editor, the Scene at a desk — waits until the place has first drawn and settled (`data-graview-drawn`), so on a phone the network is the first draw's until then.
 
 What this asks of the framework, and what it adds: the theme scopes to the element (`themeBaseCss(scheme, brand, { scope })`, and the blocks a view is drawn with, `viewsCss`, and the scene's own rules, `sceneCss`, drawn by the face that needs them beside it) rather than the document, every rule of it held inside that element, so nothing of the host's is restyled; the panes size against the picture's own box (`cqh`) rather than the viewport; the routed face runs on a memory router, so the host page's address is never touched (unless the host's page is the app: see below); the brand's fonts are fetched by the embed rather than assumed. The page's icon is the host's: only a host whose page is the app passes `favicon: true` to wear the brand's (FR-124), and an app that prefers dark is drawn dark until the host stamps a scheme of its own. The store is in memory and starts from the seed on every mount, unless the host hands it one.
 
@@ -122,18 +126,17 @@ Each page the routed face opens is pushed, and Back returns. The scene keeps its
 
 ### Pages and the Scene as one face
 
-A host whose page is the app may draw Pages and the Scene as one place (FR-239): the routed page over the Scene's own city, drawn with the `views` the embed already has, and one control at the window's bottom left that moves the same page from Page to Nearby (the page beside its place on the map) to Map (every page and view of the app standing on its district). The keys 1, 2 and 3 go to a level, `[` and `]` down and up one.
+`mount` and `<Embed>` draw Pages and the Scene as one face (FR-239) unless the host says `sceneUnderPages: false`, as `PagesApp` does: the routed page over the Scene's own city, drawn with the `views` the embed already has, and one control at the bottom left that moves the same page from Page to Nearby (the page beside its place on the map) to Map (every page and view of the app standing on its district). The keys 1, 2 and 3 go to a level, `[` and `]` down and up one. `@graview/embed/pages`, the routed face alone, draws it only with `sceneUnderPages: true`.
+
+There is no scene face: the bar offers no Scene or Pages, a `face` other than a picture is drawn as the pages, the overview's address is the Map over the home, and a `stop` with no `path` opens the page it names — `#overview=1` the Map, a record's `#focus=<id>` its page, a kind's group its list, `#view=<place>` that place. The bar stands in the one face's bar slot, `[data-graview-one-face-bar]`, above every layer of the face, so the app's name, its places, Find, the inbox, a host's Share and the person are there at every level. A host that lays something of its own along the bar reads the slot's box.
+
+**Where it stands is said by `routing`.** A host whose page is the app and hands it the address bar (`routing: "address"`: Graview Cloud, a hosted app, `graview preview`) gets the one face against the window: the bar fixed at the window's top, the page in the window's flow and the window scrolling it, the embed as tall as its page and at least its `height`.
 
 ```ts
-const handle = mount(root, {
-  app, store,
-  face: "pages",
-  routing: "address",
-  sceneUnderPages: true,
-});
+mount(root, { app, store, routing: "address", height: "100dvh", heading: 1 });
 ```
 
-`mount`, `<Embed>` and `@graview/embed/pages` take it. There is then no scene face: the bar offers no Scene or Pages, a `face` other than a picture is drawn as the pages, and the overview's address is the Map over the home. The bar stands in the one face's bar slot, `[data-graview-one-face-bar]`, fixed at the window's top above every layer of the face, so the app's name, its places, Find, the inbox, a host's Share and the person are there at every level. The page is in the window's flow and the window scrolls it, so the embed is as tall as its page and at least its `height`; the root is still its own stacking context. A host that lays something of its own along the bar reads the slot's box. Without the option every face draws as before.
+Anywhere else — a docs chapter, a demo in an article — the one face is held to the embed's own box, `height` tall (`"auto"` holds it at `AUTO_SCENE_HEIGHT`): the bar stands at the box's top, Page, Nearby and Map and the panel are the box's rect, the page scrolls inside the box, and nothing of the face is drawn over the host's page, which scrolls on when the pointer is outside the box. The root is the containing block of every layer (`contain: layout paint`, `data-graview-one-face-box`), and the level keys move the face only while the keyboard is in it.
 
 `panel` (a share, `0.55` unsaid, held to 0.25–0.75) is how wide a desk's panel opens beside the city at Nearby, never wider than 1192 px or than leaves the city 480; a width the person drags it to is kept for that app in that browser and wins. While the page is in the panel it and each worker view's root carry `data-graview-in-panel`, and the one face sets `--graview-gutter` (20px on a full page, 16 in the panel; elsewhere it is unset, so read it as `var(--graview-gutter, 20px)`).
 
@@ -213,7 +216,7 @@ mount(root, {
 handle.setBarActions([...]);   // changed live; undefined takes them off
 ```
 
-`barActions` draws each as a button on the app bar, on both faces, before the standing and the person, named by its label (the `icon` — an emoji, a glyph or an inline `<svg>` — is hidden from a reader who cannot see it). Where the bar is too narrow for them, on a phone or in a small box, they fold into one control, "More", that lists them. They are the host's only: no declaration and no sandboxed view can put a button on the bar. The whole-page Shell takes the same `barActions`.
+`barActions` draws each as a button on the app bar, on every face, before the standing and the person, named by its label (the `icon` — an emoji, a glyph or an inline `<svg>` — is hidden from a reader who cannot see it). Where the bar is too narrow for them, on a phone or in a small box, they fold into one control, "More", that lists them. They are the host's only: no declaration and no sandboxed view can put a button on the bar. The whole-page Shell takes the same `barActions`.
 
 ### The quick ask
 
@@ -318,7 +321,7 @@ mount(el, { app, form: "rsvp", principal: token, remote, height: "100dvh", onSub
 
 `principal` is the minted id (`"form:<token>"`) or the visitor whole. A form the declaration has not got is refused by its name. `graview preview` serves each form at `/forms/<name>`. The `graview-visitor-forms` skill says the declaration and its grant.
 
-Bundled for the browser without React, the pages face alone is about 500 KB minified (165 KB gzipped); the whole embed loads about 750 KB (190 KB) before a face is fetched, and every face about 1.28 MB (370 KB); `node scripts/inspect-pack.mjs` fails CI when one passes its budget (`scripts/lib/bundle-budget.mjs`).
+Bundled for the browser without React, the Pages alone are about 500 KB minified (165 KB gzipped); the whole embed loads about 750 KB (190 KB) before a face is fetched, and every face about 1.28 MB (370 KB); `node scripts/inspect-pack.mjs` fails CI when one passes its budget (`scripts/lib/bundle-budget.mjs`).
 
 ### In a chat's widget
 
@@ -331,7 +334,7 @@ const handle = mount(root, {
   remote,                       // the store, and who is here, from the server
   principal,                    // who signed in: the only seat a hosted reader has
   people,                       // [{ id, name, kind? }]: names for the rail, offering nobody a seat
-  height: "auto",               // the pages face as tall as its page
+  height: "auto",               // the Pages as tall as the page
   pagesBelow: 560,              // narrower than this, the scene gives way to the pages
   hostContext: { theme },       // the chat's theme, over the page's own
   memory,                       // where the reader's settings are kept, if not the page's storage
@@ -343,7 +346,7 @@ handle.setHostContext({ theme: "dark" });   // the chat changed theme
 handle.setPeople(next);                     // an agent who first acted after the page opened
 ```
 
-`subscriptions` is the store the sheet "Notify me…" adds to and Activity's list of what the reader is told of reads, on either face. A served store's is `remoteSubscriptions({ url, principal })` from `@graview/ship/browser`, a module of its own: asking the route brings none of the rule language its server judges a subscription with into the page's first chunk. Unsaid, a reader's subscriptions live in the page's memory and go when it closes.
+`subscriptions` is the store the sheet "Notify me…" adds to and Activity's list of what the reader is told of reads, on every face. A served store's is `remoteSubscriptions({ url, principal })` from `@graview/ship/browser`, a module of its own: asking the route brings none of the rule language its server judges a subscription with into the page's first chunk. Unsaid, a reader's subscriptions live in the page's memory and go when it closes.
 
 `signIn` is handed only while the reader is a visitor: `{ label: "Sign in to make changes", run }`, with `roles`, the roles signing in gives, when the host knows them. Where every act withheld from the reader is one a member could take, the context menu, the Inspector and the pages' acts say `label` as one press that calls `run`, in place of each act struck through with the policy's sentence; the face's own rows (Open, Show in the scene) stay, and "Notify me" is not offered, there being nobody to tell. A member lacking one role is still told each act they may not take and who could. `signInInstead(withheld, signIn)` from `@graview/core` is the same judgment, for a page of your own.
 

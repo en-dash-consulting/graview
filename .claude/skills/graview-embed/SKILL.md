@@ -16,11 +16,11 @@ import { mount } from "@graview/embed";
 const handle = mount(el, {
   app, store,                     // or `seed`, and one is made
   views,                          // the app's own registry, in its own schema
-  stop: "#focus=agg:plot",        // the fragment the app would put in its address bar
+  stop: "#focus=agg:plot",        // where it opens: the plots' list (or `path: "/plots"`)
   scheme: "auto",                 // the host's data-theme, else the system's
   label: "Chapter 13",            // names every landmark inside
 });
-handle.setFace("pages"); handle.setStop("#focus=plot-2"); handle.unmount();
+handle.setPath("/plots/plot-2"); handle.unmount();
 ```
 
 `graview create` writes this as `src/embed.tsx` and an `embed.html` host, so
@@ -28,20 +28,26 @@ the project's `pnpm typecheck` covers the embed from day one.
 
 ## The moves
 
-1. **Say where it opens with the stop, not with code.** `stop` is exactly
-   the fragment the app writes — `#overview=1`, `#focus=agg:plot`,
-   `#view=the-week` — so a link you copied from the app is an embed's
-   starting point. `face` follows the stop unless you name one.
-2. **Pick the face for the page.** One app bar: the name and its app
-   menu (Scene, Pages), the place you are on opening the rest (on a wide
-   row they stand, the rest under More), Find, one inbox, the people, the
-   standing, the person. Name no `face` and an
-   app with a home view opens on it, else the scene; `"scene"`,
-   `"graview"`, `"pages"` (on `path`); `"picture"` is ONE lens alone
-   (`stop: "#view=the-week"`), no bar. `bar: false` drops the bar.
-   Under a product's own
-   bar, `bar: { faces: false, name: false }` (and `heading: false`) keeps
-   the places, Find, the standing and the person, never CSS hiding them.
+1. **Say where it opens with the path or the stop, not with code.** An
+   embed draws the one face: each page over the app's own city, the
+   control at the box's bottom left moving it Page · Nearby · Map. `path`
+   is the page it opens at; with none, `stop` — the fragment the app
+   writes — names it: `#overview=1` the Map, `#focus=plot-2` that
+   record's page, `#focus=agg:plot` the plots' list, `#view=the-week` that
+   place. Else the home.
+2. **It is held to its box.** In somebody else's page the bar stands at
+   the box's top, Page, Nearby and Map are the box's rect, the page
+   scrolls inside it, nothing is drawn over the host, and the level keys
+   work only while the keyboard is in it. Give the element a height (or
+   `height`). Only `routing: "address"`, a host whose page IS the app,
+   stands it against the window (`graview-host-page`). One app bar: the
+   name and its app menu, the place you are on opening the rest, Find,
+   one inbox, the people, the standing, the person; `bar: false` drops
+   it, `bar: { name: false }` (and `heading: false`) under a product's
+   own bar. `face: "picture"` is ONE lens alone (`stop: "#view=the-week"`),
+   no bar. `sceneUnderPages: false` draws the routed face alone instead,
+   with `"scene"`, `"graview"` and `"pages"` faces and a Scene/Pages
+   switch.
 3. **Name it.** Two embeds on one page carry the same landmarks — the
    relation key, the inspector, the pages' navigation — and a landmark must
    be unique by role and name. `label` names every one of them after the
@@ -97,7 +103,7 @@ it with `guestView` from `@graview/guest/host`:
 ```ts
 views.register("package", { cardinality: "many", fidelity: "full" },
   guestView({ url, name: "prices", title: "The price sheet", reads: { kinds: ["offer"], edges: ["includes"] } }),
-  { title: "The price sheet" });   // a place on both faces, by its title
+  { title: "The price sheet" });   // a place, by its title
 views.home(guestView({ url: frontUrl, name: "front", reads: { kinds: ["package"] } }));
 ```
 

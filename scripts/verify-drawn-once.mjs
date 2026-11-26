@@ -124,6 +124,8 @@ async function buildHost() {
           createElement("strong", { "data-tall-title": "" }, props.node ? props.node.title : ""),
           ...Array.from({ length: 40 }, (_, i) => createElement("p", { key: i, style: { margin: "6px 0" } }, "A line of a view taller than its box, " + (i + 1))));
         window.__handle = mount(document.getElementById("app"), {
+          // The routed face and its scene, which this harness holds: an embed draws the one face unless told otherwise.
+          sceneUnderPages: false,
           app: compiled.app,
           seed,
           face: "graview",

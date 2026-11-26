@@ -88,15 +88,15 @@ describe("graview create --template", () => {
     expect(() => readFileSync(resolve(scratch, "vendors/package.json"))).toThrow();
   });
 
-  it("keeps the rest of the project the one graview create always writes, with its gate on an act that creates", () => {
+  it("keeps the rest of the project the one graview create always writes, with its seat gated on an act that creates", () => {
     const scaffold = scaffoldProject({ name: "Vendor shortlist", template: template as never });
     const paths = scaffold.files.map((f) => f.path);
-    expect(paths).toEqual(expect.arrayContaining(["src/domain/app.json", "src/domain/app.ts", "src/domain/schema.ts", "src/domain/brand.ts", "template.json", "src/ui/app.tsx", "src/ui/pages.tsx", "tests/domain.test.ts"]));
+    expect(paths).toEqual(expect.arrayContaining(["src/domain/app.json", "src/domain/app.ts", "src/domain/schema.ts", "src/domain/brand.ts", "template.json", "src/ui/pages.tsx", "src/ui/seat.tsx", "src/main.tsx", "tests/domain.test.ts"]));
     // The declaration is the document now; there is no TypeScript copy of it to drift.
     expect(paths).not.toContain("src/domain/mutations.ts");
     expect(paths).not.toContain("src/domain/invariants.ts");
-    const ui = scaffold.files.find((f) => f.path === "src/ui/app.tsx")!.contents;
-    expect(ui).toContain('gate="add-category"');
+    expect(scaffold.files.find((f) => f.path === "src/ui/pages.tsx")!.contents).toMatch(/<Begin\b/);
+    expect(scaffold.files.find((f) => f.path === "src/ui/seat.tsx")!.contents).toContain('gate="add-category"');
     const manifest = JSON.parse(scaffold.files.find((f) => f.path === "package.json")!.contents) as { scripts: Record<string, string> };
     expect(manifest.scripts["apply-template"]).toBe("pnpm build:domain && graview apply ./dist/domain/app.js --template template.json --data data");
   });

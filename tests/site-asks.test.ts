@@ -10,18 +10,17 @@ import { checkManifest, checkViewSource, type WorkerViewManifest } from "@gravie
 import { describe, expect, it } from "vitest";
 
 /**
- * WHAT GRAVIEW.DEV SAYS IT ASKED FOR, IT GOT.
+ * WHAT GRAVIEW.DEV ASKED FOR, IT GOT.
  *
- * The landing page claims the interface is generated from the declaration
- * and that changing it is a sentence. Its hero ends on a departures board
- * asked of the docs recipe, and the section under it reshapes a kids'
- * soccer season three ways. None of those views is a mockup: each is a
- * worker view recorded as the answer to the words the page shows
- * (apps/site/asks/turns.json), handed on the page to the same view host a
- * product's views run in. CI cannot ask a model, so it holds the recording:
- * every view passes the host's own checks, runs headless over its app's
- * records, and draws what the page's captions say it draws — the season's
- * one rule showing through every view, and the docs the hero's repair
+ * Graview.dev's front page used to end its hero on a departures board asked
+ * of the docs recipe, and reshape a kids' soccer season three ways under it.
+ * The home that replaced it (look behind the screen) draws its story on one
+ * canvas and replays none of them, so what this held about the page is
+ * retired with that page. What it holds about the recordings themselves
+ * (apps/site/asks/turns.json, still bundled into docs/site/chapters.js)
+ * stays true and stays held: each is a worker view the view host would take,
+ * runs headless over its app's records, and draws what its ask said, the
+ * season's one rule showing through every view and the docs the repair
  * writes reading WRITTEN on the board.
  */
 
@@ -40,8 +39,6 @@ interface Turn {
 }
 const turns = json<{ turns: Turn[] }>("apps/site/asks/turns.json").turns;
 const turn = (name: string) => turns.find((one) => one.name === name)!;
-const page = read("apps/site/pages/index.html");
-const built = read("docs/site/index.html");
 
 const DOCUMENTS = {
   docs: { document: ["docs/site/recipes/docs/app.json"], seed: ["docs/site/recipes/docs/seed.json"] },
@@ -66,8 +63,12 @@ async function drawn(name: string, store: Store<AnySchema>): Promise<string> {
   return result.description.text;
 }
 
-/** The three modules the docs seed leaves with no doc: the hero's repair writes a guide for each, as the page's script does. */
-const GUIDES = [...page.matchAll(/\{ module: "([^"]+)", id: "([^"]+)", title: "([^"]+)", path: "([^"]+)" \}/g)].map((m) => ({ module: m[1]!, id: m[2]!, title: m[3]!, path: m[4]! }));
+/** The three modules the docs seed leaves with no doc, and the guide the repair writes for each. */
+const GUIDES = [
+  { module: "module-packages-search", id: "doc:guide-search", title: "Search", path: "docs/guides/search.md" },
+  { module: "module-packages-shared-types", id: "doc:guide-shared-types", title: "Shared types", path: "docs/guides/shared-types.md" },
+  { module: "module-packages-telemetry", id: "doc:guide-telemetry", title: "Telemetry", path: "docs/guides/telemetry.md" },
+];
 function repaired(day: string): Store<AnySchema> {
   const store = storeOf("docs");
   for (const guide of GUIDES) {
@@ -79,9 +80,9 @@ function repaired(day: string): Store<AnySchema> {
 const today = () => new Intl.DateTimeFormat("en-CA", { year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
 
 describe("the asks graview.dev replays", () => {
-  it("are recorded once each, the hero's and the season's, every one shown on the page in the words it was asked", () => {
+  it("are recorded once each, the board's and the season's, each with the words it was asked", () => {
     expect(turns.map((one) => one.name)).toEqual(["departures", "remaining-games", "courier"]);
-    for (const one of turns) expect(built.replace(/&rsquo;/g, "’").replace(/’/g, "'"), one.name).toContain(one.ask.replace(/’/g, "'"));
+    for (const one of turns) expect(one.ask.length, one.name).toBeGreaterThan(20);
   });
 
   for (const one of turns) {
@@ -131,10 +132,8 @@ describe("the season's one rule shows through every view", () => {
   });
 });
 
-describe("the hero's run", () => {
-  it("says what the docs recipe declares, and repairs the modules its seed leaves with no doc", () => {
-    const document = json<{ kinds: object; acts: object; rules: object }>("docs/site/recipes/docs/app.json");
-    expect(page).toContain(`Declared ${Object.keys(document.kinds).length} kinds, ${Object.keys(document.acts).length} acts and ${Object.keys(document.rules).length} rules.`);
+describe("the docs recipe's board", () => {
+  it("repairs the modules its seed leaves with no doc", () => {
     const undocumented = storeOf("docs")
       .violations()
       .filter((problem) => problem.invariant === "module-has-doc")
@@ -155,10 +154,4 @@ describe("the hero's run", () => {
     expect(after.split("\n").filter((line) => line.startsWith("- packages/") || line.startsWith("- services/") || line.startsWith("- tools/"))).toHaveLength(16);
   });
 
-  it("is said in the subhead too: the interface is generated, and a different one is asked for", () => {
-    expect(built).toMatch(/Graview generates the interface, the rules\s+and an agent&rsquo;s tools from it/);
-    expect(built).toMatch(/Want\s+something else\? Ask for it, and every rule still holds/);
-    expect(built).toContain("The interface is generated.");
-    expect(built).toContain("You never build the UI. You ask for the one you want.");
-  });
 });

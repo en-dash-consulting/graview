@@ -17,7 +17,7 @@ import { registerWorkerView, type WorkerViewDefinition } from "@graview/guest/ho
  * page reloads, and the card says so; one Undo puts the view back.
  *
  * Things' own home is its design's, so the view is a place rather than the
- * home's body: /pages/places/at-a-glance, and the Scene's places.
+ * home's body: /places/at-a-glance, and its view on the Map.
  */
 
 const SOURCE = `// Things at a glance: what is due this week, what is still open, and the lists.

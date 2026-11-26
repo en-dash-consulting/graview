@@ -16,26 +16,22 @@ import type { HistoryHost } from "@graview/core/history";
 import { open } from "./open.js";
 import { todoApp } from "./domain/app.js";
 import { thingsBrand } from "./domain/brand.js";
-import { today, TodoApp } from "./ui/app.js";
+import { today, TodoApp, todoSeat, todoStudio } from "./ui/app.js";
 import { thingsDesign } from "./ui/design.js";
 import { todoViews } from "./ui/views.js";
 
 /*
- * ONE FACE (a prototype: Pages and the Scene are one place). The routed
- * pages stand over the Scene's own city, and the city is the camera rising
- * from a page, so a person who opens the app's root is sent to that city —
- * `/pages/places/overview`, which stands over the home — rather than to the
- * Scene's face of its own, with its switch and its record "drive-in".
- * `?scene=off` keeps the faces as they were (and the pages' way to the
- * Scene carries it), and a link to a stop in the Scene (`/#focus=…`) is
- * left where it points. A driven browser still gets
- * the Scene's face here: the harnesses of the Scene's own hand drive it
- * until they are moved onto the one face.
+ * ONE FACE. Things is one `PagesApp` at `/`: every page stands over the
+ * Scene's own city, and one control at the window's foot moves the page
+ * itself from Page to Nearby to Map. `?scene=off` reads the pages as the
+ * routed face alone (`sceneUnderPages: false`).
+ *
+ * `/scene/` is not part of the example. It draws the Scene's own face
+ * (`Shell`, in `ui/app.tsx`) only so the harnesses of the Scene's own hand
+ * — its districts, its drive-in, its bar — keep driving it until they are
+ * moved onto the one face. Nothing links a person there.
  */
-if (!window.location.pathname.startsWith("/pages") && !window.location.hash && !navigator.webdriver && new URLSearchParams(window.location.search).get("scene") !== "off") {
-  window.location.replace(`/pages/places/overview${window.location.search}`);
-  await new Promise(() => undefined);
-}
+const sceneOwnFace = window.location.pathname === "/scene" || window.location.pathname.startsWith("/scene/");
 
 const sheet = new CSSStyleSheet();
 document.adoptedStyleSheets = [sheet];
@@ -159,12 +155,6 @@ void import("@graview/core/subscriptions").then(({ watchSubscriptions }) =>
 );
 
 /*
- * TWO FACES, ONE DECLARATION. The scene owns "/" (and the hash, which is
- * its view state); the routed face lives under "/pages" on ordinary paths.
- * Same store machinery, same ids — a record page links to its spatial stop
- * and the scene's header offers the pages, because they are one app.
- */
-/*
  * WHAT THE HOST KEEPS OUTSIDE THE LOG (Roadmap f-playback): Things keeps
  * nothing, so a harness that compacts the store hands the archive it made
  * (`HistoryHost.archived`, FR-196) as `__todoHistory` before the page loads.
@@ -224,38 +214,35 @@ function Changing({ children }: { readonly children: (shown: DevApp, host: DevAp
   const host = useMemo(() => devChanges?.devAppChanges(start, setShown, { principal }), [start]);
   return <>{children(shown, host, () => views)}</>;
 }
-if (window.location.pathname.startsWith("/pages")) {
+// `?scene=off`: the routed face alone, with its switch to the Scene's own face (the fixture at `/scene/`).
+const sceneOff = new URLSearchParams(window.location.search).get("scene") === "off";
+if (!sceneOwnFace) {
   createRoot(root).render(
     <Changing>
       {(shown, host, pagesViews) => (
     <PagesApp
-      basename="/pages"
       context={{
         store: shown.store as typeof opened.store,
         brand: thingsBrand,
         signature: true,
-        // `?scene=off` reaches the Scene's own face from the pages it turned off.
-        sceneHref: new URLSearchParams(window.location.search).get("scene") === "off" ? "/?scene=off" : "/",
         /*
-         * PAGES AND THE SCENE ARE ONE PLACE (a prototype): the Scene's own
-         * city under every page, one camera: Up narrows the page into a
-         * panel beside its record's building, then stands it on the
-         * building with the city around it, then the whole city — the same
-         * page moving all the way. `?scene=off` reads the pages as they were.
+         * ONE FACE, unsaid: the Scene's own city under every page, one
+         * camera moving the same page from Page to Nearby (a panel beside
+         * its record's building) to Map (the whole city). `?scene=off`
+         * reads the pages as the routed face alone.
          */
-        sceneUnderPages: new URLSearchParams(window.location.search).get("scene") !== "off",
+        ...(sceneOff ? { sceneUnderPages: false, sceneHref: "/scene/?scene=off" } : {}),
         invariantContext: { today: today() },
         /*
-         * THE SAME SEAT ON BOTH FACES. The routed face lists the kinds this
-         * seat may see and withholds the acts it may not, from the same
-         * policy the scene narrows by — `?as=user-sam` sits somebody down
-         * here exactly as it does over there.
+         * THE SEAT. The pages list the kinds this seat may see and withhold
+         * the acts it may not, from the app's own policy, and the city under
+         * them narrows by the same — `?as=user-sam` sits somebody down.
          */
         principal,
         remembers,
         /*
-         * THE APP'S PICTURES, on this face too: the same registry the scene
-         * draws from, so every named lens is a page and the nav is the bar.
+         * THE APP'S PICTURES: the registry the city draws from, so every
+         * named lens is a page and a view on its district, and the nav is the bar.
          */
         views: pagesViews(),
         ...(keptViews ? { keptViews } : {}),
@@ -267,6 +254,12 @@ if (window.location.pathname.startsWith("/pages")) {
         subscriptions,
         ...(history ? { history } : {}),
         ...(onProposeChange ? { onProposeChange } : host ? { onProposeChange: host.onProposeChange, composeChange: host.composeChange, onDraftChange: host.onDraftChange } : {}),
+        /*
+         * THE SEAT AND THE STUDIO, on the one bar: the seat in the bell's
+         * Activity, the studio in the person's menu under "Keeping this app".
+         */
+        seat: todoSeat,
+        studio: todoStudio,
       }}
       /*
        * THE APP'S OWN FACE, over the same derivations. Every surface is

@@ -81,6 +81,8 @@ async function buildHost() {
         import seed from ${JSON.stringify(seed)};
         const asked = new URLSearchParams(location.search);
         const options = {
+          // The routed face and its scene, which this harness holds: an embed draws the one face unless told otherwise.
+          sceneUnderPages: false,
           app: todoApp,
           seed,
           face: asked.get("face") ?? "graview",
@@ -575,7 +577,7 @@ async function thePictureKeepsItsWidth(newPage, readyOf) {
   };
   for (const [where, url, ready] of [
     ["the embed's Graview", `${at("chrome-host")}/?face=graview`, readyOf.embed],
-    ["the Shell", `${at("todo")}/?today=2026-09-01&fresh=1`, readyOf.shell],
+    ["the Shell", `${at("todo")}/scene/?today=2026-09-01&fresh=1`, readyOf.shell],
   ]) {
     const page = await newPage({ width: 1440, height: 900 });
     await visit(page, url, ready);
@@ -707,7 +709,7 @@ try {
     const places = [
       { where: "the embed's Graview", url: `${at("chrome-host")}/?face=graview&company=1&tidy=1`, ready: () => page.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 }) },
       { where: "the embed's pages", url: `${at("chrome-host")}/?face=pages&company=1&tidy=1`, ready: () => page.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 }) },
-      { where: "the Shell", url: `${at("todo")}/?today=2026-09-01&fresh=1`, ready: () => page.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 }) },
+      { where: "the Shell", url: `${at("todo")}/scene/?today=2026-09-01&fresh=1`, ready: () => page.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 }) },
     ];
     for (const place of places) {
       await page.goto(place.url, { waitUntil: "load" });
@@ -1554,7 +1556,7 @@ try {
       for (const colorScheme of ["light", "dark"]) {
         const page = await browser.newPage({ viewport: size, colorScheme });
         page.on("pageerror", (error) => errors.push(error.message));
-        await page.goto(`${at("todo")}/?today=2026-09-01&fresh=1`, { waitUntil: "load" });
+        await page.goto(`${at("todo")}/scene/?today=2026-09-01&fresh=1`, { waitUntil: "load" });
         await page.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
         await settled(page, { most: 900 });
         const shell = await readBar(page);
@@ -1645,8 +1647,8 @@ try {
       for (const colorScheme of SCHEMES) {
         const where = [
           ...["graview", "pages"].map((face) => ({ name: `the embed's ${face === "graview" ? "Graview" : "pages"}`, hosted: true, face, url: `${at("chrome-host")}/?face=${face}&calm=1&tidy=1&company=1`, ready: (page) => page.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 }) })),
-          { name: "the Shell", hosted: false, url: `${at("todo")}/?today=2026-09-01&fresh=1&theme=${colorScheme}`, ready: (page) => page.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 }) },
-          { name: "the routed face", hosted: false, url: `${at("todo")}/pages/?today=2026-09-01&fresh=1&theme=${colorScheme}`, ready: (page) => page.waitForSelector('[data-testid="app-bar"]', { timeout: 60_000 }) },
+          { name: "the Shell", hosted: false, url: `${at("todo")}/scene/?today=2026-09-01&fresh=1&theme=${colorScheme}`, ready: (page) => page.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 }) },
+          { name: "the routed face", hosted: false, url: `${at("todo")}/?today=2026-09-01&fresh=1&theme=${colorScheme}`, ready: (page) => page.waitForSelector('[data-testid="app-bar"]', { timeout: 60_000 }) },
         ];
         for (const place of where) {
           const key = `${place.name} ${width} ${colorScheme}`;
@@ -1940,14 +1942,14 @@ try {
   {
     const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
     page.on("pageerror", (error) => errors.push(error.message));
-    await page.goto(`${at("todo")}/?today=2026-09-01&fresh=1`, { waitUntil: "load" });
+    await page.goto(`${at("todo")}/scene/?today=2026-09-01&fresh=1`, { waitUntil: "load" });
     await page.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
     await settled(page, { most: 900 });
     await page.click('[data-testid="inbox-button"]');
     await page.waitForSelector('[data-testid="problems"]', { timeout: 10_000 });
     await settled(page, { most: 400 });
     const problems = await page.evaluate(() => document.querySelector('[data-testid="problems"]')?.innerText ?? "");
-    await page.goto(`${at("todo")}/pages/tasks/t-deposit?today=2026-09-01`, { waitUntil: "load" });
+    await page.goto(`${at("todo")}/tasks/t-deposit?today=2026-09-01`, { waitUntil: "load" });
     await settled(page, { most: 1200 });
     const record = await page.evaluate(() => {
       const main = document.querySelector("main") ?? document.body;

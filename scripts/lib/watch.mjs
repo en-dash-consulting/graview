@@ -101,6 +101,13 @@ export function spoken(field) {
 
 /** The declaration's names, and the words it has for them: what the watch's `learn` takes. */
 export function namesOf(store) {
+  /*
+   * A MONTH'S OR A DAY'S NAME IS A WORD. A key spoken the same ("May", a
+   * policy's `may` in the studio's own declaration) is caught only where it
+   * is all an element says — and a calendar on the same page says "May" as
+   * the month it is. Said inside, since this function is also read into the page.
+   */
+  const CALENDAR_WORDS = new Set(["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December", "Jan", "Feb", "Mar", "Apr", "Jun", "Jul", "Aug", "Sep", "Sept", "Oct", "Nov", "Dec", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]);
   const schema = store.schema;
   const policy = store.policy;
   const mutations = typeof store.allMutations === "function" ? store.allMutations() : [];
@@ -179,7 +186,7 @@ export function namesOf(store) {
         }
     }
   }
-  return { ids, words: words.filter(Boolean), unsaid: [...new Set(unsaid)].filter((word) => !declared.has(word)), kinds: schema.definitions.map((definition) => definition.kind) };
+  return { ids, words: words.filter(Boolean), unsaid: [...new Set(unsaid)].filter((word) => !declared.has(word) && !CALENDAR_WORDS.has(word)), kinds: schema.definitions.map((definition) => definition.kind) };
 }
 
 /**

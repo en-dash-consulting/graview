@@ -37,7 +37,7 @@ async function mounting(studio?: false) {
   document.body.append(host);
   let handle!: { unmount(): void };
   await act(async () => {
-    handle = mount(host, { app, seed, face: "graview", fonts: false, ...(studio === false ? { studio } : {}) });
+    handle = mount(host, { sceneUnderPages: false, app, seed, face: "graview", fonts: false, ...(studio === false ? { studio } : {}) });
   });
   hosts.push({ unmount: () => handle.unmount(), host });
   await act(async () => new Promise((resolve) => setTimeout(resolve, 50)));

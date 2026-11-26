@@ -42,7 +42,8 @@ const TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa", "best-prac
  */
 const APPS = [
   { app: "gauntlet", ready: "__graviewReady", query: "as=u-4f1c9a", kinds: ["room", "session", "speaker", "staff", "topic"] },
-  { app: "todo", ready: "__todoReady", query: "", kinds: ["rule", "reason"] },
+  // Things' root is the one face; its Scene's own face, whose kind stop this reads, is at /scene/.
+  { app: "todo", ready: "__todoReady", query: "", kinds: ["rule", "reason"], scene: "/scene" },
   { app: "seedbed", ready: "__seedbedReady", query: "", kinds: ["planting", "rotation", "rule"] },
   { app: "rota", ready: "__rotaReady", query: "", kinds: ["location", "rule"] },
   { app: "discography", ready: "__graviewReady", query: "", kinds: ["era", "theme"] },
@@ -145,14 +146,14 @@ let browser;
 try {
   for (const { app } of APPS) servers.push(await serving(app, portFor(app), repoRoot));
   browser = await launchEngine("chromium");
-  for (const { app, ready, query, kinds } of APPS) {
+  for (const { app, ready, query, kinds, scene = "" } of APPS) {
     for (const [width, scheme] of SWEEP) {
       const phone = width < 600;
       const context = await browser.newContext({ viewport: { width, height: phone ? 844 : 900 }, colorScheme: scheme, ...(phone ? { isMobile: true, hasTouch: true } : {}) });
       const page = await context.newPage();
       page.on("pageerror", (error) => report.pageErrors.push(`${app} ${width} ${scheme}: ${String(error.message).slice(0, 200)}`));
       for (const kind of kinds) {
-        const url = `${at(app)}/?theme=${scheme}${query ? `&${query}` : ""}#focus=${encodeURIComponent(`aggregate:${kind}`)}`;
+        const url = `${at(app)}${scene}/?theme=${scheme}${query ? `&${query}` : ""}#focus=${encodeURIComponent(`aggregate:${kind}`)}`;
         await page.goto(url, { waitUntil: "load", timeout: 120_000 });
         await page.waitForFunction((flag) => flag in window, ready, { timeout: 120_000 });
         await page.waitForSelector('[data-testid="kind-stop"]', { timeout: 15_000 }).catch(() => undefined);

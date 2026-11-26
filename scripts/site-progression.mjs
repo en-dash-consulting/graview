@@ -39,7 +39,7 @@ const chapter = (c) => {
           <div class="chapter-live" data-graview-chapter="${c.n}" role="region" aria-label="${esc(c.title)}, live">
             <p class="chapter-loading">The garden after chapter ${c.n}, loading…</p>
           </div>
-          <figcaption>${esc(said ? `Standing says “${said}”.` : "")} ${esc(verdict)} This is the app itself: switch its face, click a district, take an act.</figcaption>
+          <figcaption>${esc(said ? `Standing says “${said}”.` : "")} ${esc(verdict)} This is the app itself: rise to its map, press a district, take an act.</figcaption>
         </figure>
         <div class="chapter-adds">
           <span class="chapter-label">The declaration gained</span>

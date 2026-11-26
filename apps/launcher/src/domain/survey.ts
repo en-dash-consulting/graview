@@ -117,7 +117,7 @@ export const CAPABILITIES: readonly Capability[] = [
     area: "declaration",
     holds: (app) => definitions(app).some((definition) => definition.requiresInvariant !== undefined),
     shownIn: "todo",
-    stop: "#focus=aggregate:rule",
+    stop: "/rules",
   },
   {
     id: "cap-repairs",
@@ -138,7 +138,7 @@ export const CAPABILITIES: readonly Capability[] = [
         ),
       ),
     shownIn: "todo",
-    stop: "#focus=aggregate:reason",
+    stop: "/reasons",
   },
   {
     id: "cap-wildcard-mutation",
@@ -154,7 +154,7 @@ export const CAPABILITIES: readonly Capability[] = [
     area: "declaration",
     holds: (app) => definitions(app).some((definition) => definition.fieldRoles !== undefined),
     shownIn: "todo",
-    stop: "#focus=aggregate:task",
+    stop: "/tasks",
   },
 
   /* ------------------------------------ 2 · look at it: scene, altitude */
@@ -233,7 +233,7 @@ export const CAPABILITIES: readonly Capability[] = [
     // exactly what makes it worth a stop rather than a sentence.
     holds: () => true,
     shownIn: "todo",
-    stop: "/pages",
+    stop: "/",
   },
   {
     id: "cap-own-design",
@@ -270,7 +270,7 @@ export const CAPABILITIES: readonly Capability[] = [
     area: "declaration",
     holds: (app) => (app.settings ?? []).length > 0,
     shownIn: "todo",
-    stop: "#focus=aggregate:list",
+    stop: "/lists",
   },
 
   /* ------------------------------------------ 6 · brand, kit, embed */
@@ -311,7 +311,7 @@ export const CAPABILITIES: readonly Capability[] = [
     // is why this one is named where it is instead.
     holds: () => true,
     shownIn: "todo",
-    stop: "#focus=aggregate:list",
+    stop: "/lists",
   },
   {
     id: "cap-migration",

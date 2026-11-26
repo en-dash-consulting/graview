@@ -88,8 +88,9 @@ function PagesDrawing<S extends AnySchema>(props: PagesEmbedProps<S>) {
   const notices = props.notices ?? ownBoard;
   // What the pages say on it is the framework's, which a host's Report this may answer (FR-237).
   const voice = useMemo(() => frameworkVoice(notices), [notices]);
-  // Pages and the Scene as one face (FR-239): the bar stands in the face's slot once the face has drawn it.
+  // Pages and the Scene as one face (FR-239), here only where the host asks: this entry is the routed face alone. The bar stands in the face's slot once the face has drawn it; held to this box unless the host's page is the app.
   const oneFace = props.sceneUnderPages === true;
+  const inBox = oneFace && !address;
   const [barSlot, setBarSlot] = useState<HTMLElement | null>(null);
   return (
     <section
@@ -98,8 +99,9 @@ function PagesDrawing<S extends AnySchema>(props: PagesEmbedProps<S>) {
       aria-label={props.label ?? app.name}
       data-graview-embed="pages"
       data-graview-scheme={scheme}
+      {...(inBox ? { "data-graview-one-face-box": "" } : {})}
       // Its own stacking context: every layer inside it (the scene's corner control, a panel) is ordered inside it, never over the host's page.
-      style={rootStyle(height, auto, oneFace)}
+      style={rootStyle(height, auto, oneFace ? (inBox ? "box" : "window") : false)}
     >
       <style>{css}</style>
       <ErrorReportContext.Provider value={report}>
@@ -135,7 +137,7 @@ function PagesDrawing<S extends AnySchema>(props: PagesEmbedProps<S>) {
             <BarFindContext.Provider value={barFind}>
               <NoticeBoardContext.Provider value={voice}>
               <FaceBoundary module="@graview/pages" report={report} content>
-                <PagesContent<S> store={store} views={views} presence={presence} auto={auto} brand={brand} steering={steering} scope={scope} scheme={scheme} titleLevel={titleBelow(props.heading ?? 2)} onBarSlot={setBarSlot} props={props} />
+                <PagesContent<S> store={store} views={views} presence={presence} auto={auto} brand={brand} steering={steering} scope={scope} scheme={scheme} titleLevel={titleBelow(props.heading ?? 2)} onBarSlot={setBarSlot} props={{ ...props, sceneUnderPages: oneFace }} />
               </FaceBoundary>
               </NoticeBoardContext.Provider>
             </BarFindContext.Provider>

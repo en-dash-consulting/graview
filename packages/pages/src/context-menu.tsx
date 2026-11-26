@@ -6,7 +6,7 @@ import { HostMenuItems, MenuSections, outOfViews, partsWanted, recordInView, sec
 import { PLACE_MENU_EVENT, useGraview, useGraviewIfAny, type MenuColumn, type MenuItem, type MenuSectionSource, type MenuTarget, type PointerMenu } from "@graview/react/provider";
 import { useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
 import { useHref, useLocation, useNavigate } from "react-router";
-import type { PageContext } from "./page-context.js";
+import { onTheOneFace, type PageContext } from "./page-context.js";
 import { addressAsksForTheList, BUILT_IN, listOpensAs, pathOfPlace } from "./page-places.js";
 import { kindMap } from "./facts.js";
 import { kindOfSlug, pluralSlug, recordPath, type PageRegistry } from "./registry.js";
@@ -431,7 +431,7 @@ function Menu<S extends AnySchema>({ context, root, registry, children }: { read
       if (face && (node || place || kind)) {
         // One face: the city is the camera rising, the record (or the list, or the view) beside it.
         items.push({ id: "in-the-scene", label: "Show on the map", run: () => (node ? face.openRecord(node.id, 1) : face.openPath(place ? pathOfPlace(context, place) : `/${pluralSlug(schema, kind!)}`, 1)) });
-      } else if (stop !== undefined && (context.overview || !context.embedded)) {
+      } else if (stop !== undefined && !onTheOneFace(context) && (context.overview || !context.embedded)) {
         const scene = context.overview;
         items.push({ id: "in-the-scene", label: "Show in the scene", run: () => (scene ? scene(stop) : location.assign(`${context.sceneHref ?? "/"}${stop}`)) });
       }

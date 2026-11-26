@@ -9,6 +9,7 @@ import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { beforeAll, describe, expect, it } from "vitest";
 import { PagesApp } from "../../src/index.js";
+import { theOneFaceHasCome, thePageIn } from "./on-the-one-face.js";
 
 /**
  * A STATUS BOARD ON THE ROUTED FACE (FR-97), from a document and nothing
@@ -51,11 +52,14 @@ beforeAll(() => fetchDeclaredLenses());
 async function rendered(principal: Principal, withButton = false) {
   const app = withButton && buttoned.ok ? (buttoned.app as GraviewApp<AnySchema>) : plain;
   const store = new Store<AnySchema>({ schema: app.schema, mutations: app.mutations ?? [], ...(app.policy ? { policy: app.policy } : {}), snapshot: seed as never });
-  const host = document.createElement("div");
-  document.body.appendChild(host);
-  const root = createRoot(host);
+  const frame = document.createElement("div");
+  document.body.appendChild(frame);
+  const root = createRoot(frame);
   await act(async () => root.render(<PagesApp context={{ store, views: declaredViews(app), principal }} initialPath="/places/the-board" />));
   await act(async () => new Promise((done) => setTimeout(done, 20)));
+  await theOneFaceHasCome(frame);
+  // The page on the one face, not the city out of sight under it.
+  const host = thePageIn(frame) as HTMLElement;
   const columns = () =>
     [...host.querySelectorAll<HTMLElement>("[data-graview-column]")].map((column) => [
       column.getAttribute("data-graview-column"),
@@ -65,7 +69,7 @@ async function rendered(principal: Principal, withButton = false) {
     ]);
   const done = async () => {
     await act(async () => root.unmount());
-    host.remove();
+    frame.remove();
   };
   return { host, store, columns, done };
 }

@@ -15,17 +15,18 @@ decides the frame; the app still decides what is in it.**
 ## The moves
 
 1. **When the page IS the app, hand it the address bar.** The default,
-   `routing: "memory"`, never touches the host's `location` or `history`
-   — right in an article. A host whose whole page is the app passes
+   `routing: "memory"`, never touches the host's `location` or `history`.
+   A host whose whole page is the app passes
    `routing: "address"` (and `basePath: "/apps/a1/"` when it is not served
    at `/`), and answers every address under the base with the one page:
    `<base>/places/<as>`, `<base>/<plural>/<id>` and the home are the routed
-   face's pages, pushed and reloadable; the scene is
-   `<base>/places/overview#overview=1`; the switch is a step Back undoes.
+   face's pages, pushed and reloadable.
    `faceAtAddress(options)` is the face an address opens on, and
    `addressOf(place, { basePath })` (`@graview/core`) spells a place's
    link. A host that keeps its own history stays on memory, hears
    `onNavigate(path, how)` and answers its own Back with `setPath(path)`.
+   The one face (`graview-pages`) stands against the window, its Map
+   at `<base>/places/overview`.
    A product shell of its own that shows the scene at a route mounts
    `face: "graview"` there with `bar: { faces: false, name: false }` and
    `heading: false`: no second name, no switch to Graview's own pages.

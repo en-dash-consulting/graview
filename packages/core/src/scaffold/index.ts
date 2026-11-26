@@ -32,7 +32,7 @@ import {
 } from "./project.js";
 import { agentsMd, claudeMd } from "./agents.js";
 import { schemaTs, mutationsTs, invariantsTs, brandTs, appTs, domainTest } from "./domain.js";
-import { indexHtml, embedHtml, embedTsx, viewsTsx, uiAppTsx, pagesTsx, mainTsx } from "./ui.js";
+import { indexHtml, embedHtml, embedTsx, viewsTsx, pagesTsx, seatTsx, mainTsx } from "./ui.js";
 import { documentAppTs, documentBrandTs, documentJson, documentSchemaTs, documentTest, templateJson, templateKind, templateViewFiles } from "./from-template.js";
 import type { GraviewTemplate } from "../document/graview-template.js";
 
@@ -184,7 +184,6 @@ export function scaffoldProject(given: ScaffoldOptions): Scaffold {
     schemaVar: `${camel(slugify(name))}Schema`,
     SchemaType: `${pascal(slugify(name))}Schema`,
     StoreType: `${pascal(slugify(name))}Store`,
-    AppComponent: `${pascal(slugify(name))}App`,
     accent,
     port,
     link,
@@ -228,8 +227,8 @@ export function scaffoldProject(given: ScaffoldOptions): Scaffold {
     { path: "CLAUDE.md", contents: claudeMd() },
     ...domain,
     { path: "src/ui/views.tsx", contents: viewsTsx(ids) },
-    { path: "src/ui/app.tsx", contents: uiAppTsx(ids) },
     { path: "src/ui/pages.tsx", contents: pagesTsx(ids) },
+    { path: "src/ui/seat.tsx", contents: seatTsx(ids) },
     { path: "src/main.tsx", contents: mainTsx(ids) },
     { path: "src/embed.tsx", contents: embedTsx(ids) },
     { path: "tests/domain.test.ts", contents: template ? documentTest(ids) : domainTest(ids) },

@@ -202,7 +202,7 @@ async function framesWhileMoving(page) {
 
 const report = { at: new Date().toISOString(), viewport: VIEWPORT, frameMs: Number(FRAME_MS.toFixed(2)), domBlurFrameMs: Number(DOM_BLUR_FRAME_MS.toFixed(2)), gpu: {}, dom: {}, without: {} };
 const vite = await serving("todo", portFor("todo"), repoRoot);
-const home = `${vite.url}/?theme=light`;
+const home = `${vite.url}/scene/?theme=light`;
 
 try {
   // ---- A Chromium that can capture: both paths, side by side. ----

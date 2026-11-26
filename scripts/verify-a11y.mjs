@@ -124,6 +124,8 @@ async function buildHost() {
           const notes = { manifest: { name: "notes", title: "What we heard", attach: "signal", cardinality: "many", flows: false }, worker: { source: window.NOTES } };
           const packages = { manifest: { name: "packages", title: "The packages", attach: "package", cardinality: "many", reads: { kinds: ["offer"], edges: ["includes"] } }, worker: { source: window.PACKAGES } };
           window.__handle = mount(document.getElementById("graview-app"), {
+            // The routed face and its scene, which this harness holds: an embed draws the one face unless told otherwise.
+            sceneUnderPages: false,
             app: threat ? threatApp : offersApp,
             seed: threat ? threatSeed : offersSeed,
             principal: threat ? sam : lin,
@@ -143,6 +145,8 @@ async function buildHost() {
         if (!compiled.ok) throw new Error("the document did not compile");
         const seed = isWorkshop ? workshopSeed : vendors.seed;
         window.__handle = mount(document.getElementById("graview-app"), {
+          // The routed face and its scene, which this harness holds: an embed draws the one face unless told otherwise.
+          sceneUnderPages: false,
           app: compiled.app,
           seed: { nodes: seed.nodes, edges: seed.edges.map((edge, i) => ({ id: edge.id ?? "e" + i, ...edge })) },
           face: asked.get("face") ?? "graview",
@@ -239,7 +243,8 @@ const SCREENS = [
   ...firstLook,
   board,
   ...hosted("workshop"),
-  ...example("todo", ["/", "/pages", "/pages/tasks", "/pages/tasks/t-deposit", "/pages/problems", "/pages/search?q=the"]),
+  // Things is one face at its root; `/scene/` is the Scene's own face, kept for the harnesses of its own hand.
+  ...example("todo", ["/", "/tasks", "/tasks/t-deposit", "/problems", "/search?q=the", "/scene/"]),
   ...example("seedbed", ["/", "/pages"]),
   ...example("rota", ["/", "/pages"]),
   ...example("discography", ["/", "/pages"]),

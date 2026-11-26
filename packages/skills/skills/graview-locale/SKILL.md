@@ -39,7 +39,7 @@ brand, the name, mark, typeface and palette, is `graview-brand`.
    sentence and its echo to an agent, Activity, the date editor. A moment
    kept without a zone is still the wall time written. A person's zone wins
    where a host passes one — `timeZone` on `GraviewProvider`, the embed and
-   the pages face, beside `locale`. A worker view is handed `locale` and
+   `PagesApp`, beside `locale`. A worker view is handed `locale` and
    `timeZone` rather than formatted strings (`graview-worker-view`). The
    zone is the app's day too: `today()` is the date there, `date(starts)`
    the day an instant is on there, and `starts < today()` reads the instant

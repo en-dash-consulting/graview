@@ -304,6 +304,8 @@ async function serveHost() {
         const keptViews = withMemoryRevisions(memoryViews({ may: { views: !visitor, lenses: false } }));
         window.__keeper = keptViews;
         window.__handle = mount(document.getElementById("app"), {
+          // The routed face and its scene, which this harness holds: an embed draws the one face unless told otherwise.
+          sceneUnderPages: false,
           app: current.app,
           store: current.store,
           principal: visitor ? { kind: "human", id: "v1", roles: ["viewer"] } : { kind: "human", id: "p1", roles: ["owner"] },
@@ -1718,7 +1720,7 @@ try {
   const things = await todoContext.newPage();
   things.on("pageerror", (error) => errors.push(`todo: ${error.message}`));
   const thingsAt = async (path) => {
-    await things.goto(`${at("todo")}/pages${path}?today=2026-09-01&fresh=1`, { waitUntil: "load" });
+    await things.goto(`${at("todo")}${path}?today=2026-09-01&fresh=1`, { waitUntil: "load" });
     await things.waitForSelector("[data-graview-page-title], main h1", { timeout: 60_000 });
     await things.waitForTimeout(300);
   };

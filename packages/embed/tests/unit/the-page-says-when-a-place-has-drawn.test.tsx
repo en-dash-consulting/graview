@@ -35,7 +35,7 @@ async function mounted(options: Partial<EmbedOptions>) {
   host = document.createElement("div");
   document.body.appendChild(host);
   await act(async () => {
-    handle = mount(host!, { app, seed, fonts: false, studio: false, face: "pages", ...options } as EmbedOptions);
+    handle = mount(host!, { sceneUnderPages: false, app, seed, fonts: false, studio: false, face: "pages", ...options } as EmbedOptions);
   });
   return { root: () => host!.querySelector<HTMLElement>("[data-graview-embed]")!, handle: handle! };
 }
@@ -198,16 +198,29 @@ describe("the page says when it is painted, what stands under it still to come",
     expect(await until(() => root().hasAttribute(PAINTED_ATTRIBUTE))).toBe(true);
   });
 
-  it("takes an attribute written again as it was for no change, as a city's frame loop writes its own", async () => {
+  /*
+   * THE CITY IS SAID DRAWN WHEN IT HAS DRAWN (Graview HQ
+   * feature:f-city-drawn-waits-its-cap): its frame loop writes its own
+   * attributes every frame, most of them as they were, and the drawn mark
+   * took each write for a move, so a place over the city was said drawn
+   * only at the ten seconds. Painted and drawn alike take such a write for
+   * no change.
+   */
+  it("takes an attribute written again as it was for no change, as a city's frame loop writes its own, painted and drawn alike", async () => {
     const { root } = await mounted({ views: withWorkerHome as never });
     expect(await until(() => regions.length > 0)).toBe(true);
     const region = regions.at(-1)!;
-    region.setAttribute("data-worker-view-drawn", "");
     const loop = setInterval(() => region.setAttribute("data-camera", "1.0000"), 16);
-    expect(await until(() => root().hasAttribute(PAINTED_ATTRIBUTE), 2500)).toBe(true);
-    expect(root().hasAttribute(DRAWN_ATTRIBUTE), "which the drawn mark still waits out").toBe(false);
-    clearInterval(loop);
-    expect(await until(() => root().hasAttribute(DRAWN_ATTRIBUTE))).toBe(true);
+    try {
+      await wait(300);
+      const drew = performance.now();
+      region.setAttribute("data-worker-view-drawn", "");
+      expect(await until(() => root().hasAttribute(PAINTED_ATTRIBUTE), 2500)).toBe(true);
+      expect(await until(() => root().hasAttribute(DRAWN_ATTRIBUTE), 2500), "drawn while the loop still writes, well before the ten seconds").toBe(true);
+      expect(performance.now() - drew).toBeLessThan(2500);
+    } finally {
+      clearInterval(loop);
+    }
   });
 
   it("waits for an attribute that changes", async () => {

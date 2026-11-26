@@ -41,8 +41,8 @@ const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const asked = process.argv.find((arg) => arg.startsWith("--engine="))?.slice("--engine=".length);
 const QUICK = process.argv.includes("--quick") || process.env["GRAVIEW_QUICK"] === "1";
 const engines = asked ? [asked] : QUICK ? ["chromium"] : ENGINES;
-const SCENE = (search = "") => `${at("todo")}/?today=2026-09-01&remember=1${search}`;
-const PAGES = `${at("todo")}/pages/tasks?today=2026-09-01&remember=1`;
+const SCENE = (search = "") => `${at("todo")}/scene/?today=2026-09-01&remember=1${search}`;
+const PAGES = `${at("todo")}/tasks?today=2026-09-01&remember=1`;
 /** `--shots=<dir>`: the scene and the list stopped part way, for a person to look at. */
 const SHOTS = process.argv.find((arg) => arg.startsWith("--shots="))?.slice("--shots=".length);
 const shot = async (page, name) => {

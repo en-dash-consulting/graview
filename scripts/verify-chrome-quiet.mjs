@@ -316,6 +316,8 @@ async function buildHost() {
         /* A brand whose body face is a wide display face: what the place tiles are measured in (FR-118). */
         const wide = asked.get("font") === "wide" ? { brand: { ...(compiled.app.brand ?? {}), name: compiled.app.name, typography: { body: ${JSON.stringify(WIDE_FONT)} } } } : {};
         window.__handle = mount(document.getElementById("app"), {
+          // The routed face and its scene, which this harness holds: an embed draws the one face unless told otherwise.
+          sceneUnderPages: false,
           ...wide,
           ...railed,
           app: compiled.app,

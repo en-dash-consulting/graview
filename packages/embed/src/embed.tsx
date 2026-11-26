@@ -1,6 +1,6 @@
 import { retryingImport } from "@graview/core/retry";
-import { addressOf, OVERVIEW_PATH, pagesTitle, pathWithin, sceneTitle, type AnySchema, type Brand, type GraviewApp, type Person, type Place, type Principal, type Store } from "@graview/core";
-import { EMPTY_VIEW, fromUrl, toUrl, withFocus, withOverview, type ViewState } from "@graview/layout/view";
+import { addressOf, kindPath, OVERVIEW_PATH, pagesTitle, pathWithin, placePath, recordPath, sceneTitle, type AnySchema, type Brand, type GraviewApp, type Person, type Place, type Principal, type Store } from "@graview/core";
+import { EMPTY_VIEW, fromUrl, kindsOf, toUrl, withFocus, withOverview, type ViewState } from "@graview/layout/view";
 import { appKeyOf, BarFindContext, descentTarget, fetchFrameworkViews, fetchNotices, frameworkViewDoors, frameworkVoice, NoticeBoardContext, sceneReportWhere, useWidth, type AppMenuRow, type BarFind, type BarScheme, type BarShare, type BarStatus } from "@graview/primitives/frame";
 import type { StudioOffered, StudioOnApply, StudioPlace as StudioPlaceType } from "@graview/studio";
 import { createNoticeBoard, quickAskOf, type Notice, type NoticeHandle } from "@graview/primitives/frame";
@@ -416,12 +416,15 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
   const addressAt = (path: string) => addressOf(path, based);
   const routed = { ...(props.routing ? { routing: props.routing } : {}), ...based };
   /*
-   * PAGES AND THE SCENE AS ONE FACE (FR-239): the routed face over the
+   * PAGES AND THE SCENE AS ONE FACE (FR-239), unless the host says `false`
+   * (Graview HQ feature:f-one-face-by-default): the routed face over the
    * Scene's own city, so there is no scene face to open on or switch to —
    * the overview is the Map over the home — and only a picture is drawn
-   * as itself.
+   * as itself. Held to the embed's own box unless the host's page is the
+   * app and hands it the address bar (`inBox`).
    */
-  const oneFace = props.sceneUnderPages === true;
+  const oneFace = props.sceneUnderPages !== false;
+  const inBox = oneFace && props.routing !== "address";
   const theOne = (face: EmbedFace): EmbedFace => (oneFace && face !== "picture" ? "pages" : face);
   const [opened] = useState<EmbedFace>(() => {
     const given = props.at?.face;
@@ -476,7 +479,9 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
   const pagesAt = useRef<{ path: string; asked: string | undefined }>(undefined as never);
   // On the one face the overview's address is the routed face's own: the Map over the home (FR-239).
   const pageOf = (path: string | undefined): string => (path === undefined || (isOverview(path) && !oneFace) ? "/" : path);
-  pagesAt.current ??= { path: pageOf(at?.path ?? (address ? (face === "pages" ? (pathWithin(window.location.pathname, props.basePath) ?? "/") + window.location.search : "/") : props.path)), asked: props.path };
+  // On the one face a stop with no path names the page it opens at: there is no scene to stop in.
+  const firstPage = (): string | undefined => props.path ?? (oneFace && !address && !at ? pageOfStop(stop, app.schema, (id) => store.graph.getNode(id)?.kind as string | undefined, (views as ReactViewRegistry<S>).places()) : undefined);
+  pagesAt.current ??= { path: pageOf(at?.path ?? (address ? (face === "pages" ? (pathWithin(window.location.pathname, props.basePath) ?? "/") + window.location.search : "/") : firstPage())), asked: props.path };
   if (props.path !== pagesAt.current.asked) pagesAt.current = { path: pageOf(props.path), asked: props.path };
   const told = useRef(props.onNavigate);
   told.current = props.onNavigate;
@@ -605,6 +610,15 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
     }
     toFace("pages", path);
   }, [steering, steer, setPageAt, toFace, address, props.basePath]);
+  /* A stop set later (`setStop`) goes, on the one face, to the page it names, as the first one opened there. */
+  const stopWas = useRef(stop);
+  useEffect(() => {
+    if (stopWas.current === stop) return;
+    stopWas.current = stop;
+    if (!oneFace || address) return;
+    const page = pageOfStop(stop, app.schema, (id) => store.graph.getNode(id)?.kind as string | undefined, (views as ReactViewRegistry<S>).places());
+    if (page) toPage(page);
+  }, [stop, oneFace, address, app.schema, store, views, toPage]);
   const arrangement = (views as ReactViewRegistry<S>).arrangement?.();
   const onPages = shown === "pages";
   /* The address a link to a page carries: the host's, where it says one; the app's own under address routing; none under memory routing, where a path of the face is no page of the host's. */
@@ -642,8 +656,10 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
       data-graview-embed={shown}
       data-graview-scheme={scheme}
       {...(narrow ? { "data-graview-embed-narrow": "" } : {})}
+      // The one face held to this box: every layer of it is placed from here, and clipped here (`PageContext.inBox`).
+      {...(inBox && shown === "pages" ? { "data-graview-one-face-box": "" } : {})}
       // Its own stacking context: every layer inside it (the scene's corner control, a panel) is ordered inside it, never over the host's page.
-      style={rootStyle(height, auto, oneFace && shown === "pages")}
+      style={rootStyle(height, auto, oneFace && shown === "pages" ? (inBox ? "box" : "window") : false)}
     >
       <style>{css}</style>
       <ErrorReportContext.Provider value={report}>
@@ -743,6 +759,27 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
 
 /** Whether a path on the routed face is the overview's own (FR-132). */
 const isOverview = (path: string): boolean => path.split(/[?#]/)[0] === OVERVIEW_PATH;
+
+/**
+ * THE PAGE A STOP NAMES, ON THE ONE FACE: there is no scene to stop in, so
+ * a stop handed with no path is where the page opens — the overview the
+ * Map over the home, a record focused its page, a kind's group or card its
+ * list, a place's view (`#view=the-season`) that place. A stop that names
+ * none of these names no page.
+ */
+export function pageOfStop(stop: string | undefined, schema: AnySchema, kindOf: (id: string) => string | undefined, places: readonly Place[]): string | undefined {
+  if (!stop) return undefined;
+  const view = fromUrl(stop);
+  if (view.overview) return OVERVIEW_PATH;
+  const named = view.within?.["view"];
+  if (named !== undefined && places.some((place) => place.as === named)) return placePath(named);
+  const focus = view.focusId;
+  if (!focus) return undefined;
+  const kind = kindOf(focus);
+  if (kind) return recordPath(schema, kind, focus);
+  const [only, ...more] = kindsOf(focus);
+  return only !== undefined && more.length === 0 && (schema.kinds as readonly string[]).includes(only) ? kindPath(schema, only) : undefined;
+}
 
 /** What `mount` reads `where()` from: the scene's view, the page on the routed face, and the face drawn. */
 interface Whereabouts {
@@ -1040,7 +1077,7 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedO
   const opening: EmbedFace | undefined = namedFace === undefined ? undefined : faceAtAddress({ ...options, face: namedFace });
   let asked: EmbedFace = opening ?? faceOf(options.stop);
   // On the one face every face asked for but a picture is drawn as the pages (FR-239).
-  const drawnAs = (face: EmbedFace): EmbedFace => (options.sceneUnderPages === true && face !== "picture" ? "pages" : face);
+  const drawnAs = (face: EmbedFace): EmbedFace => (options.sceneUnderPages !== false && face !== "picture" ? "pages" : face);
   let drawnFace: EmbedFace | null = null;
   let waiting: (() => void)[] = [];
   const onFaceDrawn = (face: EmbedFace) => {
@@ -1157,7 +1194,7 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedO
     setPath: (path) =>
       flushSync(() => {
         // The overview's path is the scene; any other path is a page (FR-132). On the one face it is the Map over the home, a page of the routed face (FR-239).
-        if (isOverview(path) && options.sceneUnderPages !== true) {
+        if (isOverview(path) && options.sceneUnderPages === false) {
           if (asked === "pages" || asked === "picture") {
             asked = "scene";
             historyDoor.unsettle();

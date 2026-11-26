@@ -88,7 +88,7 @@ graview.on("drop", "[data-drop]", (event) => {
 
 ### What the check cannot see
 
-Whether it reads (an image with no `alt`, colors that fail in dark): look on both faces, at 390 and on a desk, in both schemes.
+Whether it reads (an image with no `alt`, colors that fail in dark): look as a page and on the Map, at 390 and a desk, both schemes.
 
 ---
 

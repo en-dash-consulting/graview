@@ -78,7 +78,7 @@ async function embed(options: Partial<EmbedOptions> & { readonly firstLook?: Fir
   document.body.appendChild(host);
   let handle: EmbedHandle | undefined;
   await act(async () => {
-    handle = mount(host, { app, fonts: false, face: "scene", store: store(), ...options } as unknown as EmbedOptions);
+    handle = mount(host, { sceneUnderPages: false, app, fonts: false, face: "scene", store: store(), ...options } as unknown as EmbedOptions);
   });
   return { host, done: async () => { await act(async () => handle!.unmount()); host.remove(); } };
 }

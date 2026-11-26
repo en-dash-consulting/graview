@@ -65,6 +65,18 @@ describe("the watch, handed a store", () => {
     expect(unsaid).toContain("Brood frames");
   });
 
+  it("never counts a month's or a day's name as a key spoken, though a key says it: a calendar prints the month", () => {
+    const grant = defineNode("grant", {
+      fields: z.object({ label: z.string(), may: z.string(), mon: z.string(), allowsOn: z.string() }),
+      display: { labels: { may: "Allowed to", mon: "Monitor", allowsOn: "Starts" } },
+    });
+    const { unsaid } = namesOf(new Store({ schema: createSchema([grant]) }));
+    // "May" and "Mon" are a calendar's words as much as these keys spoken; "Allows on" is the key alone.
+    expect(unsaid).not.toContain("May");
+    expect(unsaid).not.toContain("Mon");
+    expect(unsaid).toContain("Allows on");
+  });
+
   it("reads what a seat may not see, and who has signed what", () => {
     const store = new Store({ schema, mutations: [close], policy, snapshot });
     expect(unseenOf(store, { kind: "human", id: "sam", roles: ["salesperson"] })).toEqual(["Chloé · Highlander"]);

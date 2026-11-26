@@ -188,9 +188,9 @@ export function documentReadmeLayout(ids: Ids, run: string): string {
   brand.ts       the document's brand, or one derived from an accent
 src/ui/
   views.tsx      registerDefaultViews, then your own where the generic one is wrong
-  app.tsx        the provider, the Shell primitive, and a seat — under sixty lines
-  pages.tsx      the ${ids.kind}'s page on the routed face, in your words, over the derived ones
-src/main.tsx     the theme, the store that remembers, the two faces
+  pages.tsx      the ${ids.kind}'s page and the home, in your words, over the derived ones
+  seat.tsx       the agent's seat and the studio, on the app's bar
+src/main.tsx     the theme, the store that remembers, and the app on one face
 template.json    the template this project was made from: \`${run} apply-template\` sets a store up from it
 tests/           the declaration checks clean, and the template's setup runs as one undoable batch`;
 }

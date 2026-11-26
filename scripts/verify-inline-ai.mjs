@@ -177,7 +177,7 @@ try {
   await context.addInitScript(KEEP_THE_STORE);
   const page = await context.newPage();
   page.on("pageerror", (error) => errors.push(error.message));
-  await page.goto(`${at("todo")}/?${DAY}&ai=stub`, { waitUntil: "load", timeout: 90_000 });
+  await page.goto(`${at("todo")}/scene/?${DAY}&ai=stub`, { waitUntil: "load", timeout: 90_000 });
   await ready(page);
 
   /* ------------------------------------------- a suggestion, from the catalog */
@@ -331,7 +331,7 @@ try {
 
   /* ------------------------------------------- the record view, on the routed face */
   reach("theRecordViewShowsIt");
-  await page.goto(`${at("todo")}/pages/tasks/t-deposit?${DAY}&ai=stub`, { waitUntil: "load", timeout: 90_000 });
+  await page.goto(`${at("todo")}/tasks/t-deposit?${DAY}&ai=stub`, { waitUntil: "load", timeout: 90_000 });
   await page.waitForSelector(HEADING, { timeout: 60_000 });
   await page.waitForTimeout(500);
   await page.click(HEADING, { button: "right" });
@@ -396,7 +396,7 @@ try {
   }, STORED);
   const host = await hosted.newPage();
   host.on("pageerror", (error) => errors.push(error.message));
-  await host.goto(`${at("todo")}/?${DAY}`, { waitUntil: "load", timeout: 90_000 });
+  await host.goto(`${at("todo")}/scene/?${DAY}`, { waitUntil: "load", timeout: 90_000 });
   await ready(host);
   await openActivity(host);
   await host.waitForSelector('[data-interaction="ai-stored-1"]', { timeout: 10_000 }).catch(() => undefined);
@@ -441,7 +441,7 @@ try {
   });
   const rested = await counting.newPage();
   rested.on("pageerror", (error) => errors.push(error.message));
-  await rested.goto(`${at("todo")}/?${DAY}`, { waitUntil: "load", timeout: 90_000 });
+  await rested.goto(`${at("todo")}/scene/?${DAY}`, { waitUntil: "load", timeout: 90_000 });
   await ready(rested);
   const calls = () => rested.evaluate(() => ({ ...window.__calls }));
   /* A right-click dispatched on a card, and what the menu is one frame later. */
@@ -502,7 +502,7 @@ try {
   };
 
   reach("onlyAThinkingSlotAsksWhenSuggestIsPressed");
-  await rested.goto(`${at("todo")}/?${DAY}&thinkingOnly=1`, { waitUntil: "load", timeout: 90_000 });
+  await rested.goto(`${at("todo")}/scene/?${DAY}&thinkingOnly=1`, { waitUntil: "load", timeout: 90_000 });
   await ready(rested);
   await rested.click('[data-graview-pick="t-deposit"]', { button: "right" });
   await rested.waitForSelector(MENU, { timeout: 10_000 }).catch(() => undefined);
@@ -566,7 +566,7 @@ try {
   let loads = 0;
   while (samples.length < OPENS && loads < 8) {
     loads += 1;
-    await clock.goto(`${at("todo")}/?${DAY}`, { waitUntil: "load", timeout: 90_000 });
+    await clock.goto(`${at("todo")}/scene/?${DAY}`, { waitUntil: "load", timeout: 90_000 });
     await ready(clock);
     const tasks = await clock.evaluate(() => [...new Set([...document.querySelectorAll('[data-graview-pick^="t-"]')].map((one) => one.getAttribute("data-graview-pick")))]);
     for (const id of tasks) {
@@ -630,7 +630,7 @@ try {
   /* ------------------------------------------- one quiet hover chip */
   reach("aHoverChipIsAtMostOneAndNeverOnAPassOver");
   const chipsSaid = () => clock.evaluate(() => ({ chips: document.querySelectorAll('[data-testid="hover-chip"]').length, fast: window.__calls.fast, label: document.querySelector('[data-testid="hover-chip"]')?.getAttribute("aria-label") ?? null }));
-  await clock.goto(`${at("todo")}/?${DAY}&chips=1`, { waitUntil: "load", timeout: 90_000 });
+  await clock.goto(`${at("todo")}/scene/?${DAY}&chips=1`, { waitUntil: "load", timeout: 90_000 });
   await ready(clock);
   const passing = await clock.evaluate(() => [...new Set([...document.querySelectorAll('[data-graview-pick^="t-"]')].map((one) => one.getAttribute("data-graview-pick")))].slice(0, 6));
   // Across the tasks without stopping: each passed over in a few milliseconds, then the pointer away from them all.
@@ -671,13 +671,13 @@ try {
   };
 
   reach("aHoverChipVanishesWithAiOff");
-  await clock.goto(`${at("todo")}/?${DAY}&chips=1&off=1`, { waitUntil: "load", timeout: 90_000 });
+  await clock.goto(`${at("todo")}/scene/?${DAY}&chips=1&off=1`, { waitUntil: "load", timeout: 90_000 });
   await ready(clock);
   await clock.hover('[data-graview-pick="t-deposit"]');
   await clock.waitForTimeout(900);
   const offChips = await chipsSaid();
   // And off unless the host asks for chips: the same rest, a Fast slot, no chip and no call.
-  await clock.goto(`${at("todo")}/?${DAY}`, { waitUntil: "load", timeout: 90_000 });
+  await clock.goto(`${at("todo")}/scene/?${DAY}`, { waitUntil: "load", timeout: 90_000 });
   await ready(clock);
   await clock.hover('[data-graview-pick="t-deposit"]');
   await clock.waitForTimeout(900);
@@ -691,7 +691,7 @@ try {
 
   /* ------------------------------------------- AI off: no AI part, on either face */
   reach("aiOffHidesEveryAiPartOnBothFaces");
-  await host.goto(`${at("todo")}/?${DAY}&hostOff=1`, { waitUntil: "load", timeout: 90_000 });
+  await host.goto(`${at("todo")}/scene/?${DAY}&hostOff=1`, { waitUntil: "load", timeout: 90_000 });
   await ready(host);
   await host.click('[data-graview-pick="t-deposit"]', { button: "right" });
   await host.waitForSelector(MENU, { timeout: 10_000 });
@@ -704,7 +704,7 @@ try {
   // Where the host says AI is off the inbox draws no "Your asks" tab either.
   const activityOff = await host.evaluate(() => ({ filter: document.querySelector('[data-testid="activity-filter"]') !== null, interactions: document.querySelectorAll('[data-testid="activity-interaction"]').length, asks: document.querySelector('[data-testid="inbox-tab-asks"]') !== null }));
   await host.keyboard.press("Escape");
-  await host.goto(`${at("todo")}/pages/tasks/t-deposit?${DAY}&hostOff=1`, { waitUntil: "load", timeout: 90_000 });
+  await host.goto(`${at("todo")}/tasks/t-deposit?${DAY}&hostOff=1`, { waitUntil: "load", timeout: 90_000 });
   await host.waitForSelector(HEADING, { timeout: 60_000 });
   await host.waitForTimeout(500);
   await host.click(HEADING, { button: "right" });

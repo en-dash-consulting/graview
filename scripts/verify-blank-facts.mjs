@@ -62,6 +62,8 @@ async function buildHost() {
         import { staffingApp, staffingSeed, ana, rui } from ${JSON.stringify(STAFFING)};
         const query = new URLSearchParams(location.search);
         window.__handle = mount(document.getElementById("app"), {
+          // The routed face and its scene, which this harness holds: an embed draws the one face unless told otherwise.
+          sceneUnderPages: false,
           app: staffingApp,
           seed: staffingSeed,
           face: "pages",

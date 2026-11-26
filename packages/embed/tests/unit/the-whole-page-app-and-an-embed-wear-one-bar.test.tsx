@@ -68,7 +68,7 @@ async function embed(given: Store<typeof schema>) {
   document.body.appendChild(host);
   let handle: EmbedHandle | undefined;
   await act(async () => {
-    handle = mount(host, { app, fonts: false, face: "scene", store: given } as unknown as EmbedOptions);
+    handle = mount(host, { sceneUnderPages: false, app, fonts: false, face: "scene", store: given } as unknown as EmbedOptions);
   });
   await settle(host);
   return { host, done: async () => { await act(async () => handle!.unmount()); host.remove(); sessionStorage.clear(); } };

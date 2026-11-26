@@ -1,14 +1,20 @@
 # Pages and lenses are one: the view
 
 Status: design note for the Pages+Scene unification (Graview HQ
-feature:f-page-zooms-out-to-the-city). The one face ships in 0.2.0 as a
-host option, `sceneUnderPages`, off unless a host gives it: Cloud turns it
-on app by app, and making it the default is 0.2.1. The rest of this note is
-the plan. Pre-1.0: no shims, no aliases. The format upgrade does the moving.
+feature:f-page-zooms-out-to-the-city). The one face shipped in 0.2.0 as a
+host option, `sceneUnderPages`, off unless a host gave it. Since
+one-face-by-default (Graview HQ feature:f-one-face-by-default), it is what
+a routed face that owns its page draws: a `PagesApp` handed `views` is the
+one face unless its host says `sceneUnderPages: false`, and `graview
+create` and the example (Things, `apps/todo`) open on it at `/`. Since
+embed-one-face-in-a-box, an embedded face (`@graview/embed`) is the one
+face too unless its host says `sceneUnderPages: false`: held to its box on
+somebody else's page, against the window under `routing: "address"`.
+Pre-1.0: no shims, no aliases. The format upgrade does the moving.
 
 ## What a person sees on the one face
 
-Where a host gives `sceneUnderPages`, there is one face. A routed page is read over the Scene's own city, and one
+On a routed face that owns its page, there is one face. A routed page is read over the Scene's own city, and one
 camera moves the page itself between three levels, every step drawn, the
 same element all the way:
 
@@ -125,10 +131,14 @@ and held by `pnpm verify one-face` (`aDuplicateViewIsFound`).
 
 ## What Graview Cloud changes
 
-1. Set `sceneUnderPages: true` per app, as it moves each one (see
-   "Upgrading to 0.2"), where it hosts that app as the page itself. Where it
-   embeds an app and wants no switch, pass `bar: { faces: false }` to
-   `@graview/embed` until the embed draws the one face in a box (below).
+1. Since one-face-by-default, a `PagesApp` it mounts itself with `views`
+   is the one face unless it says `sceneUnderPages: false`: pass `false`
+   for every app not yet moved. Since embed-one-face-in-a-box the same
+   holds for `@graview/embed`: `mount` and `<Embed>` draw the one face
+   unless told `sceneUnderPages: false`, so pass `false` for every app
+   Cloud mounts and has not moved. One it hosts as the page itself
+   (`routing: "address"`) stands against the window; one it embeds in a
+   box is held to the box.
 2. Run `upgradeDocument` on read (it already does) once format 2 ships. The
    stored document upgrades itself, and Cloud records the system-authored
    version it returns. No hand migration of users' documents.
@@ -140,20 +150,25 @@ and held by `pnpm verify one-face` (`aDuplicateViewIsFound`).
 
 ## What breaks for a host
 
-- `PagesApp` with `sceneUnderPages`: the bar has no Scene/Pages switch, no
+- `PagesApp` handed `views`, unless its host says `sceneUnderPages: false`
+  (since one-face-by-default; with `sceneUnderPages: true` before it): the bar has no Scene/Pages switch, no
   "In the scene" link, and no Up on the bar. The page's bar is portaled to a
   fixed slot at the window's top. A `pages-design` shell that measured the
   bar inside its own flow sees a spacer of the bar's height in its place.
-- `@graview/embed`: unchanged in this pass. The one face positions the page
-  and the city against the window (`position: fixed`), so it is not yet
-  drawn inside a host's box. The embed keeps its faces, and a host that wants
-  no switch already says `bar: { faces: false }`. Making the one face live in
-  a box (the embed's root as the camera's frame) is the next step.
+- `@graview/embed` (since embed-one-face-in-a-box): `mount` and `<Embed>`
+  draw the one face unless told `sceneUnderPages: false`. Under memory
+  routing it is held to the embed's element, whose root is the containing
+  block of every layer (`contain: layout paint`), `height` tall (`"auto"`:
+  `AUTO_SCENE_HEIGHT`); under `routing: "address"` it stands against the
+  window. `sceneUnderPages: false` keeps the routed face, its switch and
+  the scene and the Graview as faces.
 - Format 2 (when it ships): `lenses` with titles move to `views.items`, and
   `pages.scene` / `pages.pages` are gone. Code declarations (`defineApp`)
   change by hand, guided by the check.
 
 ## Upgrading to 0.2
+
+(As 0.2.0 shipped it. Since one-face-by-default, above, a `PagesApp` that owns its page is the one face unless its host says `sceneUnderPages: false`; the embed is as below.)
 
 0.2.0 makes the one face available and changes nothing for an app that does
 not ask for it. `sceneUnderPages` is off unless a host gives it, and an app
@@ -192,10 +207,9 @@ when staff choose:
    first.
 3. **Move one app.** Two steps, each its own act:
    - Turn on `sceneUnderPages` for that app where Cloud hosts it as the page
-     itself (a per-app setting of Cloud's, not of the document). An embed
-     keeps its faces for now: pass `bar: { faces: false }` to
-     `@graview/embed` if the switch should not show, until the one face
-     draws in a box (below).
+     itself (a per-app setting of Cloud's, not of the document). Since
+     embed-one-face-in-a-box an embed draws the one face unless told
+     `sceneUnderPages: false`, in a box as against the window.
    - Apply the app's `view-duplicates-another` edits as one new version
      authored by the system ("one view per picture, 0.2"):
      `findings.filter((f) => f.code === "check:view-duplicates-another").flatMap((f) => f.edits ?? [])`,
@@ -214,7 +228,7 @@ upgraded in memory on read, persisted per app by an explicit host call.
 
 **What breaks:**
 
-- Nothing, for an app without `sceneUnderPages`.
+- Nothing, for an app without `sceneUnderPages` (in 0.2.0; since one-face-by-default, for an app whose host says `sceneUnderPages: false`, or an embed that does not say `true`).
 - With it, on that app's routed face: the bar has no Scene/Pages switch, no
   "In the scene" link and no Up. The bar is portaled to a fixed slot at the
   window's top, so a `pages-design` shell that measured the bar inside its
@@ -231,29 +245,56 @@ Held by
 an unmoved app compiles with the folds as warnings, a moved and an unmoved
 app compile side by side, and reading a document twice changes nothing.
 
+## One face by default (done)
+
+The one face is the default for a routed face that owns its page
+(`onTheOneFace(context)` in `@graview/pages`: handed `views`, not
+`embedded`, and not `sceneUnderPages: false`). `sceneUnderPages` stays, as
+the host's way out (`false`) and an embed's way in (`true`). What 0.2.0's
+first try found, and where it went:
+
+- The routed-face unit tests that read a page before the city's part had
+  come, or read the whole document (where jsdom does not leave out the city
+  drawn out of sight under the page, and so found every board twice), wait
+  for the one face now and read the page alone
+  (`packages/pages/tests/unit/on-the-one-face.ts`): the boards, the menus
+  under the cursor, a record drawn as a link under a base.
+- A page drawn to a string where a document is shimmed (jsdom's
+  `renderToStaticMarkup`) took the browser's path and suspended; it draws
+  the page as the fallback does, as on a server.
+- The claims about the record's way to the Scene ("In the scene", Seen in's
+  arrow, a worker view's head) hold on the routed face alone, where the link
+  is drawn, and say so; on the one face the city is the camera rising, and a
+  test holds that no link is drawn there.
+- The hosted budgets did not move: Cloud's hosted page is the embed, which
+  stays the routed face alone unless asked.
+- `graview create` writes one `PagesApp` at `/`: no `/pages`, no
+  `src/ui/app.tsx` (the Scene's own face, its Studio button and its starter
+  seat), and the record page in your words has no "See it in the scene".
+  Things serves the one face at `/`; the Scene's own face stays at
+  `/scene/` only for the Scene's own harnesses
+  (scene-harnesses-onto-the-one-face, below).
+- The seat and the studio stand on the one face's bar where the Scene's own
+  face had them (f-studio-and-seat-on-the-one-face): the agent's seat in the
+  bell's Activity, with its calls, and the studio in the person's menu under
+  "Keeping this app". `PagesApp` takes them as `seat` and `studio` on its
+  context, and `graview create` writes both in `src/ui/seat.tsx`.
+
 ## Deferred past 0.2.0 (named follow-ups)
 
-- **one-face-by-default (0.2.1)**: the one face without the
-  `sceneUnderPages` option. Tried in this pass and taken back: with it on
-  for every routed face that owns its page, 32 unit tests of the routed face
-  (boards, menus, a record's name in place, Seen in, "the record's way to the
-  scene") and the hosted budgets failed. They hold claims about the page as
-  it was drawn before the city part loads, and about the link to the Scene.
-  Each needs moving onto the one face, or retiring where the one face makes
-  it obsolete, before the option can go.
-- **embed-one-face-in-a-box**: the one face drawn inside a host's element.
-  It positions against the window today, so `@graview/embed` draws the plain
-  routed face, and Cloud's embedded pages get no city yet.
 - **close-up-live-views**: a view up close on the Map as its live,
   interactive page.
 - **format-2**: `views.items` in the stored format, done by `UPGRADES[1]`.
 - **scene-harnesses-onto-the-one-face**: the Scene-face harnesses
   (navigation, scene-hands, drive-in, chrome, menu, seat and others) still
-  drive the Scene's own face at the root. A person at the root of Things or
+  drive the Scene's own face, at `/scene/` on Things. A person at the root of
   the discography is sent to the one face; a driven browser is not.
+- **show-installation-on-the-one-face**: the Scene's own face put "Show the
+  installation" beside the studio under "Keeping this app"; the one face's
+  person's menu holds the studio alone.
 - **district-views-menu**: the district label's legacy menu of views is not
   drawn on the one face (each view stands as its billboard); removing it from
-  the Scene's own face goes with one-face-by-default.
+  the Scene's own face goes with the Scene's own face.
 - **worker-view-lines**: lines from a worker view's `data-record` parts,
   reported by the guest host through the frame.
 - **custom-view fixtures** through the harness: a worker view, a product

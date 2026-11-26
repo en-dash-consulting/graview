@@ -2,11 +2,11 @@
 
 > Graview is an agent-native TypeScript framework, made by En Dash, for apps that people and AI agents work in together. A product declares its domain once — the kinds of thing, their fields and relations, the acts that change them, the rules they must keep and who may do what — and Graview derives the interface, the permissions and a typed tool for every act from that one declaration, so they cannot drift apart. The interface is an isometric scene a person flies over and a routed web app, and a checker says in plain words when the declaration is wrong. Graview Cloud (https://graview.cloud) is the hosted product built on it.
 
-- Start with an agent: https://graview.dev/start.md is the procedure, written for the agent — hand it "Read https://graview.dev/start.md, then turn this repo's docs into a Graview app."
+- Start with an agent: https://graview.dev/start.md is the procedure, written for the agent — hand it "Read https://graview.dev/start.md, then map this repo as a Graview app and show me what's in it."
 - Start a product: `npm create graview@latest my-app` (Node 22 or later)
 - License: Elastic License 2.0 — source-available, free to build with and to ship products on
 - Source: https://github.com/en-dash-consulting/graview
-- npm: https://www.npmjs.com/package/graview — 14 packages, one version (0.2.16)
+- npm: https://www.npmjs.com/package/graview — 14 packages, one version (0.2.17)
 - Hosted: Graview Cloud, https://graview.cloud (private alpha, invite-only)
 
 Every page below is also a web page (drop the `.md` for the `.html`); [llms-full.txt](https://graview.dev/llms-full.txt) is all of them in one file.

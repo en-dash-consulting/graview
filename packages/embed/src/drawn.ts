@@ -26,9 +26,10 @@ import type { EmbedWhere } from "./where.js";
  * said for time alone, so a page said drawn by the ten seconds is never
  * said painted (wait for either); at the city (the overview, the page out of the
  * window) it waits for the face and its city too, which are what is read.
- * An attribute written again as it was is no change to it: the city's frame
- * loop writes its own every frame, and a place over it is said drawn only
- * after ten seconds.
+ * An attribute written again as it was is no change to it, for either mark:
+ * the city's frame loop writes its own every frame, most as they were, and a
+ * place over it was said drawn only at the ten seconds (Graview HQ
+ * feature:f-city-drawn-waits-its-cap).
  */
 
 /** The attribute the embed's root wears while the place it is on has drawn and settled. */
@@ -89,7 +90,6 @@ export function watchDrawn(root: HTMLElement, path: string, settled: () => void,
   const window = root.ownerDocument.defaultView;
   if (!window) return () => undefined;
   const started = now();
-  let moved = started;
   // When anything last changed, an attribute written again as it was aside.
   let changed = started;
   let last = measure(root);
@@ -97,9 +97,7 @@ export function watchDrawn(root: HTMLElement, path: string, settled: () => void,
   let timer: ReturnType<typeof setTimeout> | undefined;
   const observer = typeof MutationObserver === "undefined" ? undefined : new MutationObserver((records) => {
     const seen = records.filter((record) => !(record.target === root && (record.attributeName === DRAWN_ATTRIBUTE || record.attributeName === PAINTED_ATTRIBUTE)));
-    if (seen.length === 0) return;
-    moved = now();
-    if (seen.some((record) => record.attributeName === null || (record.target as Element).getAttribute(record.attributeName) !== record.oldValue)) changed = moved;
+    if (seen.some((record) => record.attributeName === null || (record.target as Element).getAttribute(record.attributeName) !== record.oldValue)) changed = now();
   });
   observer?.observe(root, { childList: true, subtree: true, characterData: true, attributes: true, attributeOldValue: true });
   const stop = () => {
@@ -134,7 +132,7 @@ export function watchDrawn(root: HTMLElement, path: string, settled: () => void,
     const size = measure(root);
     if (size !== last) {
       last = size;
-      moved = changed = now();
+      changed = now();
     }
     const at = now();
     if (!painting && at - changed >= QUIET_MS && whole()) {
@@ -145,7 +143,7 @@ export function watchDrawn(root: HTMLElement, path: string, settled: () => void,
         if (painting) root.setAttribute(PAINTED_ATTRIBUTE, path);
       });
     }
-    if ((here(root, parts) && at - moved >= QUIET_MS) || at - started >= MOST_MS) {
+    if ((here(root, parts) && at - changed >= QUIET_MS) || at - started >= MOST_MS) {
       afterPaint(() => {
         if (stopped) return;
         stop();

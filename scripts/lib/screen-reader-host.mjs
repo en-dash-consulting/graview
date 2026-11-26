@@ -54,6 +54,8 @@ export async function buildRoadmapHost(repoRoot) {
         const compiled = compileDocumentWithoutCheck({ ...roadmap, lenses: [...roadmap.lenses, blocks] }, { today: () => "2026-10-12" });
         if (!compiled.ok) throw new Error(compiled.findings.map((one) => one.message).join("; "));
         const handle = mount(document.getElementById("app"), {
+          // The routed face and its scene, which this harness holds: an embed draws the one face unless told otherwise.
+          sceneUnderPages: false,
           app: compiled.app,
           seed,
           face: asked.get("face") ?? "pages",

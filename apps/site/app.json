@@ -29,7 +29,7 @@
         "about": { "to": ["package", "skill", "recipe", "scaffold"], "cardinality": "one", "description": "what the page is about", "inverse": "the page about it" },
         "under": { "to": ["page"], "cardinality": "one", "description": "the page it sits under", "inverse": "the pages under it" }
       },
-      "glance": ["path", "design"]
+      "glance": ["description"]
     },
     "package": {
       "noun": "package",

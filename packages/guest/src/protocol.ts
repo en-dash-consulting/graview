@@ -16,6 +16,14 @@
  *   guest → host     { type: "size", nonce, height }                 (over the port: the height it wants)
  *   guest → host     { type: "records", nonce, boxes, shows }        (over the port: the records it marks with `data-record`, and where those in sight are)
  *   host  → guest    { type: "answer", id, ok, … }                   (over the port: what became of an act)
+ *   host  → guest    { type: "away", away }                          (over the port: kept off the page, out of sight, and back on it)
+ *
+ * A FRAME KEPT FOR A RETURN (Graview HQ feature:f-kept-frame-told-off-page)
+ * is moved, still running, to a shelf out of sight as its page is left, and
+ * back as it is gone back to. It is told `away: true` as it goes and
+ * `away: false` as it comes back, so what it plays stops where nobody sees
+ * it: the client pauses the playing `<video>` and `<audio>` in its document, plays again
+ * what it paused, and the guest's code hears both (`guest.onAway`).
  *
  * A GUEST IN A WORKER (FR-68) says the same things. Its `guest-ready` goes
  * to the worker's owner (`self.postMessage`), which is the host by
@@ -624,6 +632,8 @@ export type HostMessage =
   | { readonly type: "notice"; readonly text: string }
   /** The faces the app lends a frame (`GuestFont`), every one again whenever they change: the client puts them in the frame's document in place of those it was lent before. */
   | { readonly type: "fonts"; readonly fonts: readonly GuestFont[] }
+  /** Kept off the page, out of sight (`true`), and back on it (`false`): a frame kept for a return (`keeps`). */
+  | { readonly type: "away"; readonly away: boolean }
   /** What became of `graview.mine`'s ask. */
   | { readonly type: "mine-answer"; readonly id: string | number; readonly ok: boolean; readonly value?: string | null; readonly sentence?: string }
   | HostHeartbeat;

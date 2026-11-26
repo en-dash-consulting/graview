@@ -98,6 +98,8 @@ async function inAHostsPage(browser, report) {
         const compiled = compileDocumentWithoutCheck(vendors);
         window.__handed = [];
         const handle = mount(document.getElementById("graview-builder"), {
+          // The routed face and its scene, which this harness holds: an embed draws the one face unless told otherwise.
+          sceneUnderPages: false,
           app: compiled.app,
           principal: { kind: "human", id: "editor", roles: ["viewer"] },
           studio: {
@@ -797,7 +799,8 @@ try {
   await page.waitForTimeout(600);
   const back = await page.evaluate(() => ({
     studioGone: document.querySelector('[data-testid="studio"]') === null,
-    stillTheApp: document.querySelector('[data-graview-pick="t-deposit"]') !== null,
+    // Things' one face, on the page it opened on, its bar and its page standing.
+    stillTheApp: document.querySelector("[data-graview-one-place]") !== null && document.querySelector('[data-graview-app-bar] [data-testid="profile-button"]') !== null && location.pathname === "/",
   }));
   report.checks.closingPutsYouBackWhereYouWere = { ...back, ok: back.studioGone && back.stillTheApp };
 

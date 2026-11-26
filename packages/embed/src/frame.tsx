@@ -232,17 +232,38 @@ export interface FrameOptions<S extends AnySchema = AnySchema> {
    */
   readonly bar?: boolean | EmbedBar;
   /**
-   * PAGES AND THE SCENE AS ONE FACE (FR-239), for a host whose page IS the
-   * app: the routed face stands over the Scene's own city, drawn with the
-   * `views` it already has, and one control moves the same page from Page
-   * to Nearby to Map (the keys 1, 2, 3, `[` and `]` too). There is then no
+   * PAGES AND THE SCENE AS ONE FACE (FR-239, Graview HQ
+   * feature:f-one-face-by-default): what an embed draws unless its host says
+   * `false`. The routed face stands over the Scene's own city, drawn with
+   * the `views` it already has, and one control moves the same page from
+   * Page to Nearby to Map (the keys 1, 2, 3, `[` and `]` too). There is no
    * scene face to switch to: `face` names the pages (a picture stays a
-   * picture), the overview's address is the Map over the home, and the
-   * bar offers no Scene/Pages switch. The bar stands in the one face's slot,
-   * fixed at the window's top (`[data-graview-one-face-bar]`), at every
-   * level; the page is in the window's flow and the window scrolls it, so
-   * the embed is as tall as its page, at least `height`. Off unless given:
-   * without it every face draws as before.
+   * picture), the overview's address is the Map over the home, a `stop`
+   * with no `path` opens the page it names (`#overview=1` the Map, a
+   * record's focus its page, a kind's its list, a place's view the place),
+   * and the bar offers no Scene/Pages switch. The bar stands in the one
+   * face's slot (`[data-graview-one-face-bar]`) at every level.
+   *
+   * WHERE IT STANDS is said by `routing`:
+   *
+   * - `routing: "address"` — the host's page IS the app (Graview Cloud, a
+   *   hosted app, `graview preview`): the one face stands against the
+   *   window. The bar is fixed at the window's top, the page is in the
+   *   window's flow and the window scrolls it, so the embed is as tall as
+   *   its page, at least `height`.
+   * - otherwise, memory routing — an embed in a box on somebody else's page
+   *   (a docs chapter, a demo in an article): the one face is held to the
+   *   embed's own element, `height` tall (`"auto"` holds it at
+   *   `AUTO_SCENE_HEIGHT`). The root is the containing block of every layer
+   *   of the face (`contain: layout paint`, `data-graview-one-face-box`),
+   *   so the bar stands at the box's top, Page, Nearby and Map and the
+   *   panel are the box's rect, the page scrolls inside the box, nothing is
+   *   drawn over the host's page, the host's page scrolls on when the
+   *   pointer is outside it, and the level keys move it only while the
+   *   keyboard is in it.
+   *
+   * `false` draws the routed face alone, with its Scene/Pages switch, and
+   * the scene and the Graview as faces of their own.
    */
   readonly sceneUnderPages?: boolean;
   /**
@@ -251,7 +272,7 @@ export interface FrameOptions<S extends AnySchema = AnySchema> {
    * unsaid, held to 0.25–0.75, and never wider than 1192 pixels or than
    * leaves the city 480. A width the person drags the panel to is kept for
    * the app in that browser and wins over it; a phone's sheet is not this.
-   * Read only with `sceneUnderPages`.
+   * Read only on the one face (`sceneUnderPages`).
    */
   readonly panel?: number;
   /**
@@ -698,6 +719,14 @@ export function useIntrinsicHeight(rootRef: { readonly current: HTMLElement | nu
     };
     let last = -1;
     const report = () => {
+      // The one face held to a box asks for the box: its page scrolls inside it, every layer of it placed there, so nothing of it is in the frame's flow to measure.
+      if (root.hasAttribute("data-graview-one-face-box")) {
+        const height = Math.ceil(heightOf(root));
+        if (height === last) return;
+        last = height;
+        told.current?.(height);
+        return;
+      }
       const { strip, line, content, measure } = parts();
       const height = Math.ceil(heightOf(strip) + heightOf(line) + (measure ? heightOf(measure) : heightOf(content)));
       if (height === last) return;
@@ -796,13 +825,30 @@ export function useFrame<S extends AnySchema>(props: FrameOptions<S>) {
     // sweep names what is INSIDE it — a named section is a region too, and
     // the seat is one (FR-40).
     // A landmark that already says which picture it is in — a board's column, "Vendors by status · Researching, 0" (FR-109) — keeps its name.
-    const sweep = () =>
+    /*
+     * A REGION NAMED BY ITS OWN HEADING (`aria-labelledby`, as a design's
+     * sections are) is named after the embed too: two embeds of one design on
+     * a page were two regions of one name. Its heading's words become its
+     * label, under the embed's, and the reference is let go.
+     */
+    const byHeading = (el: Element) => {
+      const ids = el.getAttribute("aria-labelledby")?.split(/\s+/).filter(Boolean) ?? [];
+      const words = ids.map((id) => root.querySelector(`[id="${CSS.escape(id)}"]`)?.textContent?.trim() ?? "").filter(Boolean).join(" ");
+      if (!words) return;
+      el.removeAttribute("aria-labelledby");
+      el.setAttribute("aria-label", words);
+    };
+    const sweep = () => {
+      root.querySelectorAll("section[aria-labelledby]:not([role]), [role=region][aria-labelledby]").forEach((el) => {
+        if (!el.hasAttribute("data-graview-named-by-lens")) byHeading(el);
+      });
       root.querySelectorAll("aside, nav, main, header, footer, section[aria-label]:not([role]), [role=region], [role=complementary], [role=navigation], [role=search]").forEach((el) => {
         if (!el.hasAttribute("data-graview-named-by-lens")) name(el);
       });
+    };
     sweep();
     const observer = new MutationObserver(sweep);
-    observer.observe(root, { childList: true, subtree: true, attributes: true, attributeFilter: ["aria-label"] });
+    observer.observe(root, { childList: true, subtree: true, attributes: true, attributeFilter: ["aria-label", "aria-labelledby"] });
     return () => observer.disconnect();
   }, [label]);
 
@@ -894,19 +940,24 @@ export function providerProps<S extends AnySchema>(props: FrameOptions<S>, prese
 /**
  * THE FRAME'S ROOT, as every face draws it: its own stacking context, so
  * every layer inside it is ordered inside it and never over the host's
- * page, and the face's box at the height asked for. On the one face
- * (`sceneUnderPages`, FR-239) the page is in the window's flow and the
- * window scrolls it, so the root is at least that height, as tall as its
- * page, and clips nothing.
+ * page, and the face's box at the height asked for. Where the one face
+ * stands against the window (`sceneUnderPages` under address routing,
+ * FR-239) the page is in the window's flow and the window scrolls it, so
+ * the root is at least that height, as tall as its page, and clips
+ * nothing. Where it is held to the box (`oneFace: "box"`) the root is the
+ * containing block of every layer of the face — the bar's slot, the page,
+ * the city, the boards, the level control — so each is placed from the
+ * box's corner and clipped to it, and none is drawn over the host's page.
  */
-export function rootStyle(height: number | string, auto: boolean, oneFace: boolean): CSSProperties {
-  if (oneFace) return { position: "relative", isolation: "isolate", minHeight: auto ? 0 : height, display: "flex", flexDirection: "column", borderRadius: "var(--graview-radius, 12px)" };
+export function rootStyle(height: number | string, auto: boolean, oneFace: false | "window" | "box"): CSSProperties {
+  if (oneFace === "window") return { position: "relative", isolation: "isolate", minHeight: auto ? 0 : height, display: "flex", flexDirection: "column", borderRadius: "var(--graview-radius, 12px)" };
+  if (oneFace === "box") return { position: "relative", isolation: "isolate", contain: "layout paint", overflow: "clip", height: auto ? AUTO_SCENE_HEIGHT : height, minHeight: auto ? 0 : 320, display: "flex", flexDirection: "column", borderRadius: "var(--graview-radius, 12px)" };
   return { position: "relative", isolation: "isolate", height, minHeight: auto ? 0 : 320, display: "flex", flexDirection: "column", overflow: "hidden", borderRadius: "var(--graview-radius, 12px)" };
 }
 
 /**
  * THE BAR WHERE THE FACE KEEPS IT: in the one face's slot, fixed at the
- * window's top over the page and the city (FR-239), once the face has drawn
+ * window's top — the box's, where the face is held to one — over the page and the city (FR-239), once the face has drawn
  * it; in the frame's flow until then, and on every other face.
  *
  * ONE BAR ACROSS THE MOVE. The one face's part is fetched after the page

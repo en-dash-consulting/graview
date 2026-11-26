@@ -145,6 +145,36 @@ export interface GuestFrame {
   dispose(): void;
 }
 
+/*
+ * What the page adds and takes away, watched once a document for every
+ * frame drawn in it (LOADED AGAIN, DRAWN AGAIN, below): each frame is asked
+ * whether its window is another. A frame in a shadow root is not seen
+ * moved within it; none is drawn there.
+ */
+const reloadWatches = new WeakMap<Document, { readonly observer: MutationObserver; readonly frames: Set<() => void> }>();
+function watchReloads(document: Document, look: () => void): () => void {
+  if (typeof MutationObserver === "undefined") return () => undefined;
+  let watch = reloadWatches.get(document);
+  if (!watch) {
+    const frames = new Set<() => void>();
+    const observer = new MutationObserver(() => {
+      for (const one of [...frames]) one();
+    });
+    observer.observe(document, { childList: true, subtree: true });
+    watch = { observer, frames };
+    reloadWatches.set(document, watch);
+  }
+  const { frames } = watch;
+  frames.add(look);
+  return () => {
+    frames.delete(look);
+    if (frames.size === 0 && reloadWatches.get(document)?.frames === frames) {
+      reloadWatches.get(document)!.observer.disconnect();
+      reloadWatches.delete(document);
+    }
+  };
+}
+
 /** An element that can be moved to without what is moved being taken down (Chrome 133, Firefox 144). */
 interface Moves {
   moveBefore?(node: Node, child: Node | null): void;
@@ -317,11 +347,13 @@ export function mountGuestView<S extends AnySchema>(element: HTMLElement, option
     clearTimeout(quiet);
     quiet = setTimeout(drew, 250);
   };
-  const silent = setTimeout(() => {
-    if (session) return;
-    iframe.removeAttribute("aria-busy");
-    iframe.setAttribute("data-guest-view-failed", "silent");
-  }, options.limits?.readyMs ?? 8_000);
+  const unready = () =>
+    setTimeout(() => {
+      if (session) return;
+      iframe.removeAttribute("aria-busy");
+      iframe.setAttribute("data-guest-view-failed", "silent");
+    }, options.limits?.readyMs ?? 8_000);
+  let silent = unready();
 
   /*
    * WHERE ITS RECORDS ARE (Graview HQ feature:f-one-face-lines-from-frame-views):
@@ -458,6 +490,34 @@ export function mountGuestView<S extends AnySchema>(element: HTMLElement, option
   element.appendChild(iframe);
   element.removeAttribute("aria-busy");
 
+  /*
+   * LOADED AGAIN, DRAWN AGAIN (Graview HQ feature:f-frame-guest-mark-after-move).
+   * Where the browser cannot move an element as it is (no `moveBefore`), a
+   * frame taken out of the page and put back — the one face taking in the
+   * page it is on — loads its page again from nothing, in a new window. Its
+   * mark comes off then, the frame busy again and the guest's session let
+   * go, and it is said again once the new page has drawn, or is silent past
+   * its time. Seen from what the page adds and takes away, and only where
+   * the frame's window is another.
+   */
+  let shown = iframe.contentWindow;
+  const unwatchReloads = watchReloads(document, () => {
+    const now = iframe.contentWindow;
+    if (now === shown) return;
+    shown = now;
+    end();
+    handed = false;
+    waiting = false;
+    clearTimeout(quiet);
+    clearTimeout(silent);
+    iframe.removeAttribute("data-guest-view-drawn");
+    iframe.removeAttribute("data-guest-view-failed");
+    // A page loaded again starts as tall as it asks: what was held of the one before is not.
+    iframe.removeAttribute("data-guest-view-held");
+    iframe.setAttribute("aria-busy", "true");
+    silent = unready();
+  });
+
   return {
     iframe,
     update: push,
@@ -480,6 +540,8 @@ export function mountGuestView<S extends AnySchema>(element: HTMLElement, option
         return false;
       }
       resting = { shelf, theme: look };
+      /* Told it is off the page (HQ f-kept-frame-told-off-page): its client pauses what it plays, and its code hears it. */
+      port?.postMessage({ type: "away", away: true } satisfies HostMessage);
       /* Nothing of it is in sight; what it said of its records stands for when it is. */
       recordBoxesMoved(iframe);
       live.rest({
@@ -506,6 +568,7 @@ export function mountGuestView<S extends AnySchema>(element: HTMLElement, option
       was.shelf.remove();
       onto.removeAttribute("aria-busy");
       session.rest(undefined);
+      port?.postMessage({ type: "away", away: false } satisfies HostMessage);
       recordBoxesMoved(iframe);
       push();
       return true;
@@ -515,6 +578,7 @@ export function mountGuestView<S extends AnySchema>(element: HTMLElement, option
       return stats;
     },
     dispose() {
+      unwatchReloads();
       end();
       clearTimeout(silent);
       clearTimeout(quiet);

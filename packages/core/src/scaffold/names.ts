@@ -95,7 +95,6 @@ export type Ids = {
   schemaVar: string;
   SchemaType: string;
   StoreType: string;
-  AppComponent: string;
   accent: string;
   port: number;
   link: string | undefined;

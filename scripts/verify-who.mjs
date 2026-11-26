@@ -29,7 +29,7 @@ let vite;
 
 const NORA = "user-nora";
 const SAM = "user-sam";
-const BASE = `${at("todo")}/?today=2026-09-01`;
+const BASE = `${at("todo")}/scene/?today=2026-09-01`;
 
 /** The figure B draws for a participant, if any. */
 const figureOf = (page, id) =>
@@ -217,7 +217,7 @@ try {
   const sceneList = await hereListed(b);
   const c = await context.newPage();
   c.on("pageerror", (error) => report.pageErrors.push(`pages: ${String(error).slice(0, 200)}`));
-  await c.goto(`${at("todo")}/pages/?today=2026-09-01&as=${SAM}`, { waitUntil: "load" });
+  await c.goto(`${at("todo")}/?today=2026-09-01&as=${SAM}`, { waitUntil: "load" });
   await c.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
   await c.waitForTimeout(2500);
   const onPages = await barSays(c);
@@ -243,7 +243,7 @@ try {
     const apart = await browser.newContext({ viewport: { width: 1560, height: 940 } });
     const page = await apart.newPage();
     page.on("pageerror", (error) => report.pageErrors.push(`profile: ${String(error).slice(0, 200)}`));
-    await page.goto(`${at("todo")}/pages/tasks/t-deposit?today=2026-09-01&fresh=1&as=${SAM}${query}`, { waitUntil: "load" });
+    await page.goto(`${at("todo")}/tasks/t-deposit?today=2026-09-01&fresh=1&as=${SAM}${query}`, { waitUntil: "load" });
     await page.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
     await page.getByRole("heading", { level: 1 }).first().waitFor({ timeout: 15_000 }).catch(() => {});
     await page.waitForTimeout(1500);
@@ -256,7 +256,7 @@ try {
   report.checks.aProfileIsOfferedWhatItsAccountIsOffered = { sam: samOffered, mia: miaOffered, ok: samOffered.length > 0 && samOffered.join() === miaOffered.join() };
   const mia = await context.newPage();
   mia.on("pageerror", (error) => report.pageErrors.push(`mia: ${String(error).slice(0, 200)}`));
-  await mia.goto(`${at("todo")}/pages/lists?today=2026-09-01&fresh=1&as=${SAM}&profile=Mia`, { waitUntil: "load" });
+  await mia.goto(`${at("todo")}/lists?today=2026-09-01&fresh=1&as=${SAM}&profile=Mia`, { waitUntil: "load" });
   await mia.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
   await a.waitForFunction(() => [...document.querySelectorAll("[aria-label]")].some((one) => one.getAttribute("aria-label").startsWith("Mia (Sam)")), undefined, { timeout: 8_000 }).catch(() => {});
   const namesOnA = await a.evaluate(() => [...document.querySelectorAll('[aria-label*=" is here"]')].map((one) => one.getAttribute("aria-label")));
@@ -296,7 +296,7 @@ try {
    */
   await b.close();
   await c.setViewportSize({ width: 1560, height: 940 });
-  await c.goto(`${at("todo")}/pages/tasks/t-deposit?today=2026-09-01&as=${SAM}`, { waitUntil: "load" });
+  await c.goto(`${at("todo")}/tasks/t-deposit?today=2026-09-01&as=${SAM}`, { waitUntil: "load" });
   await c.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
   const d = await open(context, NORA, "#overview=1");
   const recordLabel = await c.evaluate(() => (document.querySelector("[data-graview-page-title]") ?? document.querySelector("main h1, main h2"))?.textContent?.trim() ?? null);

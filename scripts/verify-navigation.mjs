@@ -66,7 +66,7 @@ const note = async (page, step) =>
 
 /** Travel by double click, deeper through a pick target, back twice and forward once by the browser's own arrows, and Escape home: each stop noted as it is reached. */
 async function walkingThereAndBack(page) {
-  await page.goto(`${at("todo")}/?today=2026-09-01`, { waitUntil: "load" });
+  await page.goto(`${at("todo")}/scene/?today=2026-09-01`, { waitUntil: "load" });
   await page.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
   await page.waitForTimeout(900);
   await note(page, "landed");
@@ -140,7 +140,7 @@ async function drawnWith(page, drawn) {
  * does not. Twelve of them over the panel were the picture Nick sent.
  */
 async function aViewThatDrawsBothEnds(page) {
-  await page.goto(`${at("todo")}/?today=2026-09-01#focus=aggregate%3Alist&relation=task`, { waitUntil: "load" });
+  await page.goto(`${at("todo")}/scene/?today=2026-09-01#focus=aggregate%3Alist&relation=task`, { waitUntil: "load" });
   await page.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
   await drawnWith(page, () => document.querySelectorAll('[data-graview-plane="1"]').length >= 12 && document.querySelectorAll('[data-graview-view="aggregate:list"] [data-graview-pick^="t-"]').length >= 12);
   report.restated = await page.evaluate(() => ({
@@ -153,7 +153,7 @@ async function aViewThatDrawsBothEnds(page) {
   // The other way round: the week in focus, the lists raised as cards. A card
   // summarizing its members as chips has not drawn the relation between the
   // week's entries and itself; every entry keeps its line to its list.
-  await page.goto(`${at("todo")}/?today=2026-09-01#focus=aggregate%3Atask&relation=list`, { waitUntil: "load" });
+  await page.goto(`${at("todo")}/scene/?today=2026-09-01#focus=aggregate%3Atask&relation=list`, { waitUntil: "load" });
   await page.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
   await drawnWith(page, () => {
     const entries = document.querySelectorAll('[data-graview-view="aggregate:task"] [data-graview-pick^="t-"]').length;
@@ -376,7 +376,7 @@ async function goingDeeperIntoADistrict(page) {
   // And it is listed in the panel beside the map, every record in it, at a size a person reads.
   const listing = await browser.newPage({ viewport: { width: 1560, height: 940 } });
   listing.on("pageerror", (error) => report.pageErrors.push(String(error).slice(0, 200)));
-  await listing.goto(`${at("todo")}/?today=2026-09-01#overview=1&sel=kind%3Areason`, { waitUntil: "load" });
+  await listing.goto(`${at("todo")}/scene/?today=2026-09-01#overview=1&sel=kind%3Areason`, { waitUntil: "load" });
   await listing.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
   await listing.waitForSelector('[data-testid="district-panel"]', { timeout: 10_000 }).catch(() => {});
   report.districts.listed = await listing.evaluate(() => {
@@ -404,7 +404,7 @@ async function goingDeeperIntoADistrict(page) {
 async function theProblemCountIsAControl() {
   const problems = await browser.newPage({ viewport: { width: 1560, height: 940 } });
   problems.on("pageerror", (error) => report.pageErrors.push(String(error).slice(0, 200)));
-  await problems.goto(`${at("todo")}/?today=2026-09-01#overview=1`, { waitUntil: "load" });
+  await problems.goto(`${at("todo")}/scene/?today=2026-09-01#overview=1`, { waitUntil: "load" });
   await problems.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
   await problems.waitForSelector(".graview-district-problems", { timeout: 15_000 }).catch(() => {});
   const asButton = await problems.evaluate(() =>
@@ -443,7 +443,7 @@ async function theProblemCountIsAControl() {
 async function theSameTrueThingOnTheGround() {
   const ground = await browser.newPage({ viewport: { width: 1560, height: 940 } });
   ground.on("pageerror", (error) => report.pageErrors.push(String(error).slice(0, 200)));
-  await ground.goto(`${at("todo")}/?today=2026-09-01`, { waitUntil: "load" });
+  await ground.goto(`${at("todo")}/scene/?today=2026-09-01`, { waitUntil: "load" });
   await ground.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
   await ground.waitForSelector('[data-graview-view^="kind:"] .graview-district-problems', { timeout: 15_000 }).catch(() => {});
   const onTheGround = await ground.evaluate(() => {
@@ -492,7 +492,7 @@ async function aDistrictsNameIsNotMovedByHand() {
       const tile = document.querySelector('[data-graview-plot="kind:task"] .graview-plot-tile')?.getBoundingClientRect();
       return face && tile ? { dx: Math.round(face.x + face.width / 2 - (tile.x + tile.width / 2)), dy: Math.round(face.y - (tile.y + tile.height)), tileX: Math.round(tile.x), tileY: Math.round(tile.y), hash: location.hash, pinned: document.querySelectorAll("[data-graview-pinned]").length } : null;
     });
-  await unmoved.goto(`${at("todo")}/?today=2026-09-01#overview=1`, { waitUntil: "load" });
+  await unmoved.goto(`${at("todo")}/scene/?today=2026-09-01#overview=1`, { waitUntil: "load" });
   await unmoved.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
   /*
    * Where the name rests once the picture has its first frame, not after a
@@ -555,7 +555,7 @@ async function aDistrictsNameIsNotMovedByHand() {
     dragged = await settledName(600);
   }
   // And a pin an old bookmark carries for a district is ignored.
-  await unmoved.goto(`${at("todo")}/?today=2026-09-01#overview=1&pin.kind%3Atask=40,40`, { waitUntil: "load" });
+  await unmoved.goto(`${at("todo")}/scene/?today=2026-09-01#overview=1&pin.kind%3Atask=40,40`, { waitUntil: "load" });
   const bookmarked = await settledName(1800);
   report.districtName = { resting, dragged, bookmarked };
   await unmoved.close();
@@ -575,7 +575,7 @@ async function thePanelFloatsOverTheMap() {
   for (const [width, height] of [[1560, 940], [390, 844]]) {
     const floating = await browser.newPage({ viewport: { width, height } });
     floating.on("pageerror", (error) => report.pageErrors.push(String(error).slice(0, 200)));
-    await floating.goto(`${at("todo")}/?today=2026-09-01#overview=1&focus=aggregate%3Atask&in.view=the-week`, { waitUntil: "load" });
+    await floating.goto(`${at("todo")}/scene/?today=2026-09-01#overview=1&focus=aggregate%3Atask&in.view=the-week`, { waitUntil: "load" });
     await floating.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
     await floating.waitForSelector('[data-graview-map-panel]', { timeout: 15_000 }).catch(() => {});
     await floating.waitForTimeout(1500);
@@ -651,7 +651,7 @@ async function tabNeverLandsUnderThePanel() {
   for (const [width, height] of [[1440, 900], [390, 844]]) {
     const covering = await browser.newPage({ viewport: { width, height } });
     covering.on("pageerror", (error) => report.pageErrors.push(String(error).slice(0, 200)));
-    await covering.goto(`${at("todo")}/?today=2026-09-01#overview=1&focus=aggregate%3Atask&in.view=the-week`, { waitUntil: "load" });
+    await covering.goto(`${at("todo")}/scene/?today=2026-09-01#overview=1&focus=aggregate%3Atask&in.view=the-week`, { waitUntil: "load" });
     await covering.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
     await covering.waitForSelector("[data-graview-map-panel]", { timeout: 15_000 }).catch(() => {});
     await covering.waitForTimeout(1200);
@@ -899,7 +899,7 @@ async function theTwoDoorsAreStops(page) {
     await page.waitForTimeout(350);
   };
 
-  await page.goto(`${at("todo")}/?today=2026-09-01&fresh=1&as=user-nora`, { waitUntil: "load" });
+  await page.goto(`${at("todo")}/scene/?today=2026-09-01&fresh=1&as=user-nora`, { waitUntil: "load" });
   await page.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
   await page.waitForTimeout(900);
 
@@ -958,7 +958,7 @@ async function aLensIsADriveIn() {
   try {
     const drive = await browser.newPage({ viewport: { width: 1560, height: 940 } });
     drive.on("pageerror", (error) => report.pageErrors.push(String(error).slice(0, 200)));
-    await drive.goto(`${at("todo")}/?today=2026-09-01#overview=1`, { waitUntil: "load" });
+    await drive.goto(`${at("todo")}/scene/?today=2026-09-01#overview=1`, { waitUntil: "load" });
     await drive.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
     await drive.waitForTimeout(1200);
     const marquee = await drive.evaluate(() =>
@@ -1111,7 +1111,7 @@ async function zoomAndPanByHand() {
   try {
     const cam = await browser.newPage({ viewport: { width: 1560, height: 940 } });
     cam.on("pageerror", (error) => report.pageErrors.push(String(error).slice(0, 200)));
-    await cam.goto(`${at("todo")}/?today=2026-09-01#overview=1&focus=aggregate%3Alist&in.view=the-lists`, { waitUntil: "load" });
+    await cam.goto(`${at("todo")}/scene/?today=2026-09-01#overview=1&focus=aggregate%3Alist&in.view=the-lists`, { waitUntil: "load" });
     await cam.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
     await cam.waitForTimeout(1500);
     const ground = () =>
@@ -1183,7 +1183,7 @@ async function zoomAndPanByHand() {
      * altitude opens beside the map, which lays itself out in the room left;
      * the ground there still moves under the hand.
      */
-    await cam.goto(`${at("todo")}/?today=2026-09-01#overview=1&focus=aggregate%3Alist&in.view=the-lists`, { waitUntil: "load" });
+    await cam.goto(`${at("todo")}/scene/?today=2026-09-01#overview=1&focus=aggregate%3Alist&in.view=the-lists`, { waitUntil: "load" });
     /*
      * A LOAD, NOT A HASH CHANGE: the address differs from the last only after
      * the #, so without one the camera kept the drag above, already at the
@@ -1243,7 +1243,7 @@ async function zoomAndPanByHand() {
      * settled, or thirty seconds have gone.
      */
     const measureTravel = async () => {
-      await cam.goto(`${at("todo")}/?today=2026-09-01#overview=1`, { waitUntil: "load" });
+      await cam.goto(`${at("todo")}/scene/?today=2026-09-01#overview=1`, { waitUntil: "load" });
       await cam.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
       await cam.waitForSelector(".graview-ground[data-graview-settled]", { timeout: 15_000 }).catch(() => {});
       await cam.clock.install();
@@ -1355,7 +1355,7 @@ async function aSearchIsAStop() {
   try {
     const find = await browser.newPage({ viewport: { width: 1560, height: 940 } });
     find.on("pageerror", (error) => report.pageErrors.push(String(error).slice(0, 200)));
-    await find.goto(`${at("todo")}/?today=2026-09-01#overview=1`, { waitUntil: "load" });
+    await find.goto(`${at("todo")}/scene/?today=2026-09-01#overview=1`, { waitUntil: "load" });
     await find.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
     await find.waitForTimeout(1200);
     const history = () => find.evaluate(() => window.history.length);
@@ -1470,7 +1470,7 @@ async function aSearchIsAStop() {
 
     const phone = await browser.newPage({ viewport: { width: 390, height: 844 } });
     phone.on("pageerror", (error) => report.pageErrors.push(String(error).slice(0, 200)));
-    await phone.goto(`${at("todo")}/?today=2026-09-01`, { waitUntil: "load" });
+    await phone.goto(`${at("todo")}/scene/?today=2026-09-01`, { waitUntil: "load" });
     await phone.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
     await phone.evaluate(() => { document.documentElement.style.fontSize = "32px"; });
     await phone.waitForTimeout(1200);

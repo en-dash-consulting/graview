@@ -1,5 +1,21 @@
 # @graview/primitives
 
+## 0.2.17
+
+### Patch Changes
+
+- 26dc3d1: The seat and the studio stand on the one face's bar. The Scene's own face held the app's agent seat in its inbox's Activity and the way into the app's own declaration in the person's menu, under "Keeping this app"; the one face's bar had a place for neither, so a project `graview create` made after the one face became the default had no starter seat and no studio. `PagesApp` now takes both on its context where it was handed `views`, as the Scene's `Shell` does: `seat`, handed the call recorder, is drawn in the bell's Activity under "The agent's seat" with the calls it makes, and the bell is offered from the first draw where there is one; `studio` (`<StudioPlace app={…} />`) is drawn in the person's menu. Nothing is added to the bar, and a design's shell under the bar keeps both. The keyboard always lands somewhere on the one face's bar as it does on its page: a control in the bar's menus disabled or taken away under the keyboard — the seat's button once its turn is taken — gives it to what still stands around it, where it fell to `<body>`. `graview create` writes `src/ui/seat.tsx` — the starter seat gated on the act that creates the kind, and the studio, in a chunk of its own rather than the page's first load — and hands both to the one face, so a new project's studio writes a change into `src/domain` in development as before. Things (`apps/todo`) hands its tidy seat and its studio to the one face too. Held by `the-one-face-offers-the-seat-and-the-studio` and the scaffold's `the seat and the studio on the one face`, by `pnpm smoke:create` planting starter data from Activity and writing a field from the studio into the scratch project's `src/domain`, and by verify-seat and verify-studio, which drive Things at `/` again.
+  
+  Compatibility: ops, stored formats, the wire, the document format, check's finding codes and tool names are unchanged. The JavaScript API is additive: `seat` and `studio` on `PageContext`, and `useCallLog` from `@graview/primitives/pages` (it moved to its own module; `@graview/primitives` and `/scene` still export it). A `PagesApp` given neither draws what it drew. A project made by `graview create` has one more file, `src/ui/seat.tsx`; one made before keeps its own files and adds `seat` and `studio` to its `PagesApp` context to have them.
+- Updated dependencies [1e43396]
+- Updated dependencies [64c3dac]
+- Updated dependencies [26dc3d1]
+  - @graview/core@0.2.17
+  - @graview/layout@0.2.17
+  - @graview/react@0.2.17
+  - @graview/render@0.2.17
+  - @graview/tools@0.2.17
+
 ## 0.2.16
 
 ### Patch Changes

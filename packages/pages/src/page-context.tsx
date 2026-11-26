@@ -4,6 +4,7 @@ import { freshAddress, sceneTitle, type AnySchema, type Brand, type GraviewApp, 
 import { useCallback, useRef, useSyncExternalStore, type CSSProperties, type ReactNode } from "react";
 import type { AwaySummary, FieldTyping, KeepLensHost, ProposeChangeHost, ComposeChangeHost, DraftChangeHost, HostMenuItem, MenuSectionSource, OnExport, ReactViewRegistry } from "@graview/react/provider";
 import type { HostAi } from "@graview/tools/frame";
+import type { ToolCall } from "@graview/tools";
 import { Onward } from "./onward.js";
 
 
@@ -46,20 +47,39 @@ export interface PageContext<S extends AnySchema> {
    */
   readonly timeZone?: string;
 
-  /** Where the spatial face lives, for the cross-links. Default "/". */
+  /** Where the Scene's own face lives, for the cross-links, on a face that is the routed face alone. Default "/". */
   readonly sceneHref?: string;
   /**
-   * PAGES AND THE SCENE ARE ONE PLACE (Graview HQ
-   * feature:f-page-zooms-out-to-the-city), a prototype: the Scene's own
-   * city is drawn under the page, and Up — or a pinch — moves the page
-   * itself, continuously, from the window to a panel beside its place in
-   * that city, to standing on it, to the whole city (`one-place.tsx`).
-   * Needs `views`, the registry the Scene draws with. Off unless given.
+   * PAGES AND THE SCENE ARE ONE FACE (Graview HQ
+   * feature:f-one-face-by-default): the Scene's own city is drawn under
+   * the page, and one control — or a pinch — moves the page itself,
+   * continuously, from the window (Page) to a panel beside its place in
+   * that city (Nearby) to the whole city (Map) (`one-place.tsx`). Needs
+   * `views`, the registry the Scene draws with. On unless said: `false`
+   * keeps the routed face alone, with its Scene/Pages switch. An embedded
+   * face is the one face too, held to its box where `inBox` says so
+   * (`onTheOneFace`).
    */
   readonly sceneUnderPages?: boolean;
   /**
+   * THE ONE FACE HELD TO A BOX, NOT THE WINDOW (Graview HQ
+   * feature:f-one-face-by-default): for a face drawn in an element of
+   * somebody else's page — a docs chapter, a demo in an article. Every
+   * layer of the one face (the bar's slot, the page, the city, the boards,
+   * the level control and the panel's edge) is drawn inside the nearest
+   * element that holds it marked `data-graview-one-face-box`, which is the
+   * containing block of each (`contain: layout paint`, as `@graview/embed`
+   * draws its root), so none is drawn over the host's page; Page, Nearby
+   * and Map are that element's rect, its own page scrolls inside it under
+   * the bar, and the level keys move it only while the keyboard is in it.
+   * Unsaid, it is `embedded`; where no marked element holds the face, or it
+   * is `false`, the one face stands against the window and the window
+   * scrolls its page. Read only where `sceneUnderPages` is.
+   */
+  readonly inBox?: boolean;
+  /**
    * WHERE A HOST'S OWN BAR GOES ON THE ONE FACE (FR-239): handed the bar's
-   * slot, fixed at the window's top over the page and the city, above every
+   * slot, fixed at the window's top (the box's, `inBox`) over the page and the city, above every
    * layer of the one face (`[data-graview-one-face-bar]`), once it is drawn,
    * and null once it is gone. A host that draws the app's bar itself (the
    * embed's, with `barAbove`) draws it there, so it stays at Page, Nearby
@@ -295,14 +315,43 @@ export interface PageContext<S extends AnySchema> {
    * it (`describe_place`). Unsaid, the app of the provider around them.
    */
   readonly app?: GraviewApp<S>;
+  /**
+   * THE APP'S AGENT SEAT (Graview HQ feature:f-studio-and-seat-on-the-one-face),
+   * as the Scene's `Shell` takes it: handed the call recorder, it draws the
+   * seat — `AgentSeat`, a `ChatPanel` — and the bar's inbox holds it in
+   * Activity under "The agent's seat", with the calls it makes, whether or
+   * not anything has happened yet. Read where the face was handed `views`.
+   */
+  readonly seat?: (onCall: (call: ToolCall) => void) => ReactNode;
+  /**
+   * THE WAY INTO THE APP'S OWN DECLARATION (Graview HQ
+   * feature:f-studio-and-seat-on-the-one-face): `<StudioPlace app={…} />`
+   * from `@graview/studio`, drawn in the person's menu under "Keeping this
+   * app", as on the Scene's own face. Taken as a node because the studio
+   * lives in a package this one must not depend on. Read where the face was
+   * handed `views`.
+   */
+  readonly studio?: ReactNode;
+}
+
+/**
+ * WHETHER A ROUTED FACE IS THE ONE FACE: the page over the Scene's own city.
+ * It is wherever the face was handed the `views` the city is drawn with and
+ * the host did not say `sceneUnderPages: false` — an embedded face, drawn
+ * in a box of somebody else's page, as much as one that owns its page
+ * (held to its box there, `inBox`).
+ */
+export function onTheOneFace(context: { readonly views?: unknown; readonly sceneUnderPages?: boolean | undefined }): boolean {
+  if (!context.views) return false;
+  return context.sceneUnderPages !== false;
 }
 
 /**
  * WHERE A THING STANDS IN THE SCENE (FR-132, FR-137): a link from a page to
  * the scene at a stop — a record in focus, a picture in place. Through the
  * embed's own way when the face is in one that draws the scene; to the
- * scene's address when the face owns its page; nowhere, and nothing drawn,
- * when there is no scene to go to.
+ * scene's address when the face owns its page and is the routed face alone;
+ * nowhere, and nothing drawn, on the one face or when there is no scene.
  */
 export function SceneLink<S extends AnySchema>({
   context,
@@ -333,7 +382,7 @@ export function SceneLink<S extends AnySchema>({
   );
   const named = label ? { "aria-label": label } : {};
   // One face: the city is the camera rising from this page (the button at the window's foot), never another address.
-  if (context.sceneUnderPages && context.views) return null;
+  if (onTheOneFace(context)) return null;
   if (context.overview) {
     const go = context.overview;
     return (

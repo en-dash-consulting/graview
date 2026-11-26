@@ -46,6 +46,30 @@
  *                                   once the embed's sheets are put aside
  *                                   and `PagesApp`'s own (`themeCss`) is
  *                                   adopted, as the examples adopt it;
+ *
+ * And held to a box of somebody else's page, as `mount` draws it by default
+ * under memory routing: graview.dev's docs page "This site, as an app"
+ * (`docs/site/docs/site.html`, its built `chapters.js`), at the desk and
+ * the phone:
+ *
+ *   theDocsPageShowsNoScenePagesSwitch   the app menu offers no Scene or
+ *                                   Pages, and nothing on the page draws the
+ *                                   old two faces' controls (the switch,
+ *                                   Close the map, Reset view, From above,
+ *                                   the zoom pill) or a scene face;
+ *   theBarIsInsideTheBoxAt…         at Map, Nearby and Page the bar stands
+ *                                   inside the box, at its top;
+ *   nothingOfTheFacePaintsOutsideTheBoxAt…  the box clips what it holds
+ *                                   (`contain: paint`), and no point of the
+ *                                   window outside it lands on the face;
+ *   mapWorksInTheBox, nearbyWorks…, pageWorks…  each level rests, from
+ *                                   its key pressed inside the box, its
+ *                                   control and (below Map) its page in the
+ *                                   box;
+ *   theBoxScrollsItsOwnPage         at Page a wheel over the page scrolls
+ *                                   the page, and the window stays;
+ *   theHostPageScrollsWithThePointerOutsideTheBox  and a wheel outside the
+ *                                   box scrolls the host's page;
  *   noPageThrew.
  *
  *   node scripts/verify-embed-one-face.mjs
@@ -437,6 +461,190 @@ async function sceneRules(browser, url, scheme, app, errors) {
   return checks;
 }
 
+/*
+ * THE ONE FACE HELD TO A BOX OF SOMEBODY ELSE'S PAGE (Graview HQ
+ * feature:f-one-face-by-default). graview.dev's docs page "This site, as an
+ * app" (`docs/site/docs/site.html`) mounts the site's own declaration into
+ * one element of it with `mount`, which draws the one face unless told
+ * otherwise, and holds it to that element: at a desk and on a phone, the
+ * docs page as it is published (`file://`, the built `chapters.js`).
+ */
+const SITE_PAGE = `file://${resolve(repoRoot, "docs/site/docs/site.html")}`;
+const BOX = '[data-graview-document="site-app"]';
+
+/** Wait until the boxed face rests at a level: its page says it and its camera is there. */
+async function restInBox(page, level, timeout = 15_000) {
+  await page.waitForFunction(
+    ({ want, box }) => {
+      const holder = document.querySelector(box);
+      const sheet = holder?.querySelector("[data-graview-one-place]");
+      const city = holder?.querySelector('[data-testid="one-place-city"]');
+      const now = Number(city?.getAttribute("data-graview-altitude-now") ?? (want === 0 ? 0 : -1));
+      return Number(sheet?.getAttribute("data-graview-one-place")) === want && Math.abs(now - want) < 0.002;
+    },
+    { want: level, box: BOX },
+    { timeout },
+  );
+  await page.waitForTimeout(300);
+}
+
+/** A level asked for from inside the box, as a person does: the keyboard on its level control, then the level's key. */
+async function levelInBox(page, level) {
+  await page.evaluate((box) => {
+    const inside = document.activeElement && document.querySelector(box)?.contains(document.activeElement);
+    if (!inside) document.querySelector(`${box} [data-testid="altitude"] button`)?.focus({ preventScroll: true });
+  }, BOX);
+  await page.keyboard.press(String(level + 1));
+  await restInBox(page, level);
+}
+
+/** What of the face is seen, read against the box: the bar, the page, the level control, and any point of the window outside the box that lands on the face. */
+const boxAsSeen = (page) =>
+  page.evaluate((box) => {
+    const holder = document.querySelector(box);
+    const root = holder?.querySelector("[data-graview-embed]");
+    if (!root) return { mounted: false };
+    const r = root.getBoundingClientRect();
+    const within = (q) => q.width > 0 && q.left >= r.left - 0.5 && q.right <= r.right + 0.5 && q.top >= r.top - 0.5 && q.bottom <= r.bottom + 0.5;
+    const rectOf = (selector) => {
+      const el = root.querySelector(selector);
+      if (!el) return null;
+      const q = el.getBoundingClientRect();
+      return { left: Math.round(q.left), top: Math.round(q.top), right: Math.round(q.right), bottom: Math.round(q.bottom), width: Math.round(q.width), inside: within(q) };
+    };
+    // Every point of the window, a grid 32 across, that is outside the box: none may land on anything of the face.
+    const leaks = [];
+    const W = document.documentElement.clientWidth;
+    const H = window.innerHeight;
+    for (let i = 0; i <= 32; i++) {
+      for (let j = 0; j <= 32; j++) {
+        const x = Math.min(W - 1, (W * i) / 32);
+        const y = Math.min(H - 1, (H * j) / 32);
+        if (x >= r.left - 1 && x <= r.right + 1 && y >= r.top - 1 && y <= r.bottom + 1) continue;
+        const hit = document.elementFromPoint(x, y);
+        if (hit && root.contains(hit)) leaks.push({ x: Math.round(x), y: Math.round(y), hit: `${hit.tagName.toLowerCase()}${hit.getAttribute("data-testid") ? `[${hit.getAttribute("data-testid")}]` : ""}` });
+      }
+    }
+    // What of the face's own layers stands outside the box, measured: each fixed layer it draws.
+    const outside = [...root.querySelectorAll("*")]
+      .filter((el) => getComputedStyle(el).position === "fixed" && !el.matches(":popover-open"))
+      .map((el) => ({ el, q: el.getBoundingClientRect() }))
+      .filter(({ q }) => q.width > 1 && q.height > 1 && !(q.right <= r.left || q.left >= r.right || q.bottom <= r.top || q.top >= r.bottom) && !within(q))
+      .map(({ el }) => el.getAttribute("data-testid") ?? el.tagName.toLowerCase());
+    const style = getComputedStyle(root);
+    return {
+      mounted: true,
+      box: { left: Math.round(r.left), top: Math.round(r.top), right: Math.round(r.right), bottom: Math.round(r.bottom) },
+      held: root.hasAttribute("data-graview-one-face-box"),
+      contain: style.contain,
+      bar: rectOf("[data-graview-one-face-bar]"),
+      sheet: rectOf("[data-graview-one-place]"),
+      control: rectOf('[data-testid="altitude"] [data-graview-one-face-dock], [data-testid="altitude"]'),
+      leaks: leaks.slice(0, 12),
+      leaked: leaks.length,
+      // Clipped by the box, a layer larger than it is still drawn only inside it; one the box does not clip is a leak.
+      clipped: style.contain.includes("paint"),
+      outside: [...new Set(outside)].slice(0, 12),
+    };
+  }, BOX);
+
+/** Whether the docs page anywhere offers the old two-face controls: the Scene/Pages switch, Close the map, Reset view, From above, the zoom pill. */
+const twoFaceControls = (page) =>
+  page.evaluate(() => {
+    // What a person can see or reach: the one face keeps the Scene's own zoom under its city, put away (`display: none`).
+    const shown = (el) => el.getClientRects().length > 0 && getComputedStyle(el).visibility !== "hidden";
+    const words = /^(close the map|reset view|from above)$/i;
+    const said = [...document.querySelectorAll("button, a, [role=button], [role=tab]")].filter((el) => shown(el) && words.test((el.getAttribute("aria-label") ?? el.textContent ?? "").trim())).map((el) => (el.getAttribute("aria-label") ?? el.textContent).trim());
+    return {
+      switches: [...document.querySelectorAll('[data-testid="app-faces"], [data-testid="app-face-scene"], [data-testid="app-face-pages"]')].filter(shown).length,
+      zoom: [...document.querySelectorAll('[data-testid="zoom-pill"], [data-testid="zoom"], [data-testid="zoom-in"], [data-testid="from-above"]')].filter(shown).length,
+      scenes: [...document.querySelectorAll("[data-graview-embed]")].filter((el) => el.getAttribute("data-graview-embed") !== "pages" && el.getAttribute("data-graview-embed") !== "picture").length,
+      said,
+    };
+  });
+
+async function boxed(browser, { name, options }, errors) {
+  const context = await browser.newContext({ ...options, colorScheme: "light", reducedMotion: "no-preference" });
+  const page = await context.newPage();
+  page.on("pageerror", (error) => errors.push(`boxed, ${name}: ${error.message}`));
+  const checks = {};
+  const at = (what) => `${what}On${name[0].toUpperCase()}${name.slice(1)}`;
+  try {
+    await page.goto(SITE_PAGE, { waitUntil: "load" });
+    await page.locator(BOX).scrollIntoViewIfNeeded();
+    await page.waitForSelector(`${BOX} [data-graview-one-place]`, { timeout: 60_000 });
+    await page.waitForSelector(`${BOX} [data-graview-one-face-bar] [data-graview-app-bar]`, { timeout: 30_000 });
+    // The box a little way down the window, so the host's page stands above and below it.
+    await page.evaluate((box) => {
+      const el = document.querySelector(box);
+      const top = el.getBoundingClientRect().top + window.scrollY;
+      window.scrollTo({ top: Math.max(0, top - 160), behavior: "instant" });
+    }, BOX);
+    // graview.dev opens a frame on its page, its overview's stop the Map a level control away.
+    await restInBox(page, 0, 30_000);
+
+    // The app menu opened as a person opens it: no Scene, no Pages in it, and nothing of the old two faces anywhere on the docs page.
+    const menu = await page.locator(`${BOX} [data-testid="app-menu-open"]`).locator("visible=true").first().click({ timeout: 5_000 }).then(
+      async () => {
+        await page.locator('[data-testid="app-menu"] button').locator("visible=true").first().waitFor({ state: "visible", timeout: 10_000 });
+        const faces = await page.locator('[data-testid="app-face-scene"], [data-testid="app-face-pages"]').count();
+        await closeAppMenu(page);
+        return { opened: true, faces };
+      },
+      (error) => ({ opened: false, faces: null, error: String(error?.message ?? error) }),
+    );
+    const two = await twoFaceControls(page);
+    checks[at("theDocsPageShowsNoScenePagesSwitch")] = { menu, ...two, ok: menu.opened && menu.faces === 0 && two.switches === 0 && two.zoom === 0 && two.scenes === 0 && two.said.length === 0 };
+
+    for (const [level, word] of [[2, "Map"], [1, "Nearby"], [0, "Page"]]) {
+      await levelInBox(page, level);
+      const seen = await boxAsSeen(page);
+      checks[at(`theBarIsInsideTheBoxAt${word}`)] = { box: seen.box, bar: seen.bar, ok: seen.mounted && seen.held && seen.bar?.inside === true && Math.abs(seen.bar.top - seen.box.top) <= 1 };
+      checks[at(`nothingOfTheFacePaintsOutsideTheBoxAt${word}`)] = {
+        box: seen.box,
+        contain: seen.contain,
+        leaked: seen.leaked,
+        leaks: seen.leaks,
+        outside: seen.outside,
+        ok: seen.mounted && seen.clipped && seen.leaked === 0,
+      };
+      checks[at(`${word.toLowerCase()}WorksInTheBox`)] = {
+        sheet: seen.sheet,
+        control: seen.control,
+        ok: seen.sheet !== null && seen.control?.inside === true && (level === 2 || seen.sheet.inside === true),
+      };
+    }
+
+    // At Page, the page scrolls itself inside the box, and the host's window stays where it is.
+    const inside = await page.evaluate((box) => {
+      const sheet = document.querySelector(`${box} [data-graview-one-place]`).getBoundingClientRect();
+      return { x: sheet.left + sheet.width / 2, y: sheet.top + Math.min(sheet.height / 2, 200) };
+    }, BOX);
+    const before = await page.evaluate((box) => ({ window: window.scrollY, sheet: document.querySelector(`${box} [data-graview-one-place]`).scrollTop }), BOX);
+    await page.mouse.move(inside.x, inside.y);
+    await page.mouse.wheel(0, 240);
+    await page.waitForTimeout(500);
+    const afterInside = await page.evaluate((box) => ({ window: window.scrollY, sheet: document.querySelector(`${box} [data-graview-one-place]`).scrollTop }), BOX);
+    checks[at("theBoxScrollsItsOwnPage")] = { before, after: afterInside, ok: afterInside.sheet > before.sheet && afterInside.window === before.window };
+
+    // With the pointer outside the box, the host's page scrolls as it always did.
+    const outsidePoint = await page.evaluate((box) => {
+      const r = document.querySelector(box).getBoundingClientRect();
+      return { x: Math.round(document.documentElement.clientWidth / 2), y: Math.max(4, Math.round(r.top) - 40) };
+    }, BOX);
+    await page.mouse.move(outsidePoint.x, outsidePoint.y);
+    await page.mouse.wheel(0, 300);
+    await page.waitForTimeout(500);
+    const afterOutside = await page.evaluate(() => window.scrollY);
+    checks[at("theHostPageScrollsWithThePointerOutsideTheBox")] = { at: outsidePoint, before: afterInside.window, after: afterOutside, ok: afterOutside > afterInside.window };
+  } catch (error) {
+    checks[at("boxedRan")] = { error: String(error?.stack ?? error), ok: false };
+  } finally {
+    await context.close();
+  }
+  return checks;
+}
+
 const report = { at: new Date().toISOString(), engine: "chromium", document: DOCUMENT, checks: {} };
 const errors = [];
 let browser;
@@ -448,6 +656,7 @@ try {
   browser = await launchEngine("chromium");
   for (const one of PROFILES) Object.assign(report.checks, await profile(browser, url, one, errors));
   report.checks.thePanelOptionSetsTheDesksPanel = await panelOption(browser, url, errors).catch((error) => ({ error: String(error?.message ?? error), ok: false }));
+  for (const one of PROFILES) Object.assign(report.checks, await boxed(browser, one, errors));
   const compiled = await appFromOrCompile({ document });
   if (!compiled.ok) throw new Error(`${DOCUMENT} does not compile`);
   for (const scheme of ["light", "dark"]) Object.assign(report.checks, await sceneRules(browser, url, scheme, compiled.app, errors));

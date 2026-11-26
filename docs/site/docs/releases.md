@@ -4,6 +4,7 @@ This is what came in each Graview version, newest first, in a few plain lines fo
 
 Each version links its release and its full changelog. **Before you upgrade** says what breaks or moves for a host; [Stability](https://graview.dev/docs/stability.html) says what a version may change at all.
 
+- [`0.2.17`](https://graview.dev/docs/releases.html#v0-2-17)
 - [`0.2.16`](https://graview.dev/docs/releases.html#v0-2-16)
 - [`0.2.15`](https://graview.dev/docs/releases.html#v0-2-15)
 - [`0.2.14`](https://graview.dev/docs/releases.html#v0-2-14)
@@ -93,9 +94,26 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 - [`0.1.2`](https://graview.dev/docs/releases.html#v0-1-2)
 - [`0.1.0`](https://graview.dev/docs/releases.html#v0-1-0)
 
-## 0.2.16
+## 0.2.17
 
 Published November 26, 2026 · the current version
+
+The one face is what Graview ships: a new project, a PagesApp and every embed draw Page, Nearby and Map over the same records, and an embed keeps it to its own box.
+
+- **The one face by default.** A `PagesApp` with `views`, a project made by `graview create` and an app mounted with `@graview/embed` all draw one face: Page, Nearby and Map over the same records, with no Scene/Pages switch. `sceneUnderPages: false` keeps the routed face as it was.
+- **An embed keeps the one face in its box.** On somebody else's page the bar stands at the box's top, the page scrolls inside it, the level keys work only while the keyboard is in it, and nothing is drawn over the host's page. Under `routing: "address"` the face stands against the window, as on Graview Cloud.
+- **A new project's one face offers the seat and the studio.** The agent's seat is in the bell's Activity and the studio in the person's menu, and `graview create` writes `src/ui/seat.tsx` for it.
+- **A frame view kept for a return is told when it leaves the page**, so what it plays stops, and starts again when it comes back.
+- **A frame that loads again is said drawn only once it has drawn**, and the city is said drawn as soon as it has, not after ten seconds, so screenshots and the opening screen wait less.
+- **graview.dev looks behind the screen.** A new home: a drawn app with a window onto the map of records under it, every demo on the site is the one face, and the docs teach it.
+
+**Before you upgrade:** Breaks: `mount` and `<Embed>` now draw the one face unless told `sceneUnderPages: false`, and so does a `PagesApp` mounted with `views` and without `embedded`. There is no Scene/Pages switch, no "In the scene" link and no Up, and a `face` other than `"picture"` is drawn as the pages. Under memory routing an embed's face is held to its element, so give the element a height or pass `height`. A project made by `graview create` has no `/pages` address and no `src/ui/app.tsx`; one made before keeps its own files. `sceneUnderPages: false` keeps the routed face, its switch and its faces exactly as before. A frame that loads again is said drawn later than it was, once it has drawn. The guest client's hash changes, and the frame protocol gains one message from host to guest, `away`, which a guest that does not know it drops; the protocol's version is unchanged. The JavaScript API is otherwise additive (`onTheOneFace`, `PageContext.inBox`, `Guest.away`, `onAway`). Ops and primitives, stored formats, the declaration and check finding codes, and derived tool names and input schemas are unchanged.
+
+[The release on GitHub](https://github.com/en-dash-consulting/graview/releases/tag/graview%400.2.17) · [The full changelog for 0.2.17](https://github.com/en-dash-consulting/graview/blob/main/packages/core/CHANGELOG.md#0217)
+
+## 0.2.16
+
+Published November 26, 2026
 
 Custom pages appear at once, a Todoist project is a connection, and a view plays a YouTube or Vimeo video in place.
 

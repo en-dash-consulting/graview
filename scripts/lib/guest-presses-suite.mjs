@@ -253,6 +253,8 @@ import { mount } from "@graview/embed";
 import { registerWorkerView } from "@graview/guest/host/views";
 import { kit, placementApp, placementSeed } from ${JSON.stringify(fixture)};
 window.__handle = mount(document.getElementById("app"), {
+  // The routed face and its scene, which this harness holds: an embed draws the one face unless told otherwise.
+  sceneUnderPages: false,
   app: placementApp,
   seed: placementSeed,
   principal: kit,

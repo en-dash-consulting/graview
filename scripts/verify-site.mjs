@@ -16,13 +16,14 @@
  *
  * Writes docs/site-check.json.
  */
-import { writeFileSync } from "node:fs";
+import { readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { engineName, launchEngine } from "./lib/engine.mjs";
 import { chooseSteps, partPath } from "./lib/parts.mjs";
 import { frames, settled } from "./lib/settled.mjs";
+import { homeFrames, homeHosts, homeInEngines, homeMap, homePlain } from "./lib/home-checks.mjs";
 
 const require = createRequire(import.meta.url);
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -66,8 +67,8 @@ const arrive = async (page, url) => {
 };
 
 const PAGES = [
-  /* The prompt and the recipe it opens on, the season the asks reshape and the rota, live; the other recipes mount when their tab is chosen. */
-  { file: "index.html", name: "the page", live: 3, skip: "#what" },
+  /* The home: one canvas and the story over it, no live Graview; its own claims are in lib/home-checks.mjs. */
+  { file: "index.html", name: "the page", live: 0, skip: "#story" },
   /* The long tour, moved off the front page: eight feature frames and the first step of the stepper. */
   { file: "tour.html", name: "the tour", live: 9, skip: "#tour" },
   /* Sixteen chapters and the kit's own frame. */
@@ -271,7 +272,7 @@ async function keyboard(sheet) {
   report.criteria[`theSkipLinkReachesTheContentOn_${sheet.file}`] =
     (await one.evaluate(() => location.hash)) === sheet.skip;
   report.criteria[`focusIsVisibleOn_${sheet.file}`] = await one.evaluate(() => {
-    const link = document.querySelector(".jump a");
+    const link = document.querySelector(".site-nav a");
     link.focus();
     const style = getComputedStyle(link);
     return style.outlineStyle === "solid" && parseFloat(style.outlineWidth) >= 2;
@@ -319,93 +320,6 @@ async function stepper() {
   await stepper.close();
 }
 
-async function hero() {
-  /*
-   * THE HERO'S TABS, which are the front page's whole argument now: choose
-   * another app and the prompt says it, Copy copies it, and the app on the
-   * stage is a DIFFERENT app — a repository's docs, a volunteer rota, a
-   * garden in its own design opened on its pages. Tabs that change the words
-   * and leave the picture would be the worst thing this page could do.
-   */
-  const front = await browser.newPage({ viewport: { width: 1280, height: 900 } });
-  await arrive(front, pageAt("index.html"));
-  await front.waitForFunction(() => document.querySelector('#stage-docs [data-graview-view^="kind:"]') !== null, null, { timeout: 20_000 }).catch(() => {});
-  const districtsOn = (id) => front.evaluate((id) => [...document.querySelectorAll(`#${id} [data-graview-view^="kind:"]`)].map((el) => el.getAttribute("data-graview-view")).sort().join(","), id);
-  const docsDistricts = await districtsOn("stage-docs");
-  await front.click("#rt-rota");
-  await front.waitForFunction(() => document.querySelector('#stage-rota [data-graview-view^="kind:"]') !== null, null, { timeout: 20_000 }).catch(() => {});
-  const rotaDistricts = await districtsOn("stage-rota");
-  report.criteria.aHeroTabMountsThatApp =
-    docsDistricts !== "" && rotaDistricts !== "" && docsDistricts !== rotaDistricts &&
-    (await front.evaluate(() => document.getElementById("stage-docs")?.hidden === true && document.getElementById("stage-rota")?.hidden === false));
-  report.criteria.theTabSaysItsTaskInThePrompt = await front.evaluate(
-    () => document.getElementById("prompt-task")?.textContent === "make a Graview app for our volunteer rota" && (document.querySelector(".copy-prompt")?.getAttribute("data-copy") ?? "").includes("then make a Graview app for our volunteer rota."),
-  );
-  await front.focus("#rt-rota");
-  await front.keyboard.press("ArrowRight");
-  await front.waitForFunction(() => document.querySelector('#stage-garden [data-graview-face="pages"]') !== null, null, { timeout: 20_000 }).catch(() => {});
-  report.criteria.theHeroTabsAreReachableFromTheKeyboard = await front.evaluate(
-    () => document.activeElement?.id === "rt-garden" && [...document.querySelectorAll(".stage-panel")].filter((p) => !p.hidden).length === 1,
-  );
-  report.criteria.theGardenOpensOnItsOwnPages = await front.evaluate(() => document.querySelector('#stage-garden [data-graview-face="pages"]') !== null);
-  await front.close();
-}
-
-async function bare() {
-  /* The first frame is finished before anything loads: a picture of the city and the prompt, not a box that says loading. */
-  const bare = await browser.newPage({ viewport: { width: 1280, height: 900 }, javaScriptEnabled: false });
-  await bare.goto(pageAt("index.html"), { waitUntil: "load" });
-  report.criteria.theFirstFrameIsFinishedWithoutScript = await bare.evaluate(() => {
-    const poster = document.querySelector("#stage-docs .poster .dark svg");
-    const box = poster?.getBoundingClientRect();
-    return !!box && box.width > 200 && box.height > 150 && (document.getElementById("prompt-text")?.textContent ?? "").includes("start.md");
-  });
-  await bare.close();
-}
-
-async function asks() {
-  /*
-   * THE INTERFACE IS GENERATED, THEN ASKED FOR. The hero's run does not stop
-   * at a working app: it ends on the modules redrawn as a departures board,
-   * a worker view the view host runs, with the three docs its repair wrote
-   * reading WRITTEN. And under it each ask redraws the same season: the
-   * list a person asked for has Sign up on the game nobody brings snacks
-   * to, the newspaper has a WANTED ad for it. A view's drawing is in a
-   * shadow root, so its words are read there.
-   */
-  const asked = await browser.newPage({ viewport: { width: 1280, height: 900 } });
-  await arrive(asked, pageAt("index.html"));
-  const drawnIn = (selector, words) =>
-    asked
-      .waitForFunction(
-        ({ selector, words }) => {
-          const host = document.querySelector(selector);
-          if (!host) return false;
-          const said = [...host.querySelectorAll("*")].map((el) => el.shadowRoot?.textContent ?? "").join(" ");
-          return words.every((word) => said.includes(word));
-        },
-        { selector, words },
-        { timeout: 45_000, polling: 250 },
-      )
-      .then(() => true, () => false);
-  await asked.locator("#stage-docs").scrollIntoViewIfNeeded();
-  report.criteria.theHeroRunEndsOnTheDeparturesBoard =
-    (await drawnIn("#stage-docs", ["DEPARTURES", "WRITTEN", "packages/search"])) &&
-    (await asked.evaluate(() => document.querySelector('#hero-run li[data-step="ask"]')?.classList.contains("now") === true && document.querySelector("#stage-docs [data-graview-face]")?.getAttribute("data-graview-face") === "pages"));
-  await asked.locator("#asks").scrollIntoViewIfNeeded();
-  await asked.waitForFunction(() => document.querySelector('[data-graview-app="season"] [data-graview-embed]') !== null, null, { timeout: 20_000 }).catch(() => {});
-  const generatedSays = await asked
-    .waitForFunction(() => (document.querySelector('[data-graview-app="season"]')?.textContent ?? "").includes("Brookside Bears"), null, { timeout: 20_000 })
-    .then(() => true, () => false);
-  await asked.click('.ask-chips [data-ask="remaining-games"]');
-  const listSays = await drawnIn('[data-graview-app="season"]', ["Brookside Bears", "Sign up", "One still needs snacks."]);
-  await asked.click('.ask-chips [data-ask="courier"]');
-  const paperSays = await drawnIn('[data-graview-app="season"]', ["The Comets Courier", "WANTED", "Brookside Bears game"]);
-  report.asks = { generatedSays, listSays, paperSays };
-  report.criteria.eachAskRedrawsTheSameSeasonWithItsRuleShowing = generatedSays && listSays && paperSays;
-  await asked.close();
-}
-
 async function own() {
   /*
    * THE SITE OPENS AS ITS OWN APP, one click from the landing page: the
@@ -419,6 +333,10 @@ async function own() {
   await own.click('footer a[href="docs/site.html"]');
   await own.waitForLoadState("load");
   await own.locator('[data-graview-document="site-app"]').scrollIntoViewIfNeeded();
+  // It opens on the site's home; its city is the Map, a level's key pressed in its box away.
+  await own.waitForSelector('[data-graview-document="site-app"] [data-testid="altitude"] button', { timeout: 30_000 }).catch(() => {});
+  await own.evaluate(() => document.querySelector('[data-graview-document="site-app"] [data-testid="altitude"] button')?.focus({ preventScroll: true }));
+  await own.keyboard.press("3");
   await own
     .waitForFunction(() => document.querySelectorAll('[data-graview-document="site-app"] [data-graview-view^="kind:"]').length >= 4, null, { timeout: 30_000 })
     .catch(() => {});
@@ -434,96 +352,148 @@ async function chapters() {
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
   await arrive(page, pageAt("progression.html"));
   await settled(page, { most: 600 });
-  /* A chapter goes from its overview to a page on the page itself: the picture is the app, its home one press away on the bar (FR-132). */
-  await page.locator('#chapter-1 [data-graview-chapter="1"]').scrollIntoViewIfNeeded();
-  await page.waitForFunction(() => document.querySelector('#chapter-1 [data-graview-chapter="1"] [data-graview-embed]') !== null, null, { timeout: 20_000 }).catch(() => {});
-  const faceBefore = await page.locator('#chapter-1 [data-graview-chapter="1"] [data-graview-embed]').getAttribute("data-graview-embed").catch(() => null);
-  await page.locator('#chapter-1 [data-graview-chapter="1"] [data-testid="app-home"]').click().catch(() => {});
+  /* A chapter opens on its home page — graview.dev opens a frame on its page — and rises to its Map with its level's key pressed in its box: one face (FR-239). */
+  const one = '#chapter-1 [data-graview-chapter="1"]';
+  await page.locator(one).scrollIntoViewIfNeeded();
+  await page.waitForFunction((one) => document.querySelector(`${one} [data-graview-one-place]`) !== null, one, { timeout: 20_000 }).catch(() => {});
+  const levelAt = () => page.evaluate((one) => document.querySelector(`${one} [data-graview-one-place]`)?.getAttribute("data-graview-one-place") ?? null, one);
   await settled(page, { most: 500 });
-  const faceAfter = await page.locator('#chapter-1 [data-graview-chapter="1"] [data-graview-embed]').getAttribute("data-graview-embed").catch(() => null);
-  report.criteria.aChapterSwitchesFaceOnThePage = faceBefore !== null && faceBefore !== "pages" && faceAfter === "pages";
+  const levelBefore = await levelAt();
+  await page.evaluate((one) => document.querySelector(`${one} [data-testid="altitude"] button`)?.focus({ preventScroll: true }), one);
+  await page.keyboard.press("3");
+  await page.waitForFunction((one) => document.querySelector(`${one} [data-graview-one-place]`)?.getAttribute("data-graview-one-place") === "2", one, { timeout: 20_000 }).catch(() => {});
+  const levelAfter = await levelAt();
+  report.criteria.aChapterRisesFromItsHomeToItsMapOnThePage = levelBefore === "0" && levelAfter === "2";
 
-  /* The kit re-dresses the live garden: a right-angled route draws elbows, a kind kept quiet is not drawn. */
-  await page.locator('#kit [data-graview-chapter="8"]').scrollIntoViewIfNeeded();
-  const kitPath = () => page.evaluate(() => document.querySelector('#kit [data-graview-chapter="8"] [data-graview-connector="tended-by"]')?.getAttribute("d") ?? null);
   /*
-   * A LINE IS READ ONCE THE SCENE HAS SETTLED. Lines are not drawn while the
-   * scene moves (they are measured once a transition lands), and a chapter
-   * arrives with a transition: the line shows on the first frame, is gone
-   * for the half second the scene moves, and comes back. Reading the first
-   * appearance read the gap. So: the same path on two reads 300 ms apart,
-   * and, after a change, a path that differs from the one before it.
+   * THE KIT RE-DRESSES THE LIVE GARDEN'S ONE FACE: its page takes the
+   * typeface, the accent, the corners and the room the form declares, read
+   * off the embed before and after; at the Map the road from a plot to who
+   * tends it is drawn, and gone once the form keeps it quiet; and the
+   * declaration beside it says so.
    */
-  const settledPath = (unlike) =>
-    page
-      .waitForFunction(
-        ({ unlike }) => {
-          const d = document.querySelector('#kit [data-graview-chapter="8"] [data-graview-connector="tended-by"]')?.getAttribute("d") ?? null;
-          const seen = (window.__kitSeen ??= { d: undefined, since: 0 });
-          if (d !== seen.d) Object.assign(seen, { d, since: performance.now() });
-          return d !== null && d !== unlike && performance.now() - seen.since >= 300;
-        },
-        { unlike },
-        { timeout: 20_000, polling: 100 },
-      )
-      .catch(() => {});
-  await settledPath(null);
-  const curved = await kitPath();
-  await page.locator('#kit-form input[name="route"][value="orthogonal"]').check().catch(() => {});
-  await settledPath(curved);
-  const elbowed = await kitPath();
+  const kit = '#kit [data-graview-chapter="8"]';
+  await page.locator(kit).scrollIntoViewIfNeeded();
+  await page.waitForFunction((kit) => document.querySelector(`${kit} [data-graview-one-place]`) !== null, kit, { timeout: 20_000 }).catch(() => {});
+  await settled(page, { most: 500 });
+  const looks = () =>
+    page.evaluate((kit) => {
+      const root = document.querySelector(`${kit} [data-graview-embed]`);
+      const title = document.querySelector(`${kit} [data-graview-one-place] h1, ${kit} [data-graview-one-place] h2`);
+      const style = root ? getComputedStyle(root) : null;
+      return {
+        font: title ? getComputedStyle(title).fontFamily : null,
+        accent: style?.getPropertyValue("--graview-accent").trim() ?? null,
+        radius: style?.getPropertyValue("--graview-radius").trim() ?? null,
+        pad: style?.getPropertyValue("--graview-pad").trim() ?? null,
+      };
+    }, kit);
+  const before = await looks();
+  await page.locator('#kit-form select[name="typeface"]').selectOption("serif").catch(() => {});
+  await page.locator('#kit-form input[name="accent"]').fill("#7a3e9d").catch(() => {});
+  await page.locator('#kit-form input[name="accent-on"]').check().catch(() => {});
+  await page.locator('#kit-form input[name="radius"]').fill("0").catch(() => {});
+  await page.locator('#kit-form input[name="density"]').fill("1.4").catch(() => {});
+  await settled(page, { most: 400 });
+  const after = await looks();
+  const roads = () => page.evaluate((kit) => document.querySelectorAll(`${kit} [data-graview-ribbon="tended-by"]`).length, kit);
+  await page.evaluate((kit) => document.querySelector(`${kit} [data-testid="altitude"] button`)?.focus({ preventScroll: true }), kit);
+  await page.keyboard.press("3");
+  await page.waitForFunction((kit) => document.querySelector(`${kit} [data-graview-one-place]`)?.getAttribute("data-graview-one-place") === "2", kit, { timeout: 20_000 }).catch(() => {});
+  await settled(page, { most: 600 });
+  const drawn = await roads();
   await page.locator('#kit-form input[name="tended-visible"]').uncheck().catch(() => {});
   await settled(page, { most: 400 });
-  const quiet = await kitPath();
+  const quiet = await roads();
   const declared = await page.evaluate(() => document.getElementById("kit-decl")?.textContent ?? "");
-  /* Each half of the claim on its own, so a failure says which half. */
+  /* Each part of the claim on its own, so a failure says which. */
   report.kit = {
-    connectorFound: curved !== null,
-    curvedAtFirst: curved?.includes(" Q ") ?? false,
-    elbowedAfter: elbowed !== null && elbowed.includes(" L ") && !elbowed.includes(" Q "),
-    goneWhenQuiet: quiet === null,
-    declarationSaysSo: declared.includes("visible: false"),
+    before,
+    after,
+    typefaceTaken: before.font !== null && after.font !== before.font && /georgia|serif/i.test(after.font ?? ""),
+    accentTaken: Boolean(after.accent) && after.accent !== before.accent,
+    cornersTaken: after.radius === "0px" && after.radius !== before.radius,
+    roomTaken: Boolean(after.pad) && after.pad !== before.pad,
+    roadDrawnAtTheMap: drawn > 0,
+    roadGoneWhenQuiet: quiet === 0,
+    declarationSaysSo: declared.includes("visible: false") && declared.includes("radius: 0"),
   };
-  report.criteria.theKitRedressesTheLiveGarden = Object.values(report.kit).every(Boolean);
+  report.criteria.theKitRedressesTheLiveGarden = Object.entries(report.kit).every(([key, value]) => key === "before" || key === "after" || value === true);
   await page.locator('#kit-form input[name="tended-visible"]').check().catch(() => {});
-  await page.locator('#kit-form input[name="tended-painted"]').check().catch(() => {});
-  await page.locator('#kit-form input[name="tended-color"]').fill("#f4f4f4").catch(() => {});
+  // An accent no page can read is refused in the checker's own words.
+  await page.locator('#kit-form input[name="accent"]').fill("#f4f4f4").catch(() => {});
   await settled(page, { most: 300 });
-  report.criteria.theKitsVerdictIsTheCheckers = await page.evaluate(() => document.getElementById("kit-verdict")?.textContent?.includes("kit-contrast-below-aa") ?? false);
+  report.criteria.theKitsVerdictIsTheCheckers = await page.evaluate(() => document.getElementById("kit-verdict")?.textContent?.includes("brand-accent") ?? false);
 
   await page.close();
 }
 
-async function reduced() {
-  const reduced = await browser.newPage({ viewport: { width: 1280, height: 900 }, reducedMotion: "reduce" });
-  await arrive(reduced, pageAt("index.html"));
-  await settled(reduced, { most: 400 });
-  // The opener's own Graview is on screen at load, so its cards are the
-  // thing to ask: under reduced motion the theme turns their transitions off.
-  await reduced.waitForFunction(() => document.querySelector("[data-graview-view]") !== null, null, { timeout: 20_000 }).catch(() => {});
-  report.criteria.reducedMotionIsHonored = await reduced.evaluate(() => {
-    const card = document.querySelector("[data-graview-view]");
-    return (
-      card !== null &&
-      parseFloat(getComputedStyle(card).transitionDuration) < 0.05 &&
-      getComputedStyle(document.documentElement).scrollBehavior === "auto"
-    );
+
+/*
+ * EVERY LIVE APP ON GRAVIEW.DEV IS THE ONE FACE, IN ITS BOX (Graview HQ
+ * feature:f-one-face-by-default). Every page the site serves that mounts an
+ * app — found by its frames, never listed by hand — opened at a desk and on
+ * a phone, every frame mounted (the stepper's each step pressed): each
+ * embed is the one face held to its box, or a picture, and none offers the
+ * Scene/Pages switch or the routed Scene's own controls (Up, Close the map,
+ * From above, Reset view, the zoom).
+ */
+const LIVE_FRAME = /data-graview-(chapter|app|recipe|document)="|data-step-live="/;
+function livePages(dir = resolve(repoRoot, "docs/site"), at = "") {
+  return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    const path = at ? `${at}/${entry.name}` : entry.name;
+    if (entry.isDirectory()) return livePages(resolve(dir, entry.name), path);
+    return entry.name.endsWith(".html") && !entry.name.startsWith("_") && LIVE_FRAME.test(readFileSync(resolve(dir, entry.name), "utf8")) ? [path] : [];
   });
-  await reduced.close();
 }
 
-async function forced() {
-  const forced = await browser.newPage({ viewport: { width: 1280, height: 900 }, forcedColors: "active" });
-  await arrive(forced, pageAt("index.html"));
-  await settled(forced, { most: 400 });
-  report.criteria.forcedColorsKeepTheMeaningfulMarks = await forced.evaluate(
-    () => {
-      // The ask the season is drawn from is marked by its edge alone, so it keeps that mark in system colors.
-      const pressed = document.querySelector('.ask-chips [aria-pressed="true"]');
-      return pressed !== null && getComputedStyle(pressed).forcedColorAdjust === "none";
-    },
-  );
-  await forced.close();
+async function oneFaceEverywhere() {
+  const pages = livePages();
+  const seen = [];
+  for (const [device, options] of [["desk", { viewport: { width: 1280, height: 800 } }], ["phone", { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true }]]) {
+    const context = await browser.newContext(options);
+    for (const file of pages) {
+      const page = await context.newPage();
+      await arrive(page, pageAt(file));
+      // Every step of a stepper pressed, so each of its frames is mounted.
+      for (const tab of await page.locator('.steps [role="tab"]').all()) await tab.click().catch(() => {});
+      // Down the page and back, so every frame mounts as the reader comes near it.
+      const tall = await page.evaluate(() => document.documentElement.scrollHeight);
+      for (let y = 0; y <= tall; y += 600) {
+        await page.evaluate((to) => window.scrollTo({ top: to, behavior: "instant" }), y);
+        await page.waitForTimeout(60);
+      }
+      const hosts = '[data-graview-chapter], [data-graview-app], [data-graview-recipe], [data-graview-document], [data-step-live]';
+      await page
+        .waitForFunction((hosts) => [...document.querySelectorAll(hosts)].every((el) => el.querySelector("[data-graview-embed]") !== null), hosts, { timeout: 30_000 })
+        .catch(() => {});
+      await settled(page, { most: 800 });
+      seen.push(
+        await page.evaluate(
+          ({ hosts, file, device }) => {
+            const shown = (el) => el.getClientRects().length > 0 && getComputedStyle(el).visibility !== "hidden";
+            const embeds = [...document.querySelectorAll(hosts)].map((host) => host.querySelector("[data-graview-embed]"));
+            const notOne = embeds.filter((el) => {
+              if (!el) return true;
+              const face = el.getAttribute("data-graview-embed");
+              return face !== "picture" && !(face === "pages" && el.hasAttribute("data-graview-one-face-box") && el.querySelector("[data-graview-one-place], [data-graview-one-face-arriving]") !== null);
+            }).map((el) => (el ? `${el.getAttribute("aria-label")}: ${el.getAttribute("data-graview-embed")}` : "not mounted"));
+            const switches = document.querySelectorAll('[data-graview-embed] [data-testid="app-faces"], [data-graview-embed] [data-testid="app-face-scene"], [data-graview-embed] [data-testid="app-face-pages"]').length;
+            const words = /^(up|close the map|from above|reset view|zoom in|zoom out)$/i;
+            const controls = [...document.querySelectorAll("[data-graview-embed] button, [data-graview-embed] [role=button]")]
+              .filter((el) => shown(el) && words.test((el.getAttribute("aria-label") ?? el.textContent ?? "").trim()))
+              .map((el) => (el.getAttribute("aria-label") ?? el.textContent).trim());
+            return { file, device, embeds: embeds.length, notOne, switches, controls: [...new Set(controls)] };
+          },
+          { hosts, file, device },
+        ),
+      );
+      await page.close();
+    }
+    await context.close();
+  }
+  report.oneFace = seen;
+  report.criteria.everyLiveAppOnTheSiteIsTheOneFaceInItsBox = seen.length > 0 && seen.every((one) => one.embeds > 0 && one.notOne.length === 0 && one.switches === 0 && one.controls.length === 0);
 }
 
 /*
@@ -536,13 +506,15 @@ const steps = chooseSteps([
   ),
   ...PAGES.map((sheet) => ({ name: `keyboard/${sheet.file}`, run: () => keyboard(sheet) })),
   { name: "stepper", run: stepper },
-  { name: "hero", run: hero },
-  { name: "bare", run: bare },
-  { name: "asks", run: asks },
   { name: "own", run: own },
   { name: "chapters", run: chapters },
-  { name: "reduced", run: reduced },
-  { name: "forced", run: forced },
+  { name: "one-face", run: oneFaceEverywhere },
+  /* The home (lib/home-checks.mjs): three engines, the map's presses, the plain page, frame times. */
+  { name: "home/engines", run: () => homeInEngines(report, pageAt) },
+  { name: "home/map", run: () => homeMap(report, browser, pageAt) },
+  { name: "home/plain", run: () => homePlain(report, browser, pageAt) },
+  { name: "home/hosts", run: () => homeHosts(report, browser, pageAt) },
+  { name: "home/frames", run: () => (ENGINE === "chromium" ? homeFrames(report, browser, pageAt) : undefined) },
 ]);
 
 browser = await launchEngine(ENGINE, { headless: true });
@@ -567,7 +539,7 @@ if (sweeps) report.criteria.everyViewportIsClean = bad.length === 0;
  * the long version carries fifteen chapters and the kit's garden.
  */
 if (sweeps) report.criteria.everyGraviewIsLiveAtEveryWidth = report.viewports.every((v) => v.live === v.wanted);
-if (!sweeps) report.unmade = ["everyViewportIsClean", "everyGraviewIsLiveAtEveryWidth"];
+if (!sweeps) report.unmade = [...(report.unmade ?? []), "everyViewportIsClean", "everyGraviewIsLiveAtEveryWidth"];
 report.passed = Object.values(report.criteria).every(Boolean) && !report.error;
 
 writeFileSync(partPath(resolve(repoRoot, "docs/site-check.json")), `${JSON.stringify(report, null, 2)}\n`, "utf8");

@@ -31,9 +31,10 @@ for the agent, stop: that path is the one that will drift.
    wrappers over the same runtime — that is the whole design.
 
 3. **Show the calls.** `runtime.onCall(listener)` announces every call as it
-   starts and as it settles. Feed it to `ActivityRail`. A diff says what
-   changed and never what was *considered*, so an agent turn without this is a
-   spinner and a toast.
+   starts and as it settles. Hand the face the seat (`seat` on `PagesApp`'s
+   context, or `Shell`'s): the bar's inbox holds it in Activity, with its
+   calls. A diff says what changed and never what was *considered*, so an
+   agent turn without this is a spinner and a toast.
 
 4. **Report what it READ.** `useAttention(runtime)` pipes a settled read-only
    call's node ids into the picture, so a kind lights faintly where the agent

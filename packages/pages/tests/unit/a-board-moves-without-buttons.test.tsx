@@ -9,6 +9,7 @@ import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import { PagesApp } from "../../src/index.js";
+import { theOneFaceHasCome, thePageIn } from "./on-the-one-face.js";
 
 /**
  * A BOARD MOVES WITHOUT BUTTONS (Roadmap f-board-move-without-buttons), AND
@@ -52,15 +53,18 @@ async function board(options: Record<string, unknown> | undefined, nodes: readon
   if (!compiled.ok) throw new Error(`the document compiles: ${JSON.stringify(compiled.findings.filter((f) => f.severity === "error"))}`);
   const app = compiled.app as GraviewApp<AnySchema>;
   const store = new Store<AnySchema>({ schema: app.schema, mutations: app.mutations ?? [], ...(app.policy ? { policy: app.policy } : {}), snapshot: { nodes, edges: [] } as never });
-  const host = document.createElement("div");
-  document.body.appendChild(host);
-  const root = createRoot(host);
+  const frame = document.createElement("div");
+  document.body.appendChild(frame);
+  const root = createRoot(frame);
   const path = `/places/${String(lens["title"]).toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
   await act(async () => root.render(<PagesApp context={{ store, views: declaredViews(app), principal }} initialPath={path} />));
   await settle();
+  await theOneFaceHasCome(frame);
+  // The page on the one face, not the city out of sight under it.
+  const host = thePageIn(frame) as HTMLElement;
   cleanup = async () => {
     await act(async () => root.unmount());
-    host.remove();
+    frame.remove();
   };
   const columns = () =>
     [...host.querySelectorAll<HTMLElement>("[data-graview-column]")].map((column) => [

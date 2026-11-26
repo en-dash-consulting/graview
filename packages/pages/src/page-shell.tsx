@@ -11,7 +11,7 @@ import { kindOfSlug } from "./registry.js";
 import { useOneFace, useOneFaceComing } from "./one-place-control.js";
 import { heldHost, HeldHere, moveInto } from "./held-element.js";
 import { createPortal } from "react-dom";
-import { type PageContext, StartFreshLink, useStoreTick } from "./page-context.js";
+import { onTheOneFace, type PageContext, StartFreshLink, useStoreTick } from "./page-context.js";
 import { usePlacedOnTheFace } from "./face-placed.js";
 import { classes, sizedBy, type ControlSize } from "./control-size.js";
 import { BODY, WIDE, column, h1, quiet } from "./page-typography.js";
@@ -165,7 +165,7 @@ function OwnBar<S extends AnySchema>({ context }: { readonly context: PageContex
          * (`one-place.tsx`), and the bar offers no switch.
          */
         faces={
-          context.sceneUnderPages && context.views
+          onTheOneFace(context)
             ? undefined
             : {
                 scene: { label: sceneTitle(arrangement), current: false, go: () => window.location.assign(sceneHref) },
@@ -215,7 +215,8 @@ function OwnBar<S extends AnySchema>({ context }: { readonly context: PageContex
               * inbox there, so drawing it here too put two side by side on todo's routed face.
               */}
             {toldFind ? null : <PagesInbox context={context} />}
-            {context.views ? <Profile {...(context.signature ? { signature: true } : {})} /> : null}
+            {/* Who you are — and, for whoever keeps the app, the way into its own declaration (`studio`), as on the Scene's own face. */}
+            {context.views ? <Profile {...(context.signature ? { signature: true } : {})} {...(context.studio !== undefined ? { keeping: context.studio } : {})} /> : null}
           </>
         }
       />

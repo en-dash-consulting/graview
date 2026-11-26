@@ -6,6 +6,21 @@ this package serves lists, records, forms, problems and history as ordinary link
 `/` the gallery, `/:plural` per kind, `/:plural/:id` per node, `/places/:as` per picture,
 `/map` the relations, `/problems`.
 
+- **One face, by default.** `PagesApp` handed `views` and owning its page is the one face:
+  the page over the Scene's own city, and one control at the bottom left — `Page · Nearby ·
+  Map`, Alt+↑ and Alt+↓, a pinch — moves the same page into a panel beside its records'
+  buildings, then out onto the whole city. There is no Scene/Pages switch and no way to
+  another address. `sceneUnderPages: false` keeps the routed face alone, with its switch
+  and its links to the Scene at `sceneHref`; an embedded face (`embedded`) is the one face
+  too, and `inBox` holds every layer of it to the element marked
+  `data-graview-one-face-box` that holds it, as `@graview/embed` does in a box of somebody
+  else's page. `onTheOneFace(context)` says which a context draws. `graview create` writes one `PagesApp` at `/`, and so does `apps/todo`.
+- **The seat and the studio, on the bar.** `seat` on the context (handed the call
+  recorder, as the Scene's `Shell` takes it) is held in the bell's Activity under "The
+  agent's seat", with the calls it makes; `studio` (`<StudioPlace app={…} />` from
+  `@graview/studio`) is held in the person's menu under "Keeping this app". `graview
+  create` writes both in `src/ui/seat.tsx`.
+
 - **One store, no second path.** Pages read through the same `Store` and write through the
   same mutations with the same principal; withheld actions render disabled with their
   refusal. `recordFacts` composes the derivations the scene already uses (labels, readable
@@ -19,18 +34,18 @@ this package serves lists, records, forms, problems and history as ordinary link
   discriminated unions as a type picker plus that arm's fields, arrays as repeatable rows —
   and `DerivedForm` renders it. Nothing renderable is hand-written; anything unrenderable
   says so instead of hiding.
-- **One bar: the scene or the pages, and the place you are on.** The shell is the one app bar
-  (FR-131): the app's mark and name — the page's one heading, the way home — then the switch,
-  "Scene" and "Pages" (FR-137; the scene at its own address on a face that owns its page), then
+- **One bar, and the place you are on.** The shell is the one app bar
+  (FR-131): the app's mark and name — the page's one heading, the way home — then, on the
+  routed face alone, the switch "Scene" and "Pages" (FR-137), then
   the place you are on as one control that opens every place: the home, the Lists, the Pictures
   (FR-138) — or, where the bar has room, the places themselves on the row, the rest under
   "More" (FR-145); then Find, the standing and the person. A page keeps only its own links — a picture
-  its kind as a list, a record "In the scene ↗" to its stop there.
+  its kind as a list, and on the routed face alone a record "In the scene ↗" to its stop there.
   Under an embed's bar the shell draws none of it, and the face's Find goes in
   that bar. A design's own shell stands under the bar too (`context.barAbove`),
   drawing only what is its own; `surface("shell", Shell, { without: ["bar"] })`
   makes it the whole window. Each page's own title is said a level under the app's name. See
-  `apps/todo` for both mounted from one declaration (`/` scene, `/pages` routed).
+  `apps/todo` for a design's shell on the one face at `/`.
 - **A page says where you are.** Each derived list, record and picture opens with a trail —
   a `nav` called "You are here": the section the kind's pages are in, the kind's list, and
   the page itself last, `aria-current="page"` and out of sight, since its heading says it —

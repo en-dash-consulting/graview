@@ -136,7 +136,7 @@ async function drive(engine, checks, errors) {
   await context.addInitScript(KEEP_THE_STORE);
   const page = await context.newPage();
   page.on("pageerror", (error) => errors.push(error.message));
-  await page.goto(`${at("todo")}/?${DAY}&ai=stub`, { waitUntil: "load", timeout: 90_000 });
+  await page.goto(`${at("todo")}/scene/?${DAY}&ai=stub`, { waitUntil: "load", timeout: 90_000 });
   await ready(page);
 
   /* ------------------------------------------- no Ask box on the scene */
@@ -264,7 +264,7 @@ async function drive(engine, checks, errors) {
 
   /* ------------------------------------------- the menu's "Tell Graview…" */
   reach("theMenuOpensItOnWhatItWasOpenedOn");
-  await page.goto(`${at("todo")}/?${DAY}&ai=stub`, { waitUntil: "load", timeout: 90_000 });
+  await page.goto(`${at("todo")}/scene/?${DAY}&ai=stub`, { waitUntil: "load", timeout: 90_000 });
   await ready(page);
   await page.click('[data-graview-pick="t-book"]', { button: "right" });
   await page.waitForSelector('[data-testid="context-menu"]', { timeout: 15_000 });
@@ -282,7 +282,7 @@ async function drive(engine, checks, errors) {
   reach("onPagesTheCardStandsByTheRecordsHeading");
   const pages = await context.newPage();
   pages.on("pageerror", (error) => errors.push(error.message));
-  await pages.goto(`${at("todo")}/pages/tasks/t-deposit?${DAY}&ai=stub`, { waitUntil: "load", timeout: 90_000 });
+  await pages.goto(`${at("todo")}/tasks/t-deposit?${DAY}&ai=stub`, { waitUntil: "load", timeout: 90_000 });
   await pages.waitForSelector("main :is([data-graview-page-title], h1, h2)", { timeout: 60_000 });
   await pages.waitForTimeout(700);
   const pagesBox = await pages.evaluate((selector) => ({ askBox: document.querySelector(selector) !== null, marker: document.querySelector("[data-graview-quick-ask]")?.getAttribute("data-graview-quick-ask") ?? null }), ASK_BOX);
@@ -304,7 +304,7 @@ async function drive(engine, checks, errors) {
   /* ------------------------------------------- AI off: nothing of it, ⌘K is Find's */
   reach("aiOffHidesTheQuickAskCleanly");
   const off = {};
-  for (const [face, path] of [["scene", "/"], ["pages", "/pages/tasks/t-deposit"]]) {
+  for (const [face, path] of [["scene", "/scene/"], ["pages", "/tasks/t-deposit"]]) {
     const one = await context.newPage();
     one.on("pageerror", (error) => errors.push(error.message));
     await one.goto(`${at("todo")}${path}?${DAY}&ai=off`, { waitUntil: "load", timeout: 90_000 });

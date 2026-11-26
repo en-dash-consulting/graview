@@ -138,7 +138,7 @@ describe("a composed row says the moment exactly as the derived glance does", ()
   it("names the zone where nobody's clock says it, and says nothing for a record with no date or a value that is not one", () => {
     sayIn({ appTimeZone: "Asia/Tokyo" });
     try {
-      expect(rowOf({ id: "m1", kind: "moment", name: "Dinner", at: "2026-11-26T14:30:00Z" })).toEqual({ id: "m1", kind: "moment", title: "Dinner", parts: [{ t: "text", text: "Nov 26, 2026, 11:30 PM GMT+9" }] });
+      expect(rowOf({ id: "m1", kind: "moment", name: "Dinner", at: "2031-03-12T14:30:00Z" })).toEqual({ id: "m1", kind: "moment", title: "Dinner", parts: [{ t: "text", text: "Mar 12, 2031, 11:30 PM GMT+9" }] });
       expect(rowOf({ id: "m2", kind: "moment", name: "Toast" }).parts).toEqual([]);
     } finally {
       sayIn({});

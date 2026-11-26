@@ -244,6 +244,8 @@ async function buildHost() {
         const compiled = compileDocumentWithoutCheck(working ? jobbed : tripped ? trips : fab ? discography : laidOut ? layout : proposal ? lifelogics : board ? tasks : org ? strengths : changed ? changes : dollars ? kept : reviewed ? review : hall, { today: () => "2026-09-01" });
         if (!compiled.ok) throw new Error("the document did not compile");
         window.__handle = mount(document.getElementById("app"), {
+          // The routed face and its scene, which this harness holds: an embed draws the one face unless told otherwise.
+          sceneUnderPages: false,
           app: compiled.app,
           seed: working ? ${JSON.stringify(JOBS_SEED)} : tripped ? tripsSeed : fab ? beatlesSeed : laidOut ? layoutSeed : proposal ? lifelogicsSeed : board ? ${JSON.stringify(TASKS_SEED)} : org ? strengthsSeed : changed ? ${JSON.stringify(CHANGES_SEED)} : dollars ? ${JSON.stringify(MONEY_SEED)} : reviewed ? reviewSeed : ${JSON.stringify(SEED)},
           /* "none": the app's to choose — its home view, else the scene (FR-136). */

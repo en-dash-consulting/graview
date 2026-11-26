@@ -92,6 +92,7 @@ export const NOT_EXPORTS = new Map([
   ["importScripts", "a worker global, which a guest's worker does not have"],
   ["GraviewGuest", "the one global @graview/guest/client.js leaves in a frame guest's page, not an export"],
   ["minBuilding", "an option of sceneThumbnail, not an export"],
+  ["inBox", "an option of a PagesApp's context, not an export"],
   ["graviewHeadless","the global a headless script leaves in its isolate for the host to call (HEADLESS_ENTRY), not an export"],
 ]);
 

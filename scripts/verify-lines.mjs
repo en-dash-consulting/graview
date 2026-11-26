@@ -46,6 +46,8 @@ const APPS = [
   {
     app: "todo",
     port: portFor("todo"),
+    // Things' root is the one face; the Scene's own face, whose lines this reads, is at /scene/.
+    scene: "/scene",
     states: [
       ["at rest", "/?theme=light&today=2026-09-01"],
       ["from altitude", "/?theme=light&today=2026-09-01#overview=1"],
@@ -437,14 +439,16 @@ const report = { at: new Date().toISOString(), engine: ENGINE, checks: {}, fault
 
 /* `--only=<app>` while iterating on one app's lines; the verdict is the whole run's. */
 const ONLY = process.argv.find((arg) => arg.startsWith("--only="))?.slice(7);
-for (const { app, port, states, chosen = [], ground = [], record, focused = [], plots } of APPS.filter((one) => !ONLY || one.app === ONLY)) {
+for (const { app, port, scene = "", states, chosen = [], ground = [], record, focused = [], plots } of APPS.filter((one) => !ONLY || one.app === ONLY)) {
   const served = await serving(app, port, repoRoot);
+  // Where the app's Scene is drawn: its root, or under `scene` where the root is the one face.
+  const sceneUrl = `${served.url}${scene}`;
   const browser = await launchEngine(ENGINE, { headless: true });
   try {
     for (const [what, path] of states) {
       const where = `${app} ${what}`;
       const page = await browser.newPage({ viewport: { width: 1440, height: 950 } });
-      await page.goto(`${served.url}${path}`, { waitUntil: "load" });
+      await page.goto(`${sceneUrl}${path}`, { waitUntil: "load" });
       await page
         .waitForFunction(() => document.querySelector("[data-graview-stage]") !== null, null, { timeout: 30_000 })
         .catch(() => {});
@@ -486,7 +490,7 @@ for (const { app, port, states, chosen = [], ground = [], record, focused = [], 
     for (const [what, place, width, height, theme] of ground) {
       const where = `${app} ${what}`;
       const page = await browser.newPage({ viewport: { width, height } });
-      await page.goto(`${served.url}/?theme=${theme}`, { waitUntil: "load" });
+      await page.goto(`${sceneUrl}/?theme=${theme}`, { waitUntil: "load" });
       await page.waitForFunction(() => document.querySelector("[data-graview-stage]") !== null, null, { timeout: 30_000 }).catch(() => {});
       await pageSettled(page, { most: 1600 });
       const tab = page.getByRole("link", { name: place, exact: true }).first();
@@ -523,7 +527,7 @@ for (const { app, port, states, chosen = [], ground = [], record, focused = [], 
     }
     for (const [what, width, height, path] of chosen) {
       const page = await browser.newPage({ viewport: { width, height } });
-      await page.goto(`${served.url}${path}`, { waitUntil: "load" });
+      await page.goto(`${sceneUrl}${path}`, { waitUntil: "load" });
       await page.waitForFunction(() => document.querySelector("[data-graview-stage]") !== null, null, { timeout: 30_000 }).catch(() => {});
       await pageSettled(page, { most: 2400 });
       for (const link of await page.evaluate(RECORD_LINKS)) {
@@ -537,7 +541,7 @@ for (const { app, port, states, chosen = [], ground = [], record, focused = [], 
       const where = `${app} ${record.id} at ${width}`;
       const page = await browser.newPage({ viewport: { width, height } });
       const open = async (hash) => {
-        await page.goto(`${served.url}/?theme=light${hash}`, { waitUntil: "load" });
+        await page.goto(`${sceneUrl}/?theme=light${hash}`, { waitUntil: "load" });
         await page.waitForFunction(() => "__graviewReady" in window && document.querySelector("[data-graview-stage]") !== null, null, { timeout: 60_000 }).catch(() => {});
         await pageSettled(page, { most: 2200 });
       };
@@ -687,7 +691,7 @@ for (const { app, port, states, chosen = [], ground = [], record, focused = [], 
       for (const [width, height] of [[1440, 900], [390, 844]]) {
         const where = `${app} ${what} at ${width}`;
         const page = await browser.newPage({ viewport: { width, height } });
-        await page.goto(`${served.url}/?theme=light#focus=${encodeURIComponent(id)}${choose ? `&sel=${encodeURIComponent(id)}` : ""}`, { waitUntil: "load" });
+        await page.goto(`${sceneUrl}/?theme=light#focus=${encodeURIComponent(id)}${choose ? `&sel=${encodeURIComponent(id)}` : ""}`, { waitUntil: "load" });
         await page.waitForFunction(() => "__graviewReady" in window && document.querySelector("[data-graview-stage]") !== null, null, { timeout: 60_000 }).catch(() => {});
         await pageSettled(page, { most: 2200 });
         // Held by the keyboard, every tie of a chosen record is reached at once: the state whose words floated free.
@@ -711,7 +715,7 @@ for (const { app, port, states, chosen = [], ground = [], record, focused = [], 
     if (plots) {
       for (const [width, height] of [[1440, 900], [390, 844]]) {
         const page = await browser.newPage({ viewport: { width, height } });
-        await page.goto(`${served.url}${plots}`, { waitUntil: "load" });
+        await page.goto(`${sceneUrl}${plots}`, { waitUntil: "load" });
         await page.waitForFunction(() => document.querySelector("[data-graview-plot]") !== null, null, { timeout: 60_000 }).catch(() => {});
         await pageSettled(page, { most: 2000 });
         const seen = await page.evaluate(RESTS);

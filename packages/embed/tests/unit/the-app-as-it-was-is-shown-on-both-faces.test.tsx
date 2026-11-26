@@ -121,7 +121,7 @@ describe("the app as it was, on the routed face", () => {
     document.body.appendChild(host);
     let handle: EmbedHandle | undefined;
     await act(async () => {
-      handle = mount(host, { app, fonts: false, face: "pages", path: "/notes", store, principal: me } as unknown as EmbedOptions);
+      handle = mount(host, { sceneUnderPages: false, app, fonts: false, face: "pages", path: "/notes", store, principal: me } as unknown as EmbedOptions);
     });
     try {
       await settled(() => expect(host.textContent).toContain("Third"));

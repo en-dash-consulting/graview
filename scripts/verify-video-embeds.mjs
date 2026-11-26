@@ -92,6 +92,8 @@ async function serveHost() {
         window.__problems = [];
         window.__failures = [];
         window.__handle = mount(document.getElementById("app"), {
+          // The routed face and its scene, which this harness holds: an embed draws the one face unless told otherwise.
+          sceneUnderPages: false,
           app: compiled.app,
           seed: ${JSON.stringify(SEED)},
           principal: { kind: "human", id: "p1", roles: ["owner"] },

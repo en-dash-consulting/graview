@@ -214,6 +214,8 @@ const moment = { href: ${JSON.stringify(MOMENT)}, name: "IMG_4032.jpg", type: "i
 const definition = { manifest: reel ? ${JSON.stringify(REEL_MANIFEST)} : full || many ? ${JSON.stringify(JOURNEY_MANIFEST)} : ${JSON.stringify(PHOTOS_MANIFEST)}, worker: { source: reel ? ${JSON.stringify(REEL_JS)} : ${JSON.stringify(PHOTOS_JS)} }, ...(base && !once ? { file: (href) => base + href } : {}), onFailure: (reason, detail) => window.__failures.push([reason, detail]), onProblem: (said) => window.__problems.push(said) };
 const clip = { href: FILES.clip, name: "porch.webm", type: "video/webm", bytes: 624, width: 32, height: 32, duration: 1, poster: FILES.clipPoster, caption: "The porch, panned" };
 window.__handle = mount(document.getElementById("app"), {
+  // The routed face and its scene, which this harness holds: an embed draws the one face unless told otherwise.
+  sceneUnderPages: false,
   app: jobsApp,
   seed: reel ? { ...jobsSeed, nodes: jobsSeed.nodes.map((node) => (node.id === "job:porch" ? { ...node, clip } : node)) } : full ? { ...jobsSeed, nodes: jobsSeed.nodes.map((node) => (node.id === "job:porch" ? { ...node, photos: [moment], papers: [] } : node)) } : many ? { ...jobsSeed, nodes: [...jobsSeed.nodes.filter((node) => node.kind !== "job"), ...faces], edges: faces.map((face) => ({ kind: "on", from: face.id, to: "crew:ana" })) } : jobsSeed,
   principal: ana,

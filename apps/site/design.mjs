@@ -18,6 +18,7 @@
  */
 import { createHash } from "node:crypto";
 import { escape, inline, render, REPOSITORY, section } from "./prose.mjs";
+import { sharedHead, siteFooter, siteHeader } from "./chrome.mjs";
 import { releasesBody } from "./releases.mjs";
 
 /** The address the site is served at, and the one every canonical, card and twin names. */
@@ -102,9 +103,6 @@ export function toMarkdown(html, base) {
 const SEO_START = "<!-- site-seo:start — written by scripts/site-docs.mjs. -->";
 const SEO_END = "<!-- site-seo:end -->";
 const SEO_BLOCK = /<!-- site-seo:start[\s\S]*?<!-- site-seo:end -->\n?/;
-const RECIPES_START = "<!-- site-recipes:start — written by scripts/site-docs.mjs. -->";
-const RECIPES_END = "<!-- site-recipes:end -->";
-const RECIPES_BLOCK = /<!-- site-recipes:start[\s\S]*?<!-- site-recipes:end -->/;
 
 /** JSON for a `<script>`: nothing in it can close the element it sits in. */
 const ldScript = (data) => `<script type="application/ld+json">\n${JSON.stringify(data, null, 1).replace(/</g, "\\u003c")}\n</script>`;
@@ -297,12 +295,12 @@ function faceSection(r) {
     "package.json": "What it installs: the framework's packages, React and the router, and Vite. No framework source: a product installs the packages.",
     "vite.config.ts": "The dev server, and its proxy: every <code>/graview</code> request, the socket too, goes to the preview, with the preview's own Origin, so its same-app doors answer a page they would refuse from another port.",
     "index.html": "The page.",
-    "src/main.tsx": "The app and the seat from the preview's <code>/graview/document</code>, the store over <code>openRemote</code>, live; <code>themeCss</code> adopted by hand; the pictures from <code>registerDeclaredLenses(registerViewSpecs(registerDefaultViews(…)))</code>; and <code>PagesApp</code> with the face's own registry.",
+    "src/main.tsx": "The app and the seat from the preview's <code>/graview/document</code>, the store over <code>openRemote</code>, live; <code>themeCss</code> adopted by hand; the pictures from <code>registerDeclaredLenses(<wbr>registerViewSpecs(<wbr>registerDefaultViews(…)))</code>; and <code>PagesApp</code> with the face's own registry.",
     "src/pages.tsx": "The face's own shell (with Find and Undo in its own row), home, a route about no one kind, and a zone's record page whose map link is <code>spatialHref(id, sceneHref)</code> into the preview's own scene. Every other page is still derived.",
     "tsconfig.json": "Strict, for the bundler.",
   };
   return section("face", "A face of its own",
-    `      <p>An app worth keeping wants a look and feel of its own before it wants a server. This one keeps the store where <code>graview preview</code> runs it, and draws Graview's routed face over it with a shell, a home, a route and a record page in the team's own words: a change made on either page is the other's at once. If it mounts the scene too, give the embed <code>bar: { faces: false, name: false }</code> so the face's own shell is the one bar.</p>\n` +
+    `      <p>An app worth keeping wants a look and feel of its own before it wants a server. This one keeps the store where <code>graview preview</code> runs it, and draws Graview's pages over it with a shell, a home, a route and a record page in the team's own words: a change made on either page is the other's at once.</p>\n` +
     `      <div class="code" data-scroller aria-label="Running the face"><pre><code class="language-sh"># the store and its own page, on 4800: it prints the address to open, which carries its key\nnpx graview preview app.json --seed seed.json --port 4800\n# the face, over it, on 5173, handed that address\ncd face &amp;&amp; npm install &amp;&amp; GRAVIEW_PREVIEW=&quot;http://localhost:4800/?graview_key=…&quot; npm run dev</code></pre></div>\n` +
     `      <p class="sm dim">CI runs these files as they are: <code>pnpm verify face-recipe</code> installs them over the built packages, starts the preview and the face&rsquo;s own dev server, and checks that they typecheck, that the preview refuses the face&rsquo;s page without the proxy and answers it through it, that the face draws its own shell, home and zone page, and that a change on either side reaches the other live.</p>\n` +
     r.face.map((file) => `      <h3><code>face/${escape(file.path)}</code></h3>\n${what[file.path] ? `      <p>${what[file.path]}</p>\n` : ""}      <div class="code" data-scroller aria-label="face/${escape(file.path)}" style="max-height: 560px; overflow: auto;"><pre><code class="language-${faceLanguage(file.path)}">${escape(file.source.trimEnd())}</code></pre></div>`).join("\n"));
@@ -327,47 +325,65 @@ const RAIL = [
   ["site.html", "This site, as an app"],
 ];
 
+/** What the share image shows, said for whoever cannot see it. */
+export const OG_ALT = "The graview.dev home page: the headline Any agent can draw the screen. Look behind it., over a table of modules an agent drew, with a round hole in it showing the map of the records behind it.";
+
 /**
  * Every docs page is the same document with different content in it. The
- * head comes off the landing page so the fonts, the icon and the color
- * scheme cannot drift; `..` gets the stylesheet and the mark right from one
- * directory down. What is the page's own — its title, its description, its
- * address, its card, its Markdown twin and its structured data — replaces
- * the landing page's, so no two pages on the site say the same thing about
- * themselves.
+ * head's shared part, the header and the footer are the site's one chrome
+ * (`apps/site/chrome.mjs`), the same the home, the tour and the long version
+ * carry, so the fonts, the icons and the links cannot drift; `css` is the
+ * site's stylesheet, inline because the artifact host blocks a `<link>`.
+ * What is the page's own — its title, its description, its address, its
+ * card, its Markdown twin and its structured data — is written here, so no
+ * two pages on the site say the same thing about themselves.
  */
-function shell(landing, { path, title, blurb, here, body, scripts = [], data = "" }) {
-  const HEAD_START = landing.indexOf("<!doctype html>");
-  const HEAD_END = landing.indexOf('<a class="skip"');
-  /* The Graview logo off the landing page's header: the kit's outlines, inline so it takes the page's ink. */
-  const LOGO = /<a class="logo"[\s\S]*?<\/a>/.exec(landing)?.[0] ?? "";
-  if (!LOGO) throw new Error("the landing page has no <a class=\"logo\"> in its header to put on the docs pages");
+function shell(css, { path, title, blurb, here, body, scripts = [], data = "" }) {
   const up = path.includes("/") ? "../.." : "..";
+  const base = `${up}/`;
   const url = `${SITE}/docs/${path}`;
   const twin = path.split("/").pop().replace(/\.html$/, ".md");
-  const meta = landing
-    .slice(HEAD_START, HEAD_END)
-    .replace(SEO_BLOCK, "")
-    .replace(/<title>[\s\S]*?<\/title>/, `<title>${escape(title)} — Graview docs</title>`)
-    .replace(/<meta name="description"[^>]*>/, `<meta name="description" content="${escape(blurb)}">`)
-    .replace(/<meta property="og:title"[^>]*>/, `<meta property="og:title" content="${escape(title)} — Graview docs">`)
-    .replace(/<meta property="og:description"[^>]*>/, `<meta property="og:description" content="${escape(blurb)}">`)
-    .replace(/<meta property="og:type"[^>]*>/, `<meta property="og:type" content="article">`)
-    .replace(/<meta property="og:url"[^>]*>/, `<meta property="og:url" content="${url}">`)
-    .replace(/<link rel="canonical"[^>]*>/, `<link rel="canonical" href="${url}">`)
-    .replace("</head>", `<link rel="alternate" type="text/markdown" href="${twin}" title="This page as Markdown">\n${ldScript(articleData({ path, title, blurb }))}\n</head>`)
-    // The site's own files (the face, the icons) are `brand/` at the root: `up` from here.
-    .replaceAll('"brand/', `"${up}/brand/`);
   /* A package's or a skill's page is one directory down, so the nav's
      links to the docs root are one `../` longer there — a nav that forgot
      this sent every nested page's "Docs home" to a file that does not exist. */
   const docsRoot = up === ".." ? "" : "../";
-  return `${meta}<a class="skip" href="#main">Skip to content</a>
+  return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+${sharedHead({ base })}
+<title>${escape(title)} — Graview docs</title>
+<meta name="description" content="${escape(blurb)}">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#F7F7F2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0A0F1F" media="(prefers-color-scheme: dark)">
+<meta property="og:site_name" content="Graview">
+<meta property="og:title" content="${escape(title)} — Graview docs">
+<meta property="og:description" content="${escape(blurb)}">
+<meta property="og:type" content="article">
+<meta property="og:url" content="${url}">
+<meta property="og:image" content="${SITE}/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="${escape(OG_ALT)}">
+<meta property="og:locale" content="en_US">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="${url}">
+<link rel="alternate" type="text/markdown" href="${twin}" title="This page as Markdown">
+${ldScript(articleData({ path, title, blurb }))}
+</head>
+<body class="docs-page">
+<style>
+${css}
+</style>
+
+<a class="skip" href="#main">Skip to content</a>
+
+${siteHeader({ base, here: "docs" })}
 
 <div class="wrap" lang="en">
   <nav class="rail" aria-label="Documentation">
     <div class="brand">
-      ${LOGO.replace('href="index.html"', `href="${up}/index.html"`)}
       <span class="sub">Documentation</span>
     </div>
 
@@ -377,29 +393,15 @@ ${RAIL.map(([href, label]) => `      <a href="${docsRoot}${href}"${href === here
       <a href="${up}/progression.html">The garden, grown</a>
       <a href="${up}/index.html">&larr; graview.dev</a>
     </div>
-
-    <div class="railfoot">
-      records of a Graview app,<br>
-      written out of the repository,<br>
-      never by hand
-    </div>
   </nav>
 
   <main class="col" id="main" tabindex="-1">
 ${body}
   </main>
 
-  <footer class="docfoot">
-    <p class="sm dim">
-      Graview is built by <a href="https://endash.us">En&nbsp;Dash</a>, which also runs
-      <a href="https://graview.cloud">Graview Cloud</a>, the hosted product built on it. This site is
-      itself a Graview app: every page is a record of <a href="${DECLARATION}">its declaration</a>,
-      written out of the repository by <code>node scripts/site-docs.mjs</code> and rendered by
-      <code>renderPlace</code>, so nothing on it can disagree with the code it describes.
-      <a href="${docsRoot}site.html">Open it as an app</a>.
-    </p>
-  </footer>
 </div>
+
+${siteFooter({ base })}
 <script>
 /*
  * A REGION THAT SCROLLS NEEDS A WAY INTO IT.
@@ -613,21 +615,21 @@ const DOCS = {
         `      <p>The directory is the only thing it needs; the rest has a default it says out loud. Give it the product's name and the first kind of thing your domain has — <code>--kind shift</code>, <code>--kind work-order</code> — and it writes chapter one for that domain rather than for a placeholder.</p>\n` +
         (create ? `      <div class="code" data-scroller aria-label="graview create, usage"><pre><code class="language-text">${escape(create.fields.usage)}</code></pre></div>` : "")) +
       section("writes", `What it writes (${made.files.length} files)`,
-        `      <p>The declaration split into domain and UI, so the domain has no React in it and <code>graview check</code> can read it headless. <code>src/domain/</code> is the whole surface you will work in; the shell in <code>src/ui/</code> is eighty lines made of framework parts, and every one of them can be replaced.</p>\n` +
+        `      <p>The declaration split into domain and UI, so the domain has no React in it and <code>graview check</code> can read it headless. <code>src/domain/</code> is the whole surface you will work in; <code>src/main.tsx</code> mounts one <code>PagesApp</code> at <code>/</code>, the one face, and <code>src/ui/</code> holds the pictures, a page in your own words, and the agent's seat and the studio on the bar, each of them replaceable.</p>\n` +
         `      <ul class="names" aria-label="The files graview create writes">${made.files.map((f) => `<li><code>${escape(f)}</code></li>`).join("")}</ul>\n` +
         `      <p class="sm dim" style="margin-top: 14px;">Dependencies: ${made.dependencies.map((d) => `<code>${escape(d)}</code>`).join(", ")}. Dev: ${made.devDependencies.map((d) => `<code>${escape(d)}</code>`).join(", ")}. No zod of your own — <code>@graview/core</code> re-exports <code>z</code>, so a kind's fields are built with exactly the copy the framework was built with.</p>`) +
       section("scripts", "The scripts it gives you",
         `      <div class="tablewrap"><table><thead><tr><th scope="col">Script</th><th scope="col">Runs</th></tr></thead><tbody>` +
         scripts.map(([name, cmd]) => `<tr><td><code>npm run ${escape(name)}</code></td><td><code>${escape(cmd)}</code></td></tr>`).join("") +
         `</tbody></table></div>\n` +
-        `      <p class="sm" style="margin-top: 14px;"><strong>Start with <code>verify</code></strong> — typecheck, tests, build and <code>graview check</code>, in that order — and then <code>dev</code>: the scene at the root, the routed face at <code>/pages</code>.</p>`) +
+        `      <p class="sm" style="margin-top: 14px;"><strong>Start with <code>verify</code></strong> — typecheck, tests, build and <code>graview check</code>, in that order — and then <code>dev</code>: the app at the root, the page over its city, with <code>Page · Nearby · Map</code> at the bottom left.</p>`) +
       section("loop", "The loop from there",
         `      <p>Open a session beside the declaration. The skills are already installed where Claude Code and Codex look for them, and the first one to read is <a class="inl" href="skills/graview-node-kind.html"><code>graview-node-kind</code></a>. Describe a kind; let the model draft its fields, its edges, its acts and its rule; run <code>graview check</code>; look at the picture; declare more. The checker tells you both when a shape is wrong, in words, before a page does.</p>\n` +
         `      <ul class="cards">\n` +
         `        <li><a href="skills/graview-new-app.html"><strong>graview-new-app</strong><span>The shape of the declaration, the shell that comes for free, and the CI that keeps it honest.</span></a></li>\n` +
         `        <li><a href="skills/graview-node-kind.html"><strong>graview-node-kind</strong><span>Add a kind — fields, edges, label, plural, roles — and verify it with graview check.</span></a></li>\n` +
         `        <li><a href="skills/graview-invariant.html"><strong>graview-invariant</strong><span>A rule that names the acts that would repair it, then make it fire.</span></a></li>\n` +
-        `        <li><a href="skills/graview-pages.html"><strong>graview-pages</strong><span>The routed face, from the derived pages to a design of your own.</span></a></li>\n` +
+        `        <li><a href="skills/graview-pages.html"><strong>graview-pages</strong><span>The pages, from the derived ones to a design of your own.</span></a></li>\n` +
         `        <li><a href="skills/graview-ship.html"><strong>graview-ship</strong><span>Persistence, migrations, export and health, self-hosted or behind a service.</span></a></li>\n` +
         `      </ul>`) +
       section("one-release", "One release, run from the project",
@@ -697,8 +699,8 @@ const DOCS = {
       `    </section>\n` +
       section("city", "The city, at altitude",
         `      <p>Every kind is a district; every record a building on its own plot; every edge a road with its words on it. Drag the ground, press a district, come down to a plot.</p>\n` + frame(16, "The garden, grown", "The example garden at altitude, live", ' data-stop="#overview=1" data-settle="1"')) +
-      section("pages", "The routed face",
-        `      <p>The same store as ordinary pages — here in the garden's own design: an almanac over the same acts, rules and log.</p>\n` + frame(13, "The garden's own face", "The garden's routed pages, live", ' data-face="pages"')) +
+      section("pages", "Every page",
+        `      <p>The same store as ordinary pages — here in the garden's own design: an almanac over the same acts, rules and log.</p>\n` + frame(13, "The garden's own face", "The garden's pages, live", ' data-face="pages"')) +
       section("studio", "The studio",
         `      <p>The declaration itself, open as a graph, edited with ordinary acts and checked before the change lands.</p>\n` + frame(15, "Seedbed, in the studio", "The declaration open in the studio, live", ' data-settle="0"')) +
       section("seat", "A seat for an agent",
@@ -836,7 +838,7 @@ const DOCS = {
       `      <p class="lede" style="margin-top: 18px;">graview.dev is a Graview app: one declaration, <a class="inl" href="${DECLARATION}"><code>apps/site/app.json</code></a>, and ${total} records written out of the repository by <code>node scripts/site-docs.mjs</code>. Every page the site serves is one of those records, rendered as static HTML by <code>renderPlace</code> from <code>@graview/pages/static</code> in the site's own design, so a search engine and a model read plain pages, and none of them can say what the records do not.</p>\n` +
       `    </section>\n` +
       section("live", "The site, running",
-        `      <p>This is that declaration, compiled in your browser by the same compiler <code>graview check</code> uses, over the same records the pages are rendered from: the city of its packages, skills, check findings and pages. Press a district; come down to a record; switch to its pages.</p>\n` +
+        `      <p>This is that declaration, compiled in your browser by the same compiler <code>graview check</code> uses, over the same records the pages are rendered from: the city of its packages, skills, check findings and pages. Read its home; rise to its map and press a district; come down to a record's page.</p>\n` +
         `      <div class="chapter-live" data-graview-document="site-app" data-graview-seed="site-records" data-stop="#overview=1" data-label="graview.dev" role="region" aria-label="graview.dev as a Graview app, live"><p class="chapter-loading">graview.dev, loading…</p></div>`) +
       section("declared", "What it declares",
         `      <p><b>${escape(declared.name ?? "graview.dev")}</b>: ${escape(declared.description ?? "")} ${kinds.length} kinds, each read out of the tree:</p>\n` +
@@ -871,21 +873,6 @@ function scriptsOf(design) {
 
 /* ── the hand-designed pages, filled from records ─────────────────────── */
 
-/**
- * THE FRONT PAGE'S RECIPES, between their markers: one line each under the
- * products built on Graview — the task, linked to its live page, and what
- * it declared, counted from its record so the line cannot drift from it.
- */
-function recipeRows(rcps) {
-  const rows = rcps.map((r) =>
-    `      <li><a href="docs/recipes/${r.slug}.html"><b>${escape(r.title)}</b>` +
-    `<span>${r.kinds.length} kinds &middot; ${r.rules.length} rules &middot; ${r.records} records${r.check.some((line) => line.startsWith("!")) ? " &middot; warnings" : ""}</span></a></li>`);
-  return (
-    `${RECIPES_START}\n    <ul class="recipe-list">\n${rows.join("\n")}\n    </ul>\n` +
-    `    <p class="recipes-note">Each made by an agent from the prompt alone, over a made-up repository, and checked on every push. <a class="inl" href="docs/recipes.html">How they were made&nbsp;&rarr;</a></p>\n    ${RECIPES_END}`
-  );
-}
-
 /* ── for the crawlers and the models ──────────────────────────────────── */
 
 const START_HERE = ["getting-started.html", "concepts.html", "agents.html", "cli.html", "checks.html", "stability.html", "releases.html", "index.html"];
@@ -917,7 +904,7 @@ function preamble(site) {
     "",
     `> ${summary(site)}`,
     "",
-    `- Start with an agent: ${SITE}/start.md is the procedure, written for the agent — hand it "Read ${SITE}/start.md, then turn this repo's docs into a Graview app."`,
+    `- Start with an agent: ${SITE}/start.md is the procedure, written for the agent — hand it "Read ${SITE}/start.md, then map this repo as a Graview app and show me what's in it."`,
     "- Start a product: `npm create graview@latest my-app` (Node 22 or later)",
     "- License: Elastic License 2.0 — source-available, free to build with and to ship products on",
     `- Source: ${REPOSITORY}`,
@@ -938,7 +925,7 @@ function preamble(site) {
  */
 export function siteDesign({ template, served, today, declaration, data }) {
   const pageByPath = (site, path) => pagesOf(site).find((page) => page.fields.path === path);
-  const landingTemplate = (site) => template(pageByPath(site, "index.html").fields.template);
+  const css = () => template("docs/site/site.css").trimEnd();
 
   /** A docs page's body: what goes in its <main>. */
   const docsBody = (page, site) => {
@@ -949,7 +936,7 @@ export function siteDesign({ template, served, today, declaration, data }) {
 
   /** A docs page, whole. */
   const docsPage = (page, site) =>
-    shell(landingTemplate(site), {
+    shell(css(), {
       path: docsPath(page),
       title: page.fields.title,
       blurb: page.fields.description ?? "",
@@ -966,9 +953,7 @@ export function siteDesign({ template, served, today, declaration, data }) {
   };
 
   const landing = (page, site) => {
-    const rcps = recipesOf(site);
-    // The hero's tabs are written by hand: a recipe is one of them, the rota and the garden the others.
-    const filled = template(page.fields.template).replace(RECIPES_BLOCK, recipeRows(rcps));
+    const filled = template(page.fields.template);
     return withSeo(filled, landingData(filled, versionOf(site)));
   };
 

@@ -24,7 +24,7 @@ Every view comes with a manifest the host enforces:
 ```
 
 - `name` is lower-case letters, digits and hyphens. Acts are recorded `via: "view:<name>"`.
-- `title` makes it a named place on both faces, with the slug `placeSlug(title)` (`"the-packages"`).
+- `title` makes it a named place, with the slug `placeSlug(title)` (`"the-packages"`).
 - A view is as tall as it draws, measured by the host: set no height. On Pages it flows with the page. On the Scene it is a card held to its box: a fade and More where cut, Open to its page. `flows: false` keeps a frame on Pages; `scene: { maxHeight }` holds the card lower (80–4000px).
 - `attach` is a kind, or `"home"` for the front page's body (cardinality `many`).
 - `reads` lists the other kinds and the edges it is shown. Nothing else is handed to it. A view of one reading an edge from its kind to its kind (rock `becomes` rock) is handed the records linked to it. An edge to a kind it is not handed brings nothing, and the check says so.
@@ -166,7 +166,7 @@ is first drawn.
    sees, or `--record <id>`. It presses each control
    (`graview-view-forms`). So does `runWorkerViewForEachSeat`
    (`guest/headless`).
-3. Open the place on both faces as that member. Is anything shown that
+3. Open the place as that member, as a page and on the Map. Is anything shown that
    they should not see? Does the region carry no `data-worker-view-failed`?
    `start` there means it never ran: the note under the plain face names
    what the page's Content-Security-Policy lacks (`worker-src blob:`).

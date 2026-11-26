@@ -301,6 +301,8 @@ async function buildHost() {
           const first = compile(proposal);
           const asked = new URLSearchParams(location.search);
           window.__handle = mount(document.getElementById("app"), {
+            // The routed face and its scene, which this harness holds: an embed draws the one face unless told otherwise.
+            sceneUnderPages: false,
             app: first,
             store: storeFor(first),
             principal: { kind: "human", id: "owner", roles: ["owner"] },
@@ -353,6 +355,8 @@ async function buildHost() {
           window.__ready = true;
         } else {
         window.__handle = mount(document.getElementById("app"), {
+          // The routed face and its scene, which this harness holds: an embed draws the one face unless told otherwise.
+          sceneUnderPages: false,
           app: compiled.app,
           seed: ${JSON.stringify(SEED)},
           principal: { kind: "human", id: "p1", roles: ["owner"] },
