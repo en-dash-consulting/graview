@@ -3,6 +3,7 @@ import { createSchema, declareInstallation, defineApp, defineMutation, defineNod
 import { toDocument } from "../../src/document/index.js";
 import { memorySubscriptions, type SubscriptionMatch } from "../../src/index.js";
 import { watchSubscriptions } from "../../src/subscriptions.js";
+import { seesEveryRecord, toldTouches } from "../../src/seen.js";
 import { checkApp } from "../../src/check.js";
 import { compileDocument } from "../../src/check.js";
 import { MESSAGE_KIND, mentionablesOf, mentionsIn, messagesIn, roomsOf, threadOf, unreadFor, roomKey, isPlaceless } from "../../src/rooms.js";
@@ -155,6 +156,32 @@ describe("who reads a room", () => {
     expect(() => post(store, sam, { room: "task-talk", body: "which one?" })).toThrow(/say which one/);
     expect(() => post(store, sam, { room: "household", about: "task:van", body: "?" })).toThrow(/whole app/);
     expect(() => post(store, sam, { room: "task-talk", about: "user:gus", body: "?" })).toThrow();
+  });
+});
+
+describe("rooms keep nothing else from a seat", () => {
+  it("a seat that sees every record of the app still does, and is told who touched them, with rooms only some read", () => {
+    const store = open(household({ grants: [{ roles: "*", mutations: "*" }] }));
+    expect(seesEveryRecord(store as never, sam)()).toBe(true);
+    expect(toldTouches(store as never, sam)).toBe(true);
+  });
+
+  it("a message's id says nothing a seat could guess", () => {
+    const store = open(household());
+    post(store, nora, { room: "keepers", body: "one" });
+    const [message] = messagesIn(store.graph as never, "keepers");
+    expect(message!.id).toMatch(/^message:keepers-[a-z0-9]{6,}/);
+  });
+
+  it("the host's seat acting for a person is held to that person's roles", () => {
+    const store = open(household());
+    expect(() => post(store, { kind: "system", id: "host", onBehalfOf: gus }, { room: "keepers", body: "psst" })).toThrow(/Only a keeper/);
+    post(store, { kind: "system", id: "host" }, { room: "keepers", body: "From the host." });
+  });
+
+  it("a copy of a folded app with no policy of its own is written back with none", () => {
+    const app = defineApp({ name: "open", schema, mutations: [addTask] as never, rooms: { quiet: { title: "Quiet", read: ["keeper"] } } });
+    expect(toDocument({ ...app, lenses: [] } as never).document.policy).toBeUndefined();
   });
 });
 

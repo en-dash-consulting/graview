@@ -51,8 +51,10 @@ export function unfoldedApp<A extends object>(app: A): A {
   const folded = app as unknown as GraviewApp<AnySchema>;
   if (!folded.rooms || !folded.schema?.definitions?.some(isPlaceless)) return app;
   const schema = createSchema(folded.schema.definitions.filter((definition) => !isPlaceless(definition)) as never, (folded.schema as { readonly computed?: never }).computed);
-  const policy = folded.policy && { ...folded.policy, grants: folded.policy.grants.filter((grant) => !FRAMEWORK.has(grant)), ...(folded.policy.sees ? { sees: folded.policy.sees.filter((sight) => !FRAMEWORK.has(sight)) } : {}) };
-  const own = { ...folded, schema, mutations: (folded.mutations ?? []).filter((act) => !FRAMEWORK.has(act)), ...(policy ? { policy: policy.sees?.length === 0 ? (({ sees: _, ...rest }) => rest)(policy) : policy } : {}) };
+  const made = folded.policy && folded.policy.grants.every((grant) => FRAMEWORK.has(grant)) && (folded.policy.sees ?? []).every((sight) => FRAMEWORK.has(sight));
+  const policy = folded.policy && !made ? { ...folded.policy, grants: folded.policy.grants.filter((grant) => !FRAMEWORK.has(grant)), ...(folded.policy.sees ? { sees: folded.policy.sees.filter((sight) => !FRAMEWORK.has(sight)) } : {}) } : undefined;
+  const { policy: _folded, ...rest } = folded;
+  const own = { ...rest, schema, mutations: (folded.mutations ?? []).filter((act) => !FRAMEWORK.has(act)), ...(policy ? { policy: policy.sees?.length === 0 ? (({ sees: _, ...kept }) => kept)(policy) : policy } : {}) };
   UNFOLDED.set(app, own as never);
   return own as unknown as A;
 }
@@ -110,9 +112,15 @@ export function messageKind(rooms: AppRooms): AnyNodeDefinition {
   return definition as unknown as AnyNodeDefinition;
 }
 
-/** Whether a seat holding these roles is one a list of roles admits: unsaid, everybody. The system's own seat is always admitted. */
+/** Whether a seat holding these roles is one a list of roles admits: unsaid, everybody. The host's own seat, acting for nobody, is always admitted. */
 const admits = (allowed: readonly string[] | undefined, by: ActingSeat | undefined): boolean =>
-  allowed === undefined || by?.kind === "system" || (by?.roles ?? []).some((role) => allowed.includes(role));
+  allowed === undefined || by?.system === true || (by?.roles ?? []).some((role) => allowed.includes(role));
+
+/** Eight letters nobody guesses: what a message's id is made unguessable by. */
+function unguessable(): string {
+  const random = globalThis.crypto?.randomUUID?.() ?? `${Date.now().toString(36)}${Math.random().toString(36).slice(2)}`;
+  return random.replace(/-/g, "").slice(0, 10);
+}
 
 /** The room a message names, or a refusal that says which rooms there are. */
 function roomNamed(rooms: AppRooms, id: string): RoomDeclaration {
@@ -179,7 +187,8 @@ export function roomActs(rooms: AppRooms, schema?: AnySchema): AnyMutationDefini
       const by = ctx.by;
       const author = by?.id ?? ctx.me ?? by?.kind ?? "someone";
       ctx.addNode({
-        id: ctx.freshId(args.room, MESSAGE_KIND),
+        // Unguessable, so an id asked for or stepped past says nothing of a room the seat may not read.
+        id: ctx.freshId(`${args.room}-${unguessable()}`, MESSAGE_KIND),
         kind: MESSAGE_KIND,
         room: args.room,
         ...(about !== undefined ? { about } : {}),
@@ -263,11 +272,12 @@ function framework<T extends object>(part: T): T {
  * from anybody, and a room that admits everybody needs none; a room that
  * reads only some roles brings a policy that sees everything else as before.
  */
-export function roomsPolicy(policy: Policy | undefined, rooms: AppRooms, kinds: readonly string[]): Policy | undefined {
+export function roomsPolicy(policy: Policy | undefined, rooms: AppRooms, kinds: readonly string[], taken: ReadonlySet<string> = new Set()): Policy | undefined {
   const restricted = Object.values(rooms).some((room) => room.read !== undefined);
   if (!policy && !restricted) return undefined;
   const base: Policy = policy ?? { grants: [framework({ roles: "*", mutations: "*", describe: "Everybody may do everything here." } as Grant)] };
-  const grants = base.grants.some((grant) => grant === ROOMS_GRANT) ? base.grants : [...base.grants, ROOMS_GRANT];
+  const grant = taken.size === 0 ? ROOMS_GRANT : framework({ ...ROOMS_GRANT, mutations: ROOM_ACTS.filter((act) => !taken.has(act)) } as Grant);
+  const grants = base.grants.some((one) => FRAMEWORK.has(one) && one.mutations !== "*") ? base.grants : [...base.grants, grant];
   const sights = base.sees?.length ? base.sees : restricted ? [framework({ roles: "*", kinds: kinds.filter((kind) => kind !== MESSAGE_KIND), describe: "Everybody sees everything else here." } as Sight)] : undefined;
   return { ...base, grants, ...(sights ? { sees: [...sights.filter((sight) => !sight.kinds.includes(MESSAGE_KIND)), ...roomSights(rooms)] } : {}) };
 }
@@ -286,7 +296,8 @@ export function withRooms<A extends GraviewApp<AnySchema>>(app: A): A {
   const schema = createSchema([...app.schema.definitions, kind] as never, (app.schema as { readonly computed?: never }).computed) as unknown as A["schema"];
   const taken = new Set((app.mutations ?? []).map((mutation) => mutation.name));
   const acts = roomActs(rooms, schema as AnySchema).filter((act) => !taken.has(act.name));
-  const policy = roomsPolicy(app.policy, rooms, schema.kinds as readonly string[]);
+  // An act of the app's own by one of these names (`room-act-taken`) is not widened by the rooms' grant.
+  const policy = roomsPolicy(app.policy, rooms, schema.kinds as readonly string[], taken);
   const folded = { ...app, schema, mutations: [...(app.mutations ?? []), ...acts], ...(policy ? { policy } : {}) } as A;
   UNFOLDED.set(folded, app);
   return folded;

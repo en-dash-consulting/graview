@@ -1,5 +1,5 @@
 {
-  "at": "2026-11-26T17:30:57.186Z",
+  "at": "2026-11-26T17:44:29.333Z",
   "engine": "chromium",
   "checks": {
     "twoSeatsSeeEachOtherLive": {
@@ -33,7 +33,7 @@
     "unreadCounts": {
       "bell": "Inbox — 1 needs you: 1 rule broken",
       "listed": [
-        "1 new in Household, unreadSam: Bins go out tonight.Nov 26, 12:31 PM"
+        "1 new in Household, unreadSam: Bins go out tonight.Nov 26, 12:44 PM"
       ],
       "afterReading": [],
       "ok": true
@@ -41,7 +41,7 @@
     "aMentionReachesTheirNotices": {
       "bell": "Inbox — 2 need you: 1 rule broken",
       "listed": [
-        "Sam mentioned you in Household, unreadSam: @Nora can you take the van back on Monday?Nov 26, 12:31 PM"
+        "Sam mentioned you in Household, unreadSam: @Nora can you take the van back on Monday?Nov 26, 12:44 PM"
       ],
       "shownAsMention": [
         "@Nora:user-nora"
@@ -101,7 +101,7 @@
         ],
         "version": "0.2.17",
         "friction": [],
-        "at": "2026-11-26T17:31:19.777Z"
+        "at": "2026-11-26T17:44:51.965Z"
       },
       "reply": true,
       "panel": {
@@ -139,7 +139,7 @@
         ],
         "version": "0.2.17",
         "friction": [],
-        "at": "2026-11-26T17:31:22.723Z"
+        "at": "2026-11-26T17:44:54.907Z"
       },
       "reply": true,
       "panel": {
@@ -177,13 +177,13 @@
   "passed": true,
   "timing": {
     "wall": 31,
-    "cpu": 29.2,
+    "cpu": 28.9,
     "serverStartup": 0,
     "servers": [
       {
         "name": "todo",
         "port": 5703,
-        "ms": 153,
+        "ms": 151,
         "borrowed": true
       },
       {
@@ -193,9 +193,9 @@
         "borrowed": true
       }
     ],
-    "beforeFirstBrowser": 483,
+    "beforeFirstBrowser": 480,
     "browsers": 1,
-    "browserLaunch": 109,
+    "browserLaunch": 104,
     "fixedWaits": 14750,
     "fixedWaitCount": 20,
     "fixedWaitSites": [

@@ -29,7 +29,9 @@ export function roomNotices(store: Store<AnySchema>, principal: Principal, readU
   const unread = unreadFor(principal.id, graph, readUpTo, people);
   const out: RoomNotice[] = [];
   for (const [key, count] of Object.entries(unread.byRoom)) {
-    const [roomId, about] = key.split("@") as [string, string | undefined];
+    const at = key.indexOf("@");
+    const roomId = at < 0 ? key : key.slice(0, at);
+    const about = at < 0 ? undefined : key.slice(at + 1);
     const room = rooms.find((one) => one.id === roomId);
     if (!room) continue;
     const messages = messagesIn(graph, roomId, about).filter((one) => !one.removed);

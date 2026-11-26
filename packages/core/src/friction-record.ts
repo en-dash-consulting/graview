@@ -44,7 +44,9 @@ const RECENT_MOST = 10;
  * support, never sent anywhere but with a message the person sends.
  * Answers what is kept now, newest last.
  */
-export function keepRecentFriction(store: object): readonly FrictionDraft[] {
+export function keepRecentFriction(asked: object): readonly FrictionDraft[] {
+  // The store itself, where it is handed a seat's view of it: what `recordFriction` is handed either way.
+  const store = (seatOf(asked as never)?.store as object | undefined) ?? asked;
   let recent = RECENT.get(store);
   if (!recent) RECENT.set(store, (recent = []));
   return recent;

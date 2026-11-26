@@ -1,6 +1,6 @@
 ---
 name: graview-chat
-description: Let the people in a Graview app talk to each other inside it — a room for the whole app, a thread on each record of a kind, mentions that tell the person named, unread counts on the bell — declared as rooms and checked by graview check; and let a host offer "Chat with …" its own staff through a support transport, each message carrying where the person was.
+description: Let the people in a Graview app talk to each other inside it — a room for the whole app, a thread on each record of a kind, mentions that tell the person named, unread counts on the bell — declared as rooms and checked by graview check; and let a host offer “Chat with …” its own staff through a support transport, each message carrying where the person was.
 ---
 
 # Let people talk inside the app

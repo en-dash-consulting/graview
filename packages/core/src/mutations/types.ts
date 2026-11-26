@@ -13,6 +13,8 @@ export interface ActingSeat {
   readonly id?: string | undefined;
   readonly name?: string | undefined;
   readonly roles: readonly string[];
+  /** The host's own seat, acting for nobody (`isSystem`). */
+  readonly system?: boolean;
 }
 
 export interface MutationContext<S extends AnySchema> {

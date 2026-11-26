@@ -491,7 +491,7 @@ function useLinedUpWithThePage(held: { readonly current: HTMLElement | null }): 
     const measure = () => {
       const title = parent.querySelector<HTMLElement>("[data-graview-page-title], main h1, [data-graview-page-main] h1");
       const column = title?.closest<HTMLElement>("[data-graview-page-main], main") ?? null;
-      if (!title || !column) return setLined({});
+      if (!title || !column) return setLined((was) => (Object.keys(was).length === 0 ? was : {}));
       const box = parent.getBoundingClientRect();
       const style = getComputedStyle(parent);
       const left = box.left + (parseFloat(style.paddingLeft) || 0);

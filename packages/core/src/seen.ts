@@ -1,3 +1,4 @@
+import { isPlaceless } from "./rooms/kind.js";
 import type { AnyGraphNode, GraphEdge, GraphNodeBase, GraphReader, GraphSnapshot } from "./graph/types.js";
 import type { Violation } from "./invariants/types.js";
 import { batchesOf, undoneIn, type Epoch, type LogReading, type OperationLog } from "./ops/log.js";
@@ -72,9 +73,17 @@ export function seesEveryRecord(store: Judged & { readonly schema: { readonly ki
    * the record is there. Which ids a field names is judged by sight alone,
    * so this asks no further than one step.
    */
-  const wholly = store.schema.kinds.every(inSight);
+  /*
+   * THE FRAMEWORK'S OWN KINDS STAND OUTSIDE IT (Graview HQ
+   * feature:f-chat-rooms): a room's messages are seen by room, so no seat
+   * sees every one of them, and that is no reason to tell it less of the
+   * app's own records. Their ids say nothing of what is hidden: a message's
+   * is minted unguessable (`post-message`).
+   */
+  const kinds = store.schema.kinds.filter((kind) => !isPlaceless((store.schema as { tryDefinition?: (kind: string) => unknown }).tryDefinition?.(kind)));
+  const wholly = kinds.every(inSight);
   const full = (kind: string) => inSight(kind) && requiredRefs(store.schema, kind).every((targets) => targets.every((target) => (target === "*" ? wholly : inSight(target))));
-  const everything = wholly && store.schema.kinds.every(full);
+  const everything = wholly && kinds.every(full);
   return (kind) => everything || (kind !== undefined && full(kind));
 }
 
@@ -89,7 +98,8 @@ export function toldTouches(store: Judged & { readonly schema: { readonly kinds:
   if (!seesEveryRecord(store, principal)()) return false;
   const acting = actingAs(principal);
   const sights = store.policy?.sees ?? [];
-  const whole = (kind: string) => sights.some((sight) => sight.kinds.includes(kind) && grantsTo(sight, acting) && !sight.own && !sight.via && !scopedSight(sight) && !partialSight(sight));
+  const placeless = (kind: string) => isPlaceless((store.schema as { tryDefinition?: (kind: string) => unknown }).tryDefinition?.(kind));
+  const whole = (kind: string) => placeless(kind) || sights.some((sight) => sight.kinds.includes(kind) && grantsTo(sight, acting) && !sight.own && !sight.via && !scopedSight(sight) && !partialSight(sight));
   return sights.every((sight) => !partialSight(sight) || !grantsTo(sight, acting) || sight.kinds.every(whole));
 }
 

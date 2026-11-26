@@ -2,6 +2,7 @@
 "@graview/core": patch
 "@graview/pages": patch
 "@graview/studio": patch
+"@graview/guest": patch
 "@graview/skills": patch
 ---
 

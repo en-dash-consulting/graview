@@ -27,7 +27,7 @@ const RoomPage = lazyPart(() => import("./chat.js").then((module) => ({ default:
 const RoomsPage = lazyPart(() => import("./chat.js").then((module) => ({ default: module.RoomsPage })));
 const RecordThreads = lazyPart(() => import("./chat.js").then((module) => ({ default: module.RecordThreads })), { under: true });
 const SupportPanel = lazyPart(() => import("./support-panel.js").then((module) => ({ default: module.SupportPanel })), { under: true });
-import { roomsOfSchema, whenSupportOpened } from "@graview/core";
+import { keepRecentFriction, roomsOfSchema, whenSupportOpened } from "@graview/core";
 type HostNotificationLike = NonNullable<GraviewContextValue<AnySchema>["notifications"]>[number];
 import { roomReadsFor, useRoomReads } from "./room-reads.js";
 import { SupportHereContext, supportRowLabel, supportThreadOf, useSupportThread, type SupportHere } from "./support-door.js";
@@ -867,6 +867,8 @@ export function PagesApp<S extends AnySchema>({
   const [roomNotices, setRoomNotices] = useState<readonly HostNotificationLike[]>([]);
   const [supportOpen, setSupportOpen] = useState(false);
   const supportHere = useMemo<SupportHere | null>(() => (given.support ? { support: given.support, open: () => setSupportOpen(true) } : null), [given.support]);
+  // What the person could not do is kept from the first draw, for the messages they send staff.
+  useState(() => (given.support ? keepRecentFriction(given.store as object) : undefined));
   // A bar above this face (an embed's) offers the row too, and opens this face's panel.
   useEffect(() => (given.support ? whenSupportOpened(given.support, () => setSupportOpen(true)) : undefined), [given.support]);
   const notifications = useMemo(() => (roomNotices.length > 0 ? [...(outer?.notifications ?? []), ...roomNotices] : undefined), [roomNotices, outer?.notifications]);

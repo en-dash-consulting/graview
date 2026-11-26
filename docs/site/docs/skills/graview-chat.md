@@ -1,6 +1,6 @@
 # graview-chat
 
-`graview-chat` is one of Graview's 33 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Let the people in a Graview app talk to each other inside it — a room for the whole app, a thread on each record of a kind, mentions that tell the person named, unread counts on the bell — declared as rooms and checked by graview check; and let a host offer "Chat with …" its own staff through a support transport, each message carrying where the person was.
+`graview-chat` is one of Graview's 33 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Let the people in a Graview app talk to each other inside it — a room for the whole app, a thread on each record of a kind, mentions that tell the person named, unread counts on the bell — declared as rooms and checked by graview check; and let a host offer “Chat with …” its own staff through a support transport, each message carrying where the person was.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -62,6 +62,6 @@ Then open it as two people. Two browsers on one served store (`graview serve`, a
 
 ---
 
-Let the people in a Graview app talk to each other inside it — a room for the whole app, a thread on each record of a kind, mentions that tell the person named, unread counts on the bell — declared as rooms and checked by graview check; and let a host offer "Chat with …" its own staff through a support transport, each message carrying where the person was.
+Let the people in a Graview app talk to each other inside it — a room for the whole app, a thread on each record of a kind, mentions that tell the person named, unread counts on the bell — declared as rooms and checked by graview check; and let a host offer “Chat with …” its own staff through a support transport, each message carrying where the person was.
 
 The page: https://graview.dev/docs/skills/graview-chat.html · Every Graview docs page, for a model: https://graview.dev/llms.txt

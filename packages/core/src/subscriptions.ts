@@ -687,9 +687,8 @@ export function mentionSubscriptions(store: Store<AnySchema>, ops: readonly Oper
   const named = new Set(bodies.flatMap((body) => mentionsIn(body, people)));
   const already = new Set(listed.filter((one) => one.when.on === "mentioned").map((one) => one.who.id));
   return [...named].filter((id) => !already.has(id)).map((id) => {
-    const record = store.graph.getNode(id) as (Record<string, unknown> & { id: string; kind: string }) | undefined;
-    const roles = Array.isArray(record?.["roles"]) ? (record!["roles"] as string[]) : undefined;
+    // Judged with no roles of its own: a record's fields are the app's, never who a person is. A host that knows their seat says it (`MatchOptions.subscriber`), else a mention reaches them only where anybody may read it.
     const name = people.find((one) => one.id === id)?.name;
-    return { id: `mention:${id}`, who: { kind: "human", id, ...(name ? { name } : {}), ...(roles ? { roles } : {}) }, app: app ?? "app", when: { on: "mentioned" }, at: new Date(0).toISOString() } as Subscription;
+    return { id: `mention:${id}`, who: { kind: "human", id, ...(name ? { name } : {}) }, app: app ?? "app", when: { on: "mentioned" }, at: new Date(0).toISOString() } as Subscription;
   });
 }

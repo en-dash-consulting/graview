@@ -29,8 +29,9 @@ export function actingAs(principal: Principal): Principal {
  * seat's kind, id and name — an agent as itself — with the roles it acts
  * with, bounded by the person it acts for (`actingAs`). `MutationContext.by`.
  */
-export function actingSeat(principal: Principal): { readonly kind: string; readonly id?: string; readonly name?: string; readonly roles: readonly string[] } {
+export function actingSeat(principal: Principal): { readonly kind: string; readonly id?: string; readonly name?: string; readonly roles: readonly string[]; readonly system?: boolean } {
   return {
+    ...(principal.kind === "system" && principal.onBehalfOf === undefined ? { system: true } : {}),
     kind: principal.kind,
     ...(principal.id !== undefined ? { id: principal.id } : {}),
     ...(principal.name !== undefined ? { name: principal.name } : {}),
