@@ -59,7 +59,8 @@ const SLOW_SHARE = 0.1;
 const BLOCKED_MS = 500;
 
 const APPS = [
-  { name: "todo", port: portFor("todo"), ready: "__todoReady" },
+  // Things' root is the one face; the Scene's own city, which this pans, is at /scene/.
+  { name: "todo", port: portFor("todo"), ready: "__todoReady", scene: "/scene" },
   { name: "rota", port: portFor("rota"), ready: "__rotaReady" },
 ];
 
@@ -335,7 +336,7 @@ try {
          * agreeing with itself.
          */
         const arrive = async (aloft) => {
-          await page.goto(`${vite.url}/?theme=light`, { waitUntil: "load" });
+          await page.goto(`${vite.url}${app.scene ?? ""}/?theme=light`, { waitUntil: "load" });
           await page.waitForFunction((flag) => flag in window, app.ready, { timeout: 120_000 });
           await page.waitForTimeout(1200);
           if (aloft) {

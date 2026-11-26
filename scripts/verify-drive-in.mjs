@@ -53,7 +53,8 @@ const SHOTS = resolve(process.argv.find((arg) => arg.startsWith("--shots="))?.sl
 const DESK = { width: 1440, height: 900 };
 /** Every district of each example; the ones drawn by a declared picture are named by it. */
 const APPS = [
-  { app: "todo", kinds: ["list", "task", "rule", "reason"], member: "user-sam" },
+  // Things' root is the one face; its Scene's own face, whose drive-in this reads, is at /scene/.
+  { app: "todo", kinds: ["list", "task", "rule", "reason"], member: "user-sam", scene: "/scene" },
   { app: "discography", kinds: ["album", "song", "era"] },
   { app: "rota", kinds: ["shift", "volunteer", "location", "rule"] },
 ];
@@ -155,7 +156,7 @@ let browser;
 mkdirSync(SHOTS, { recursive: true });
 try {
   for (const { app } of APPS) servers.push(await serving(app, portFor(app), repoRoot));
-  const url = (app) => servers[APPS.findIndex((one) => one.app === app)].url;
+  const url = (app) => `${servers[APPS.findIndex((one) => one.app === app)].url}${APPS.find((one) => one.app === app).scene ?? ""}`;
   for (const engine of engines) {
     browser = await launchEngine(engine);
     const device = PHONES[engine];

@@ -19,7 +19,8 @@ const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const ENGINE = engineName();
 
 const SEATS = {
-  todo: { port: portFor("todo"), ready: "__todoReady", testId: "agent-tidy", who: "tidy", query: "&today=2026-09-01" },
+  // Things' root is the one face; the tidy seat in Activity is its Scene's own face's, at /scene/.
+  todo: { port: portFor("todo"), ready: "__todoReady", testId: "agent-tidy", who: "tidy", query: "&today=2026-09-01", scene: "/scene" },
 };
 
 /**
@@ -43,7 +44,7 @@ try {
       const page = await browser.newPage({ viewport: { width: 1560, height: 940 } });
       const errors = [];
       page.on("pageerror", (e) => errors.push(String(e).slice(0, 90)));
-      await page.goto(`http://localhost:${seat.port}/?theme=light${seat.query ?? ""}`, { waitUntil: "load" });
+      await page.goto(`http://localhost:${seat.port}${seat.scene ?? ""}/?theme=light${seat.query ?? ""}`, { waitUntil: "load" });
       await page.waitForFunction((f) => f in window, seat.ready, { timeout: 60_000 });
       await page.waitForTimeout(1200);
 
