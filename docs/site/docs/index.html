@@ -719,9 +719,11 @@ td.pkg { font-family: var(--mono); font-size: 12.5px; color: var(--ink); white-s
 .cta-line .copy { min-height: 44px; font-size: 15px; padding: 0 18px; }
 /* The prompt is a sentence a person reads before they copy it: set in the
    body's face, not as code, with the address it names picked out. */
-.cta-line.prompt { padding: 18px 14px 14px 22px; }
-.cta-line.prompt code { font-family: var(--sans); font-size: 17px; font-weight: 500; line-height: 1.55; letter-spacing: 0; color: #FFFFFF; }
-.cta-line.prompt code .url { color: var(--mint); font-weight: 600; }
+/* Dark ink on a light card: the sentence reads like the lede above it, not
+   like a terminal. */
+.cta-line.prompt { padding: 16px 14px 14px 20px; background: #FFFFFF; color: var(--ink); border: 1.5px solid #C9CEE0; --focus: var(--navy); }
+.cta-line.prompt code { font-family: var(--sans); font-size: 17px; font-weight: 500; line-height: 1.55; letter-spacing: 0; color: var(--ink); }
+.cta-line.prompt code .url { color: var(--navy); font-weight: 700; text-decoration: underline; text-decoration-color: var(--mint); text-decoration-thickness: 3px; text-underline-offset: 4px; }
 .cta-sub { margin: 0; max-width: 62ch; }
 
 /* The stepper: press a step, the left says what was added, the right is the

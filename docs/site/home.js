@@ -770,7 +770,14 @@
     listEl.addEventListener("click", function (e) { if (e.target.closest && e.target.closest("button")) openList(false); });
 
     /* ── pointing at the map ── */
-    onScroll = function () { if (lastPtr) pending = lastPtr; };
+    /* Scrolled back up to the opening, the front screen covers the map again, and lets go of the record it held: no card stays over it. */
+    var lastScrollT = tTarget;
+    onScroll = function () {
+      if (lastPtr) pending = lastPtr;
+      var up = tTarget < lastScrollT;
+      lastScrollT = tTarget;
+      if (up && tTarget < .5 && (shown || picked)) choose(null);
+    };
     var ray = new THREE.Raycaster(), ndc = new THREE.Vector2(), hovered = null, pending = null, lifted = false;
     var pickable = allBlocks.map(function (b) { return b.m; });
     var plotPills = ["people", "docs", "modules", "decisions"].map(function (k) { plots[k].pill.userData.kind = k; return plots[k].pill; });

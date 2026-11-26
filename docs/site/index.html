@@ -832,9 +832,11 @@ td.pkg { font-family: var(--mono); font-size: 12.5px; color: var(--ink); white-s
 .cta-line .copy { min-height: 44px; font-size: 15px; padding: 0 18px; }
 /* The prompt is a sentence a person reads before they copy it: set in the
    body's face, not as code, with the address it names picked out. */
-.cta-line.prompt { padding: 18px 14px 14px 22px; }
-.cta-line.prompt code { font-family: var(--sans); font-size: 17px; font-weight: 500; line-height: 1.55; letter-spacing: 0; color: #FFFFFF; }
-.cta-line.prompt code .url { color: var(--mint); font-weight: 600; }
+/* Dark ink on a light card: the sentence reads like the lede above it, not
+   like a terminal. */
+.cta-line.prompt { padding: 16px 14px 14px 20px; background: #FFFFFF; color: var(--ink); border: 1.5px solid #C9CEE0; --focus: var(--navy); }
+.cta-line.prompt code { font-family: var(--sans); font-size: 17px; font-weight: 500; line-height: 1.55; letter-spacing: 0; color: var(--ink); }
+.cta-line.prompt code .url { color: var(--navy); font-weight: 700; text-decoration: underline; text-decoration-color: var(--mint); text-decoration-thickness: 3px; text-underline-offset: 4px; }
 .cta-sub { margin: 0; max-width: 62ch; }
 
 /* The stepper: press a step, the left says what was added, the right is the
@@ -1236,7 +1238,8 @@ html.home:root {
   font-family: var(--serif); font-weight: 900; font-size: clamp(34px, 4.3vw, 60px);
   line-height: 1.05; letter-spacing: -0.028em; text-wrap: balance;
 }
-.sheet h1 em { font-style: normal; background: linear-gradient(transparent 62%, var(--mint) 62% 92%, transparent 92%); }
+/* A marker stroke under the words, not a band through them: below the letters' bodies, clear of the counters. */
+.sheet h1 em { font-style: normal; background: linear-gradient(transparent 84%, rgba(0, 229, 185, .75) 84% 96%, transparent 96%); padding-bottom: .02em; }
 .sheet .lede { margin: 0; color: var(--ink-light); font-size: clamp(16px, 1.3vw, 18.5px); line-height: 1.55; max-width: none; text-wrap: pretty; }
 .sheet .cta-line code { flex-basis: 100%; }
 .how { display: none; align-items: center; gap: 12px; margin: 0; font-size: 14.5px; font-weight: 700; color: var(--navy); }
@@ -1253,6 +1256,9 @@ html.home:root {
 .cap p { margin: 0; font-size: clamp(16px, 1.4vw, 20px); line-height: 1.5; color: var(--soft); max-width: 33em; text-wrap: pretty; }
 .cap .tq { color: var(--mint); }
 .cap code { font-family: var(--mono); font-size: .86em; color: var(--mint); }
+.cap .cta-line.prompt { color: #18213A; }
+.cap .cta-line.prompt code { font-family: var(--sans); font-size: 17px; color: #18213A; text-shadow: none; }
+.cap .cta-line.prompt code .url { color: var(--navy); }
 .cap .n { font-family: var(--sans); font-size: 12.5px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); }
 .gl .cap .n { display: none; }
 .gl .cap {
