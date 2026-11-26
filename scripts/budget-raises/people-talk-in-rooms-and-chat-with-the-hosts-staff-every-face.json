@@ -1,6 +1,6 @@
 {
   "budget": "every face",
   "minified": 44550,
-  "gzipped": 17900,
-  "note": "Raised with the whole 0.2.18 batch together (2026-11-26): rooms an app declares, with the message kind and its three acts, a sight that reads where and follows, the mentioned subscription, a room page at /~rooms/<word> offered from the person's menu and a thread under a record's page, and the host's support panel opened from the person's menu. 44,452 / 17,831 B over; held to 44550 / 17900 for the spread between builds of the same tree. Measured at 3,551,190 / 1,295,452 B against 3,506,738 / 1,277,621 B."
+  "gzipped": 18150,
+  "note": "Raised with the whole 0.2.18 batch together (2026-11-26): rooms an app declares, with the message kind and its three acts, a sight that reads where and follows, the mentioned subscription, a room page at /~rooms/<word> offered from the person's menu and a thread under a record's page, and the host's support panel opened from the person's menu. 44,452 / 17,831 B over; held to 44550 / 18150 for the spread between builds of the same tree. Measured at 3,551,190 / 1,295,452 and 1,295,636 B against 3,506,738 / 1,277,621 B."
 }
