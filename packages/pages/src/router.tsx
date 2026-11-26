@@ -697,9 +697,9 @@ export function PagesRoutes<S extends AnySchema>({
         {/* On the one face the overview is the city over the home: the face takes its address there itself (`one-place.tsx`), keeping what it carries. */}
         {placesOf(inside).some((place) => place.as === OVERVIEW_SLUG) || onTheOneFace(inside) ? null : <Route path={OVERVIEW_PATH} element={<Navigate to="/" replace />} />}
         <Route path="/places/:as" element={<DefaultPlacePage context={inside} />} />
-        {/* Where the app's people talk (Graview HQ feature:f-chat-rooms): each room at its address word, and the rooms together. */}
-        {roomsOfSchema(inside.store.schema) ? <Route path="/rooms" element={<Suspense fallback={null}><RoomsPage context={inside as unknown as PageContext<AnySchema>} /></Suspense>} /> : null}
-        {roomsOfSchema(inside.store.schema) ? <Route path="/rooms/:room" element={<Suspense fallback={null}><RoomPage context={inside as unknown as PageContext<AnySchema>} /></Suspense>} /> : null}
+        {/* Where the app's people talk (Graview HQ feature:f-chat-rooms): each room at its address word, and the rooms together — under `~`, the framework's own, so no kind's list (a venue's Rooms) is shadowed. */}
+        {roomsOfSchema(inside.store.schema) ? <Route path="/~rooms" element={<Suspense fallback={null}><RoomsPage context={inside as unknown as PageContext<AnySchema>} /></Suspense>} /> : null}
+        {roomsOfSchema(inside.store.schema) ? <Route path="/~rooms/:room" element={<Suspense fallback={null}><RoomPage context={inside as unknown as PageContext<AnySchema>} /></Suspense>} /> : null}
         <Route path="/:slug" element={<KindSwitch context={inside} registry={registry} page="list" />} />
         <Route
           path="/:slug/:id"

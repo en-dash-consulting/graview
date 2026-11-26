@@ -39,8 +39,8 @@ removes it. `mentions: false` reads `@Name` as plain words. Every key is in
   else — the room, its messages and their history. A thread follows its
   record: a seat that may not see a task sees none of what was said about
   it. Hand a page `store.seenBy(principal)` and it is already so.
-- **The face.** Each app-wide room is a page at `/rooms/<word>` (and in the
-  bar's More); a record with a thread shows it under its page, in the
+- **The face.** Each app-wide room is a page at `/~rooms/<word>` ("Talk
+  in …" in the person's menu); a record with a thread shows it under its page, in the
   page's column, whoever designed the page. A log a screen reader hears
   grow, a labeled composer — Enter sends, Shift+Enter is a new line — and
   Edit and Remove on what is yours.

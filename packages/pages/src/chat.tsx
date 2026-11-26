@@ -370,7 +370,7 @@ export function Composer({ context, room, about, label }: { readonly context: Pa
   );
 }
 
-/** A ROOM'S OWN PAGE, at `/rooms/<room>`: its title, what it is for, what was said, and the composer. */
+/** A ROOM'S OWN PAGE, at `/~rooms/<room>`: its title, what it is for, what was said, and the composer. */
 export function RoomPage({ context }: { readonly context: PageContext<AnySchema> }) {
   const params = useParams();
   const rooms = roomsHere(context.store);
@@ -404,7 +404,7 @@ export function RoomPage({ context }: { readonly context: PageContext<AnySchema>
   );
 }
 
-/** THE ROOMS, at `/rooms`: each app-wide room this reader may read, with what is new in it. */
+/** THE ROOMS, at `/~rooms`: each app-wide room this reader may read, with what is new in it. */
 export function RoomsPage({ context }: { readonly context: PageContext<AnySchema> }) {
   useStoreTick(context.store);
   const principal = context.principal ?? ANYONE;
@@ -421,7 +421,7 @@ export function RoomsPage({ context }: { readonly context: PageContext<AnySchema
           const fresh = messages.filter((one) => !one.removed && one.author !== principal.id && (reads[room.id] === undefined || one.at > reads[room.id]!)).length;
           return (
             <li key={room.id}>
-              <Link to={`/rooms/${room.id}`} data-testid="room-link" data-room={room.id} style={{ display: "flex", justifyContent: "space-between", gap: 12, padding: "12px 14px", minHeight: 44, boxSizing: "border-box", borderRadius: "var(--graview-radius-sm, 8px)", border: "1px solid var(--graview-edge)", color: "var(--graview-ink)", textDecoration: "none" }}>
+              <Link to={`/~rooms/${room.id}`} data-testid="room-link" data-room={room.id} style={{ display: "flex", justifyContent: "space-between", gap: 12, padding: "12px 14px", minHeight: 44, boxSizing: "border-box", borderRadius: "var(--graview-radius-sm, 8px)", border: "1px solid var(--graview-edge)", color: "var(--graview-ink)", textDecoration: "none" }}>
                 <span style={{ fontWeight: 600 }}>{room.title}</span>
                 <span style={quiet}>{fresh > 0 ? `${fresh} new` : `${messages.length} ${messages.length === 1 ? "message" : "messages"}`}</span>
               </Link>

@@ -150,8 +150,8 @@ try {
 
   /* ------------------------------------- two seats, one room, each sees the other */
   reach("twoSeatsSeeEachOtherLive");
-  const nora = await opened("user-nora", "/rooms/household");
-  const sam = await opened("user-sam", "/rooms/household");
+  const nora = await opened("user-nora", "/~rooms/household");
+  const sam = await opened("user-sam", "/~rooms/household");
   await nora.waitForSelector('[data-testid="room-page"] [data-testid="composer-field"]', { timeout: 30_000 });
   await sam.waitForSelector('[data-testid="room-page"] [data-testid="composer-field"]', { timeout: 30_000 });
   await write(nora, '[data-testid="room-page"]', "Who has the van keys?");
@@ -216,7 +216,7 @@ try {
   reach("unreadCounts");
   await nora.goto(`${at("todo")}/?${DAY}&server=${printed}&as=user-nora`, { waitUntil: "load" });
   await ready(nora);
-  await sam.goto(`${at("todo")}/rooms/household?${DAY}&server=${printed}&as=user-sam`, { waitUntil: "load" });
+  await sam.goto(`${at("todo")}/~rooms/household?${DAY}&server=${printed}&as=user-sam`, { waitUntil: "load" });
   await ready(sam);
   await sam.waitForSelector('[data-testid="room-page"] [data-testid="composer-field"]', { timeout: 30_000 });
   await write(sam, '[data-testid="room-page"]', "Bins go out tonight.");
@@ -225,7 +225,7 @@ try {
   await nora.waitForFunction(() => [...document.querySelectorAll('[data-testid="inbox-button"]')].some((one) => /new update|need/.test(one.getAttribute("aria-label") ?? "")), undefined, { timeout: 15_000 }).catch(() => undefined);
   const unreadBell = await bell(nora);
   const unreadListed = await notices(nora);
-  await nora.goto(`${at("todo")}/rooms/household?${DAY}&server=${printed}&as=user-nora`, { waitUntil: "load" });
+  await nora.goto(`${at("todo")}/~rooms/household?${DAY}&server=${printed}&as=user-nora`, { waitUntil: "load" });
   await ready(nora);
   await nora.waitForSelector('[data-testid="room-page"] [data-testid="message"]', { timeout: 20_000 });
   await nora.waitForTimeout(800);
@@ -259,7 +259,7 @@ try {
 
   /* ---------------------------------------------------------- a phone */
   reach("aPhone");
-  const phone = await opened("user-sam", "/rooms/household", { width: 390, height: 844 });
+  const phone = await opened("user-sam", "/~rooms/household", { width: 390, height: 844 });
   await phone.waitForSelector('[data-testid="room-page"] [data-testid="composer-field"]', { timeout: 30_000 });
   await write(phone, '[data-testid="room-page"]', "Sent from my phone.");
   const phoneSaid = await said(phone, "Sent from my phone.");
@@ -285,7 +285,7 @@ try {
 
   /* ------------------------------------------------------- the keyboard alone */
   reach("keyboardOnly");
-  const keys = await opened("user-sam", "/rooms/household");
+  const keys = await opened("user-sam", "/~rooms/household");
   await keys.waitForSelector('[data-testid="room-page"] [data-testid="composer-field"]', { timeout: 30_000 });
   let reached = false;
   for (let press = 0; press < 60 && !reached; press++) {
@@ -379,7 +379,7 @@ try {
   const chair = await shared.newPage();
   chair.on("pageerror", (error) => errors.push(`chair: ${error.message}`));
   await chair.addInitScript(KEEP);
-  await chair.goto(`${at("gauntlet")}/pages/rooms/program-team?as=u-4f1c9a&fresh=1`, { waitUntil: "load", timeout: 120_000 });
+  await chair.goto(`${at("gauntlet")}/pages/~rooms/program-team?as=u-4f1c9a&fresh=1`, { waitUntil: "load", timeout: 120_000 });
   await chair.waitForSelector('[data-testid="room-page"] [data-testid="composer-field"]', { timeout: 120_000 });
   await write(chair, '[data-testid="room-page"]', "Program locks on Friday.");
   const chairSaid = await said(chair, "Program locks on Friday.");
@@ -394,7 +394,7 @@ try {
   const visitor = await shared.newPage();
   visitor.on("pageerror", (error) => errors.push(`visitor: ${error.message}`));
   await visitor.addInitScript(KEEP);
-  await visitor.goto(`${at("gauntlet")}/pages/rooms/program-team?as=u-anon-0&remember=1`, { waitUntil: "load", timeout: 120_000 });
+  await visitor.goto(`${at("gauntlet")}/pages/~rooms/program-team?as=u-anon-0&remember=1`, { waitUntil: "load", timeout: 120_000 });
   await visitor.waitForSelector('[data-testid="room-missing"], [data-testid="room-page"]', { timeout: 120_000 });
   const visitorRoom = await visitor.evaluate(() => ({ missing: document.querySelector('[data-testid="room-missing"]') !== null, said: document.body.textContent?.includes("Program locks on Friday") ?? false }));
   const visitorSees = await visitor.evaluate(() => {

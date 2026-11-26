@@ -144,16 +144,18 @@ function OwnBar<S extends AnySchema>({ context }: { readonly context: PageContex
   const toldFind = useContext(OwnBarFind);
   // A shell with a rail of its own (`without: ["places"]`) keeps the bar and its tools; the bar names no place.
   const derived = toldFind?.places === false ? [] : barPlaces({ store: store as never, principal: context.principal, views: context.views });
+  const places = derived;
   /*
-   * THE APP'S ROOMS, ON THE BAR (Graview HQ feature:f-chat-rooms): each
-   * app-wide room this seat may read is a place, in More; a thread is on
-   * its record's page and stands on no bar.
+   * THE APP'S ROOMS, IN THE PERSON'S MENU (Graview HQ feature:f-chat-rooms):
+   * each app-wide room this seat may read, a press away. Not on the bar: a
+   * room is no picture standing in the city. A thread is on its record's
+   * page, and what is new in any of them waits on the bell.
    */
-  const rooms = toldFind?.places === false ? undefined : roomsOfSchema(store.schema);
+  const rooms = roomsOfSchema(store.schema);
   const roles = context.principal?.roles ?? [];
-  const places = rooms
-    ? [...derived, ...Object.entries(rooms).filter(([, room]) => !room.about && (room.read === undefined || room.read.some((role) => roles.includes(role)))).map(([id, room]) => ({ key: `room:${id}`, label: room.title, path: `/rooms/${id}`, group: "pictures" as const, primary: false }))]
-    : derived;
+  const talk = Object.entries(rooms ?? {})
+    .filter(([, room]) => !room.about && (room.read === undefined || room.read.some((role) => roles.includes(role))))
+    .map(([id, room]) => ({ label: `Talk in ${room.title}`, onSelect: () => navigate(`/~rooms/${id}`) }));
   const arrangement = context.views?.arrangement?.();
   const here = `${location.pathname}${location.search}`;
   const broken = store.violations(invariantContext);
@@ -229,7 +231,7 @@ function OwnBar<S extends AnySchema>({ context }: { readonly context: PageContex
               */}
             {toldFind ? null : <PagesInbox context={context} />}
             {/* Who you are — and, for whoever keeps the app, the way into its own declaration (`studio`), as on the Scene's own face. */}
-            {context.views ? <Profile {...(context.signature ? { signature: true } : {})} {...(context.studio !== undefined ? { keeping: context.studio } : {})} {...(support ? { hostActions: [{ label: supportRowLabel(support.support.title), onSelect: support.open }] } : {})} /> : null}
+            {context.views ? <Profile {...(context.signature ? { signature: true } : {})} {...(context.studio !== undefined ? { keeping: context.studio } : {})} {...(support || talk.length > 0 ? { hostActions: [...talk, ...(support ? [{ label: supportRowLabel(support.support.title), onSelect: support.open }] : [])] } : {})} /> : null}
           </>
         }
       />

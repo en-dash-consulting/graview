@@ -14,7 +14,7 @@ export interface RoomNotice {
   readonly title: string;
   readonly body?: string;
   readonly at?: string;
-  /** Where it opens, on the routed face: `/rooms/<room>`, or the record's own page. */
+  /** Where it opens, on the routed face: `/~rooms/<room>`, or the record's own page. */
   readonly path: string;
   readonly read: false;
   readonly needs?: true;
@@ -46,7 +46,7 @@ export function roomNotices(store: Store<AnySchema>, principal: Principal, readU
       id: `room:${key}`,
       title: named ? `${who(fresh.find((one) => mentionsIn(one.body, people).includes(principal.id!))!.author)} mentioned you in ${where}` : `${count} new in ${where}`,
       ...(last ? { body: `${who(last.author)}: ${excerpt(last.body, 90)}`, at: last.at } : {}),
-      path: record ? recordPath(store.schema, record.kind as string, record.id) : `/rooms/${roomId}`,
+      path: record ? recordPath(store.schema, record.kind as string, record.id) : `/~rooms/${roomId}`,
       read: false,
       ...(named ? { needs: true as const } : {}),
     });
