@@ -1830,7 +1830,7 @@ main.landing > section.agent-hero { padding-top: clamp(40px, 6vh, 72px); gap: va
     </section>
     <section id="face" aria-labelledby="h-face">
       <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-face">A face of its own</h2></div>
-      <p>An app worth keeping wants a look and feel of its own before it wants a server. This one keeps the store where <code>graview preview</code> runs it, and draws Graview's routed face over it with a shell, a home, a route and a record page in the team's own words: a change made on either page is the other's at once. If it mounts the scene too, give the embed <code>bar: { faces: false, name: false }</code> so the face's own shell is the one bar.</p>
+      <p>An app worth keeping wants a look and feel of its own before it wants a server. This one keeps the store where <code>graview preview</code> runs it, and draws Graview's pages over it with a shell, a home, a route and a record page in the team's own words: a change made on either page is the other's at once.</p>
       <div class="code" data-scroller aria-label="Running the face"><pre><code class="language-sh"># the store and its own page, on 4800: it prints the address to open, which carries its key
 npx graview preview app.json --seed seed.json --port 4800
 # the face, over it, on 5173, handed that address
@@ -1934,7 +1934,7 @@ export default defineConfig({
   &lt;/body&gt;
 &lt;/html&gt;</code></pre></div>
       <h3><code>face/src/main.tsx</code></h3>
-      <p>The app and the seat from the preview's <code>/graview/document</code>, the store over <code>openRemote</code>, live; <code>themeCss</code> adopted by hand; the pictures from <code>registerDeclaredLenses(registerViewSpecs(registerDefaultViews(…)))</code>; and <code>PagesApp</code> with the face's own registry.</p>
+      <p>The app and the seat from the preview's <code>/graview/document</code>, the store over <code>openRemote</code>, live; <code>themeCss</code> adopted by hand; the pictures from <code>registerDeclaredLenses(<wbr>registerViewSpecs(<wbr>registerDefaultViews(…)))</code>; and <code>PagesApp</code> with the face's own registry.</p>
       <div class="code" data-scroller aria-label="face/src/main.tsx" style="max-height: 560px; overflow: auto;"><pre><code class="language-typescript">import type { AnySchema, GraviewApp, Principal } from "@graview/core";
 import { appFromOrCompile, sayFindings } from "@graview/core/compiled";
 import { PagesApp } from "@graview/pages";

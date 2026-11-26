@@ -2236,45 +2236,33 @@ main.landing > section.agent-hero { padding-top: clamp(40px, 6vh, 72px); gap: va
     <section id="kit" aria-labelledby="h-kit">
       <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-kit">The kit</h2></div>
       <p class="sm" style="margin-bottom: 14px; max-width: 62ch;">
-        Everything the scene draws that is not a view is declared on the brand:
-        the lines, their route and their stroke, the ground's grid and lattice,
-        the kind tags, the captions. A route is a named strategy — curve,
-        straight, right-angled — and the next one is one case in one file.
-        Color and visibility are per edge kind. Try it on the garden after
-        chapter eight: the declaration you are writing is beside it, and the
-        checker's verdict on any color you pick is under that.
+        How the garden looks is declared once, on the brand: its typeface,
+        its accent, how round its corners are and how much room it keeps, and
+        what its city draws at the Map. Every page takes it at once, and so
+        does the city under them. Try it on the garden after chapter eight —
+        rise to the Map with the control at its foot to see the city — with
+        the declaration you are writing beside it, and the checker's verdict
+        on the accent you pick under that.
       </p>
       <div class="two">
-        <!-- June is chosen, not only Plot 1 focused: since 0.1.29 the ground
-             draws a line for the choice (a card that already names its link
-             draws none at rest), and the kit's route and color need a line
-             on the screen to be seen changing it. -->
-        <div class="chapter-live" data-graview-chapter="8" data-stop="#focus=plot-1&amp;sel=june" data-label="The dressed garden" role="region" aria-label="The kit's garden, live">
+        <div class="chapter-live" data-graview-chapter="8" data-stop="#focus=plot-1" data-label="The dressed garden" role="region" aria-label="The kit's garden, live">
           <p class="chapter-loading">The garden after chapter 8, loading…</p>
         </div>
         <form class="kit-controls" id="kit-form" aria-label="Dress the garden">
           <fieldset>
-            <legend>Every line's route</legend>
-            <label><input type="radio" name="route" value="curve" checked> curve</label>
-            <label><input type="radio" name="route" value="straight"> straight</label>
-            <label><input type="radio" name="route" value="orthogonal"> right-angled</label>
+            <legend>The pages</legend>
+            <label>typeface <select name="typeface"><option value="">as declared</option><option value="serif">serif</option><option value="sans">sans</option><option value="mono">mono</option></select></label>
+            <label><input type="checkbox" name="accent-on"> its own accent</label>
+            <label>accent <input type="color" name="accent" value="#7a3e9d"></label>
+            <label>corners <input type="range" name="radius" min="0" max="24" step="2" value="12"></label>
+            <label>room <input type="range" name="density" min="0.75" max="1.5" step="0.05" value="1"></label>
           </fieldset>
           <fieldset>
-            <legend>The line from a plot to who tends it</legend>
-            <label><input type="checkbox" name="tended-visible" checked> drawn</label>
-            <label>stroke <select name="tended-pattern"><option value="">as derived</option><option value="solid">solid</option><option value="dashed">dashed</option><option value="dotted">dotted</option></select></label>
-            <label><input type="checkbox" name="tended-painted"> painted</label>
-            <label>color <input type="color" name="tended-color" value="#1d3f8a"></label>
+            <legend>The city, at the Map</legend>
+            <label><input type="checkbox" name="tended-visible" checked> the road from a plot to who tends it</label>
           </fieldset>
-          <fieldset>
-            <legend>The ground and the marks</legend>
-            <label><input type="checkbox" name="grid" checked> grid</label>
-            <label><input type="checkbox" name="lattice" checked> lattice</label>
-            <label><input type="checkbox" name="tags" checked> kind tags</label>
-            <label><input type="checkbox" name="captions" checked> captions</label>
-          </fieldset>
-          <pre class="kit-decl" id="kit-decl" data-scroller aria-label="The kit you are declaring">kit: {}</pre>
-          <p class="kit-verdict" id="kit-verdict" role="status" data-clean="true"><b>graview check:</b> the kit is clean.</p>
+          <pre class="kit-decl" id="kit-decl" data-scroller aria-label="The brand you are declaring">brand: {}</pre>
+          <p class="kit-verdict" id="kit-verdict" role="status" data-clean="true"><b>graview check:</b> the brand is clean.</p>
         </form>
       </div>
     </section>
@@ -2395,50 +2383,47 @@ if (document.fonts && document.fonts.ready) document.fonts.ready.then(markScroll
   const CHAPTER = 8;
   function read() {
     const f = new FormData(form);
-    const kit = {};
-    const connectors = {};
-    const route = f.get("route");
-    if (route && route !== "curve") connectors.all = { route };
-    const tended = {};
-    if (!f.get("tended-visible")) tended.visible = false;
-    if (f.get("tended-pattern")) tended.pattern = f.get("tended-pattern");
-    if (f.get("tended-painted")) tended.color = f.get("tended-color");
-    if (Object.keys(tended).length) connectors.byEdge = { "tended-by": tended };
-    if (Object.keys(connectors).length) kit.connectors = connectors;
-    if (!f.get("grid")) kit.grid = { visible: false };
-    if (!f.get("lattice")) kit.lattice = { visible: false };
-    if (!f.get("tags")) kit.tags = { visible: false };
-    if (!f.get("captions")) kit.captions = { visible: false };
-    return kit;
+    const look = {};
+    if (f.get("typeface")) look.typeface = f.get("typeface");
+    if (f.get("accent-on")) look.accent = f.get("accent");
+    if (Number(f.get("radius")) !== 12) look.radius = Number(f.get("radius"));
+    if (Number(f.get("density")) !== 1) look.density = Number(f.get("density"));
+    if (!f.get("tended-visible")) look.kit = { connectors: { byEdge: { "tended-by": { visible: false } } } };
+    return look;
   }
-  function say(kit) {
-    const json = JSON.stringify(kit, null, 2).replace(/"([A-Za-z]+)":/g, "$1:");
-    decl.textContent = "kit: " + json;
+  /* The declaration as the brand says it: the shape together, the kit under it. */
+  function declared(look) {
+    const brand = {};
+    if (look.typeface) brand.typography = { body: look.typeface, display: look.typeface };
+    if (look.accent) brand.accent = look.accent;
+    if (look.radius !== undefined || look.density !== undefined) brand.shape = Object.assign({}, look.radius !== undefined ? { radius: look.radius } : {}, look.density !== undefined ? { density: look.density } : {});
+    if (look.kit) brand.kit = look.kit;
+    return brand;
+  }
+  function say(look) {
+    const json = JSON.stringify(declared(look), null, 2).replace(/"([A-Za-z]+)":/g, "$1:");
+    decl.textContent = "brand: " + json;
     const api = window.graviewChapters;
-    const findings = api ? api.kitFindings(CHAPTER, kit) : [];
+    const findings = api && api.lookFindings ? api.lookFindings(look) : [];
     if (findings.length === 0) {
       verdict.dataset.clean = "true";
-      verdict.innerHTML = "<b>graview check:</b> the kit is clean.";
+      verdict.innerHTML = "<b>graview check:</b> the brand is clean.";
       return;
     }
     verdict.dataset.clean = "false";
-    verdict.innerHTML = findings.map((finding) =>
-      finding.unreadable
-        ? "<b>kit-color-unreadable</b> " + finding.edgeKind
-        : "<b>kit-contrast-below-aa</b> " + finding.edgeKind + " " + finding.ratio + ":1 against the " + finding.scheme + " ground, " + finding.requires + ":1 required",
-    ).join("<br>");
+    verdict.innerHTML = findings.map((finding) => "<b>" + finding.code + "</b> " + finding.sentence.replace(/[<&]/g, (c) => (c === "<" ? "&lt;" : "&amp;"))).join("<br>");
   }
   // The embed wears the chapter's own brand until the form says otherwise:
   // re-dressing it in nothing new is a render for no reason.
   let worn = "{}";
   function apply() {
-    const kit = read();
-    say(kit);
-    const said = JSON.stringify(kit);
+    const look = read();
+    say(look);
+    const said = JSON.stringify(look);
     const api = window.graviewChapters;
     if (said === worn || !api || !api.handles.get(live)) return;
     worn = said;
-    api.dress(live, CHAPTER, kit);
+    api.dress(live, CHAPTER, look);
   }
   form.addEventListener("input", apply);
   form.addEventListener("submit", (event) => event.preventDefault());

@@ -451,53 +451,65 @@ async function chapters() {
   const levelAfter = await levelAt();
   report.criteria.aChapterRisesFromItsHomeToItsMapOnThePage = levelBefore === "0" && levelAfter === "2";
 
-  /* The kit re-dresses the live garden: a right-angled route draws elbows, a kind kept quiet is not drawn. */
-  await page.locator('#kit [data-graview-chapter="8"]').scrollIntoViewIfNeeded();
-  const kitPath = () => page.evaluate(() => document.querySelector('#kit [data-graview-chapter="8"] [data-graview-connector="tended-by"]')?.getAttribute("d") ?? null);
   /*
-   * A LINE IS READ ONCE THE SCENE HAS SETTLED. Lines are not drawn while the
-   * scene moves (they are measured once a transition lands), and a chapter
-   * arrives with a transition: the line shows on the first frame, is gone
-   * for the half second the scene moves, and comes back. Reading the first
-   * appearance read the gap. So: the same path on two reads 300 ms apart,
-   * and, after a change, a path that differs from the one before it.
+   * THE KIT RE-DRESSES THE LIVE GARDEN'S ONE FACE: its page takes the
+   * typeface, the accent, the corners and the room the form declares, read
+   * off the embed before and after; at the Map the road from a plot to who
+   * tends it is drawn, and gone once the form keeps it quiet; and the
+   * declaration beside it says so.
    */
-  const settledPath = (unlike) =>
-    page
-      .waitForFunction(
-        ({ unlike }) => {
-          const d = document.querySelector('#kit [data-graview-chapter="8"] [data-graview-connector="tended-by"]')?.getAttribute("d") ?? null;
-          const seen = (window.__kitSeen ??= { d: undefined, since: 0 });
-          if (d !== seen.d) Object.assign(seen, { d, since: performance.now() });
-          return d !== null && d !== unlike && performance.now() - seen.since >= 300;
-        },
-        { unlike },
-        { timeout: 20_000, polling: 100 },
-      )
-      .catch(() => {});
-  await settledPath(null);
-  const curved = await kitPath();
-  await page.locator('#kit-form input[name="route"][value="orthogonal"]').check().catch(() => {});
-  await settledPath(curved);
-  const elbowed = await kitPath();
+  const kit = '#kit [data-graview-chapter="8"]';
+  await page.locator(kit).scrollIntoViewIfNeeded();
+  await page.waitForFunction((kit) => document.querySelector(`${kit} [data-graview-one-place]`) !== null, kit, { timeout: 20_000 }).catch(() => {});
+  await settled(page, { most: 500 });
+  const looks = () =>
+    page.evaluate((kit) => {
+      const root = document.querySelector(`${kit} [data-graview-embed]`);
+      const title = document.querySelector(`${kit} [data-graview-one-place] h1, ${kit} [data-graview-one-place] h2`);
+      const style = root ? getComputedStyle(root) : null;
+      return {
+        font: title ? getComputedStyle(title).fontFamily : null,
+        accent: style?.getPropertyValue("--graview-accent").trim() ?? null,
+        radius: style?.getPropertyValue("--graview-radius").trim() ?? null,
+        pad: style?.getPropertyValue("--graview-pad").trim() ?? null,
+      };
+    }, kit);
+  const before = await looks();
+  await page.locator('#kit-form select[name="typeface"]').selectOption("serif").catch(() => {});
+  await page.locator('#kit-form input[name="accent"]').fill("#7a3e9d").catch(() => {});
+  await page.locator('#kit-form input[name="accent-on"]').check().catch(() => {});
+  await page.locator('#kit-form input[name="radius"]').fill("0").catch(() => {});
+  await page.locator('#kit-form input[name="density"]').fill("1.4").catch(() => {});
+  await settled(page, { most: 400 });
+  const after = await looks();
+  const roads = () => page.evaluate((kit) => document.querySelectorAll(`${kit} [data-graview-ribbon="tended-by"]`).length, kit);
+  await page.evaluate((kit) => document.querySelector(`${kit} [data-testid="altitude"] button`)?.focus({ preventScroll: true }), kit);
+  await page.keyboard.press("3");
+  await page.waitForFunction((kit) => document.querySelector(`${kit} [data-graview-one-place]`)?.getAttribute("data-graview-one-place") === "2", kit, { timeout: 20_000 }).catch(() => {});
+  await settled(page, { most: 600 });
+  const drawn = await roads();
   await page.locator('#kit-form input[name="tended-visible"]').uncheck().catch(() => {});
   await settled(page, { most: 400 });
-  const quiet = await kitPath();
+  const quiet = await roads();
   const declared = await page.evaluate(() => document.getElementById("kit-decl")?.textContent ?? "");
-  /* Each half of the claim on its own, so a failure says which half. */
+  /* Each part of the claim on its own, so a failure says which. */
   report.kit = {
-    connectorFound: curved !== null,
-    curvedAtFirst: curved?.includes(" Q ") ?? false,
-    elbowedAfter: elbowed !== null && elbowed.includes(" L ") && !elbowed.includes(" Q "),
-    goneWhenQuiet: quiet === null,
-    declarationSaysSo: declared.includes("visible: false"),
+    before,
+    after,
+    typefaceTaken: before.font !== null && after.font !== before.font && /georgia|serif/i.test(after.font ?? ""),
+    accentTaken: Boolean(after.accent) && after.accent !== before.accent,
+    cornersTaken: after.radius === "0px" && after.radius !== before.radius,
+    roomTaken: Boolean(after.pad) && after.pad !== before.pad,
+    roadDrawnAtTheMap: drawn > 0,
+    roadGoneWhenQuiet: quiet === 0,
+    declarationSaysSo: declared.includes("visible: false") && declared.includes("radius: 0"),
   };
-  report.criteria.theKitRedressesTheLiveGarden = Object.values(report.kit).every(Boolean);
+  report.criteria.theKitRedressesTheLiveGarden = Object.entries(report.kit).every(([key, value]) => key === "before" || key === "after" || value === true);
   await page.locator('#kit-form input[name="tended-visible"]').check().catch(() => {});
-  await page.locator('#kit-form input[name="tended-painted"]').check().catch(() => {});
-  await page.locator('#kit-form input[name="tended-color"]').fill("#f4f4f4").catch(() => {});
+  // An accent no page can read is refused in the checker's own words.
+  await page.locator('#kit-form input[name="accent"]').fill("#f4f4f4").catch(() => {});
   await settled(page, { most: 300 });
-  report.criteria.theKitsVerdictIsTheCheckers = await page.evaluate(() => document.getElementById("kit-verdict")?.textContent?.includes("kit-contrast-below-aa") ?? false);
+  report.criteria.theKitsVerdictIsTheCheckers = await page.evaluate(() => document.getElementById("kit-verdict")?.textContent?.includes("brand-accent") ?? false);
 
   await page.close();
 }

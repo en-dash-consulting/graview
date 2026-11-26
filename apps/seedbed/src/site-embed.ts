@@ -1,4 +1,4 @@
-import { checkKitContrast, resolveKit, type AnySchema, type GraviewApp, type KitOverrides, type Principal } from "@graview/core";
+import { accentProblem, documentSchemes, type AnySchema, type GraviewApp, type KitOverrides, type Principal } from "@graview/core";
 import { compileDocument } from "@graview/core/check";
 import { mount, mountWhenNear, type EmbedFace, type EmbedHandle } from "@graview/embed";
 import { registerWorkerView, type WorkerViewManifest } from "@graview/guest/host/views";
@@ -53,10 +53,10 @@ declare global {
       chapters: readonly Chapter[];
       /** Every embed the page has mounted, by its element, so the page can re-dress or re-seat one. */
       handles: Map<HTMLElement, EmbedHandle>;
-      /** Dress one mounted chapter in a kit: the chapter's own brand with the kit laid over it. */
+      /** Dress one mounted chapter in a look: the chapter's own brand with the type, the accent, the shape and the kit laid over it. */
       dress: typeof dress;
-      /** What `graview check` would say about a kit's colors against this chapter's grounds. */
-      kitFindings: typeof kitFindings;
+      /** What `graview check` would say about a look's accent. */
+      lookFindings: typeof lookFindings;
     };
   }
 }
@@ -116,29 +116,52 @@ export function mountChapter(element: HTMLElement, n: number, face?: EmbedFace, 
   return handle;
 }
 
-/** The chapter's brand with a kit laid over it, on the embed in this element. */
-export function dress(element: HTMLElement, n: number, kit: KitOverrides): void {
+/** The typefaces the kit offers, each a stack every system has. */
+const TYPEFACES = {
+  serif: 'Georgia, "Times New Roman", serif',
+  sans: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
+  mono: 'ui-monospace, "SF Mono", Menlo, Consolas, monospace',
+} as const;
+
+/**
+ * A LOOK, AS THE KIT ON THE PAGE DECLARES IT: the brand's type, accent and
+ * shape, and the kit's word on what the city draws — each optional, the
+ * chapter's own where it is unsaid.
+ */
+export interface Look {
+  readonly typeface?: keyof typeof TYPEFACES;
+  readonly accent?: string;
+  readonly radius?: number;
+  readonly density?: number;
+  readonly kit?: KitOverrides;
+}
+
+/**
+ * Dress one mounted chapter in a look: the chapter's own brand with the
+ * look laid over it, on the one face — its page in the type, the accent
+ * and the shape, the city at its Map in the kit. An accent that cannot
+ * be read leaves the chapter's colors, as `graview check` says it would.
+ */
+export function dress(element: HTMLElement, n: number, look: Look): void {
   const chapter = CHAPTERS[n - 1];
   const handle = handles.get(element);
   if (!chapter || !handle) return;
   const brand = chapter.app.brand ?? SEEDBED_BRAND;
-  handle.setBrand({ ...brand, kit });
+  const colors = look.accent && !accentProblem(look.accent) ? documentSchemes(look.accent) : null;
+  const face = look.typeface ? TYPEFACES[look.typeface] : undefined;
+  handle.setBrand({
+    ...brand,
+    ...(colors?.ok ? { schemes: colors.schemes } : {}),
+    ...(face ? { typography: { ...brand.typography, body: face, display: face } } : {}),
+    ...(look.radius !== undefined || look.density !== undefined ? { shape: { ...brand.shape, ...(look.radius !== undefined ? { radius: look.radius } : {}), ...(look.density !== undefined ? { density: look.density } : {}) } } : {}),
+    ...(look.kit ? { kit: look.kit } : {}),
+  });
 }
 
-/** The kit's colors judged against the chapter's grounds, as `graview check` judges them. */
-export function kitFindings(n: number, kit: KitOverrides): readonly { readonly edgeKind: string; readonly scheme: "light" | "dark"; readonly ratio: number; readonly requires: number; readonly unreadable?: string }[] {
-  const chapter = CHAPTERS[n - 1];
-  const brand = chapter?.app.brand ?? SEEDBED_BRAND;
-  const resolved = resolveKit(kit);
-  return (["light", "dark"] as const).flatMap((scheme) =>
-    checkKitContrast(resolved, brand.schemes[scheme]).map((finding) => ({
-      edgeKind: finding.edgeKind,
-      scheme,
-      ratio: finding.ratio,
-      requires: finding.requires,
-      ...(finding.unreadable !== undefined ? { unreadable: finding.unreadable } : {}),
-    })),
-  );
+/** What `graview check` would say about a look's accent (`brand-accent`): its sentence, or nothing when it reads. */
+export function lookFindings(look: Look): readonly { readonly code: string; readonly sentence: string }[] {
+  const refused = look.accent ? accentProblem(look.accent) : null;
+  return refused ? [{ code: "brand-accent", sentence: refused.sentence }] : [];
 }
 
 /*
@@ -389,6 +412,6 @@ export function mountAll(root: ParentNode = document): void {
   });
 }
 
-window.graviewChapters = { mount: mountChapter, mountRota, mountRecipe, mountDocument, mountSeason, answer, turns: TURNS, mountAll, chapters: CHAPTERS, handles, dress, kitFindings };
+window.graviewChapters = { mount: mountChapter, mountRota, mountRecipe, mountDocument, mountSeason, answer, turns: TURNS, mountAll, chapters: CHAPTERS, handles, dress, lookFindings };
 if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", () => mountAll());
 else mountAll();

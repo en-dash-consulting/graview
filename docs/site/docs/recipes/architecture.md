@@ -40,7 +40,7 @@ npx graview check --document app.json
 
 ## A face of its own
 
-An app worth keeping wants a look and feel of its own before it wants a server. This one keeps the store where `graview preview` runs it, and draws Graview's routed face over it with a shell, a home, a route and a record page in the team's own words: a change made on either page is the other's at once. If it mounts the scene too, give the embed `bar: { faces: false, name: false }` so the face's own shell is the one bar.
+An app worth keeping wants a look and feel of its own before it wants a server. This one keeps the store where `graview preview` runs it, and draws Graview's pages over it with a shell, a home, a route and a record page in the team's own words: a change made on either page is the other's at once.
 
 ```sh
 # the store and its own page, on 4800: it prints the address to open, which carries its key

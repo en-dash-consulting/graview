@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>https://graview.dev/</loc><lastmod>2026-11-26</lastmod><!-- 42054d3f2f06 --></url>
-  <url><loc>https://graview.dev/progression.html</loc><lastmod>2026-11-26</lastmod><!-- ecd0e5b3494f --></url>
+  <url><loc>https://graview.dev/progression.html</loc><lastmod>2026-11-26</lastmod><!-- bf1dcf39d0b4 --></url>
   <url><loc>https://graview.dev/tour.html</loc><lastmod>2026-11-26</lastmod><!-- d645b13d9bad --></url>
   <url><loc>https://graview.dev/docs/agents.html</loc><lastmod>2026-11-25</lastmod><!-- 5ce3e7b8ebc4 --></url>
   <url><loc>https://graview.dev/docs/checks.html</loc><lastmod>2026-11-21</lastmod><!-- e5b8c6628068 --></url>
@@ -26,7 +26,7 @@
   <url><loc>https://graview.dev/docs/packages/studio.html</loc><lastmod>2026-10-13</lastmod><!-- cff5b0537b9f --></url>
   <url><loc>https://graview.dev/docs/packages/tools.html</loc><lastmod>2026-11-23</lastmod><!-- 2de6a11f4588 --></url>
   <url><loc>https://graview.dev/docs/recipes.html</loc><lastmod>2026-10-21</lastmod><!-- 331d99ee6217 --></url>
-  <url><loc>https://graview.dev/docs/recipes/architecture.html</loc><lastmod>2026-11-26</lastmod><!-- 8ef8ad15240d --></url>
+  <url><loc>https://graview.dev/docs/recipes/architecture.html</loc><lastmod>2026-11-26</lastmod><!-- 3d0e044271a6 --></url>
   <url><loc>https://graview.dev/docs/recipes/decisions.html</loc><lastmod>2026-10-18</lastmod><!-- b1bf7e2c74d6 --></url>
   <url><loc>https://graview.dev/docs/recipes/dependencies.html</loc><lastmod>2026-10-15</lastmod><!-- d9150a746ffe --></url>
   <url><loc>https://graview.dev/docs/recipes/docs.html</loc><lastmod>2026-10-15</lastmod><!-- ee8dd9450879 --></url>
