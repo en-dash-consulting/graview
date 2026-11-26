@@ -4,7 +4,7 @@ import { HOME_SLUG, openingOf, OVERVIEW_PATH, OVERVIEW_SLUG, sayIn } from "@grav
 import { narrowedPath } from "@graview/core/navigate";
 import { revealSection } from "./section.js";
 import { pluralSlug } from "./registry.js";
-import { Suspense, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type ComponentType, type ReactNode } from "react";
+import { Suspense, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type ComponentType, type ReactNode } from "react";
 import { HrefOfContext } from "./href-of.js";
 import { aggregateId } from "@graview/layout/view";
 import { aheadOf, afterFirstDraw, GoToContext, GraviewProvider, lazyPart, hasLanded, HostAssetsContext, HostFilesContext, HostReelContext, HostViewerStateContext, markLanded, useHostViewerState, useKeptDrawings, useHostReel, PlaybackContext, useGraviewIfAny, useOwnPlayback, useTheKeyboardLandsSomewhere, useTheWatchKnowsWhatIsUnseen, type FieldTyping, type GoTo, type GoToAlso, type GoToTarget, type GraviewContextValue, type Playback } from "@graview/react/provider";
@@ -864,7 +864,15 @@ export function PagesApp<S extends AnySchema>({
    * reply from the host's staff that came while the support panel was shut
    * (Graview HQ feature:f-support-chat).
    */
-  const [roomNotices, setRoomNotices] = useState<readonly HostNotificationLike[]>([]);
+  const [roomNotices, setNotices] = useState<readonly HostNotificationLike[]>([]);
+  // Set only when what they say moved: an empty list handed again on every change would draw the whole face again each time.
+  const said = useRef("");
+  const setRoomNotices = useCallback((next: readonly HostNotificationLike[]) => {
+    const key = next.map((one) => `${one.id}|${one.title}|${one.body ?? ""}|${one.needs ? 1 : 0}`).join("\n");
+    if (key === said.current) return;
+    said.current = key;
+    setNotices(next);
+  }, []);
   const [supportOpen, setSupportOpen] = useState(false);
   const supportHere = useMemo<SupportHere | null>(() => (given.support ? { support: given.support, open: () => setSupportOpen(true) } : null), [given.support]);
   // What the person could not do is kept from the first draw, for the messages they send staff.
