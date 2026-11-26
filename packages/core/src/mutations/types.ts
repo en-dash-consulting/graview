@@ -7,6 +7,14 @@ import type { AnySchema, KindOfSchema, NodeOfSchema } from "../schema/schema.js"
  * What a mutation is handed. Reads go through a tracked reader so the op log
  * records causality; writes go out as primitives so every op has an inverse.
  */
+/** Who is running an act, as themselves: what `MutationContext.by` says. */
+export interface ActingSeat {
+  readonly kind: string;
+  readonly id?: string | undefined;
+  readonly name?: string | undefined;
+  readonly roles: readonly string[];
+}
+
 export interface MutationContext<S extends AnySchema> {
   readonly graph: GraphReader<NodeOfSchema<S>>;
   readonly schema: S;
@@ -16,6 +24,16 @@ export interface MutationContext<S extends AnySchema> {
    * document act's `$me` reads. Undefined for a seat with no id.
    */
   readonly me?: string | undefined;
+  /**
+   * WHO IS ACTING, AS THEMSELVES (Graview HQ feature:f-chat-rooms): the
+   * seat's kind, id and name — an agent as itself, never the person it acts
+   * for — and the roles it acts with, bounded by that person's. What a
+   * message's author is, and what a room's `post` and `moderate` read.
+   * Undefined for a call that names nobody.
+   */
+  readonly by?: ActingSeat | undefined;
+  /** When the act is run, an ISO instant from the store's clock: what a message's `at` is. */
+  readonly now?: string | undefined;
   addNode(node: NodeOfSchema<S>): void;
   /** Removes a node together with every edge touching it. */
   removeNode(id: string): void;

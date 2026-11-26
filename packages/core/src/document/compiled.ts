@@ -4,6 +4,7 @@
  * split the page's first chunks differently, a third of a kilobyte more up
  * front (docs/hosted-page.md).
  */
+import { withRooms } from "../rooms/kind.js";
 import { readTouched, TOUCHED_FIELDS } from "../graph/touched.js";
 import {
   createSchema,
@@ -961,7 +962,7 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
    */
   const policy: Policy | undefined = document.policy && { ...(document.policy as Policy), ...(document.roles ? { roles: document.roles } : {}) };
 
-  const app: GraviewApp = {
+  const declared: GraviewApp = {
     name: document.name,
     schema,
     mutations,
@@ -985,12 +986,16 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
     ...(document.purpose ? { purpose: document.purpose } : {}),
     // The screens a device offers (Roadmap f-device-nav-bar): data the e-ink render draws as its strip.
     ...(document.devices ? { devices: document.devices } : {}),
+    // Where its people talk (Graview HQ feature:f-chat-rooms): folded in below, with the message kind and its acts.
+    ...(document.rooms ? { rooms: document.rooms } : {}),
     // The document's views are the declaration's view specs (FR-03): data the framework draws.
     ...(plan.viewSpecs ? { viewSpecs: plan.viewSpecs as never } : {}),
     // And its home view, about no one record, is the app's home (FR-81).
     ...(plan.home ? { home: plan.home as never } : {}),
     version: document.version ?? 1,
   };
+  // An app with rooms is given the message kind, its three acts and their grant and sights, as `defineApp` gives a TypeScript app (Graview HQ feature:f-chat-rooms).
+  const app: GraviewApp = withRooms(declared);
 
   // `toDocument(app)` gives this document back, byte for byte; `serializeCompiled(…)` this compiled app.
   rememberDocument(app, document);

@@ -535,6 +535,9 @@ export type { EntityBinding, GraviewApp, LensDeclaration } from "./app.js";
 export type { VisitorFormDeclaration } from "./visitor-form-shape.js";
 export type { AppPurpose, JobDeclaration, JobSort } from "./job-shape.js";
 export type { AppDevices, DeviceScreen } from "./device-shape.js";
+// Graview HQ feature:f-chat-rooms: the shape of a room and a message; reading them is `@graview/core/rooms`.
+export type { AppRooms, MessageRecord, RoomDeclaration } from "./rooms/shape.js";
+export type { ActingSeat } from "./mutations/types.js";
 export { foldPresence, nextExpiry, parseParticipant, participantKey, PRESENCE_TTL_MS, presenceName, presenceStands, REMOTE_PRESENCE_TTL_MS, samePresence, VISITOR_PRESENCE_TTL_MS } from "./presence.js";
 export type { Participant, Presence, PresenceCaret, PresenceChannel, PresenceRobot } from "./presence.js";
 export { FRESH_KEY, freshAddress } from "./fresh.js";

@@ -33,6 +33,23 @@ export const isVisitorAuthor = (author: Author | undefined): boolean => author?.
 
 const SINKS = new WeakMap<object, FrictionSink>();
 
+/** The last few a page recorded, kept in the page for the person's own support thread (Graview HQ feature:f-support-chat). */
+const RECENT = new WeakMap<object, FrictionDraft[]>();
+const RECENT_MOST = 10;
+
+/**
+ * KEEP THE LAST FEW THINGS THIS PAGE'S PERSON COULD NOT DO, in the page,
+ * for their own support thread: a message they send staff carries them, so
+ * staff never have to ask what went wrong. Kept only where a host gives
+ * support, never sent anywhere but with a message the person sends.
+ * Answers what is kept now, newest last.
+ */
+export function keepRecentFriction(store: object): readonly FrictionDraft[] {
+  let recent = RECENT.get(store);
+  if (!recent) RECENT.set(store, (recent = []));
+  return recent;
+}
+
 /**
  * WHERE A STORE'S FRICTION GOES, OR NOWHERE: `openRemote` attaches the
  * server's door, a host that keeps its own attaches its storage, and
@@ -52,6 +69,12 @@ export function attachFriction(store: object, sink: FrictionSink | false | undef
  */
 export function recordFriction(store: object | undefined, draft: FrictionDraft, by?: Author): void {
   if (!store || isVisitorAuthor(by)) return;
+  // The last few, for the person's own support thread, where a host asked to keep them (`keepRecentFriction`).
+  const recent = RECENT.get(store) ?? RECENT.get((seatOf(store as never)?.store as object | undefined) ?? {});
+  if (recent) {
+    recent.push(draft);
+    if (recent.length > RECENT_MOST) recent.splice(0, recent.length - RECENT_MOST);
+  }
   const sink = SINKS.get(store) ?? SINKS.get((seatOf(store as never)?.store as object | undefined) ?? {});
   if (!sink) return;
   try {

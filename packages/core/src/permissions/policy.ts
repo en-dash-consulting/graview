@@ -24,6 +24,20 @@ export function actingAs(principal: Principal): Principal {
   return { ...principal, ...(person.id !== undefined ? { id: person.id } : {}), roles };
 }
 
+/**
+ * WHO IS ACTING, AS THEMSELVES (Graview HQ feature:f-chat-rooms): the
+ * seat's kind, id and name — an agent as itself — with the roles it acts
+ * with, bounded by the person it acts for (`actingAs`). `MutationContext.by`.
+ */
+export function actingSeat(principal: Principal): { readonly kind: string; readonly id?: string; readonly name?: string; readonly roles: readonly string[] } {
+  return {
+    kind: principal.kind,
+    ...(principal.id !== undefined ? { id: principal.id } : {}),
+    ...(principal.name !== undefined ? { name: principal.name } : {}),
+    roles: actingAs(principal).roles ?? [],
+  };
+}
+
 const PROFILE_ID = /^[\w-]{1,64}$/;
 const MOST_PROFILE_NAME = 200;
 

@@ -127,6 +127,27 @@ export function documentJsonSchema(version: string): Json {
     propertyNames: { pattern: "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$" },
     additionalProperties: workflow,
   };
+  // Rooms (Graview HQ feature:f-chat-rooms, `rooms/shape.ts`): read loosely by the compiler, judged by the checker, said here whole.
+  const roles = { type: "array", items: { type: "string" }, minItems: 1 };
+  properties["rooms"] = {
+    description: "Where the app's people talk to each other, by address word: each a `title`, and `about` a kind for a thread on each of its records (none: one room for the whole app). `read`, `post` and `moderate` name the roles that may read it, post in it and remove anybody's message; unsaid, whoever may see the app (or the record), whoever may read it, and nobody but each message's author. `mentions: false` reads `@Name` as plain words. What is said is a record of the framework's `message` kind.",
+    type: "object",
+    propertyNames: { pattern: "^[a-z][a-z0-9-]*$" },
+    additionalProperties: {
+      type: "object",
+      additionalProperties: false,
+      required: ["title"],
+      properties: {
+        title: { type: "string", minLength: 1, maxLength: 60 },
+        description: { type: "string" },
+        about: { type: "string" },
+        read: roles,
+        post: roles,
+        moderate: roles,
+        mentions: { type: "boolean" },
+      },
+    },
+  };
   rest["$defs"] = { ...((rest["$defs"] as Json | undefined) ?? {}), ...blockDefs(), FileValue: fileValueSchema() };
   return {
     $schema,

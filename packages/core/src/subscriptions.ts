@@ -29,6 +29,9 @@
  *
  * Its own entry: a page that never subscribes carries none of it.
  */
+import { MESSAGE_KIND } from "./rooms/shape.js";
+import { mentionablesOf, mentionsIn } from "./rooms/read.js";
+import { mentionsOnIn } from "./rooms/kind.js";
 import { parseExpr, type Expr } from "./document/expr/parse.js";
 import { evaluateExpr, ExprEvalError, type KindShape } from "./document/expr/evaluate.js";
 import { shapesOfSchema } from "./document/rules.js";
@@ -127,6 +130,8 @@ export function subscriptionWords(store: Declared, subscription: Pick<Subscripti
       return `When ${someone} adds ${a(when.kind)}`;
     case "changed":
       return when.record !== undefined ? `When ${someone} changes “${nameIn(store, when.record)}”` : `When ${someone} changes any of the ${pluralOf(store.schema, when.kind!)}`;
+    case "mentioned":
+      return "When someone mentions you in a room";
     case "reaches":
       return `When ${when.record !== undefined ? `“${nameIn(store, when.record)}”` : a(when.kind)} reaches ${when.condition}${subscription.alsoMine ? "" : " (by someone else)"}`;
   }
@@ -587,6 +592,20 @@ function matchOne(store: Store<AnySchema>, seen: Store<AnySchema>, subscription:
       });
       return reached.length > 0 ? records(reached) : undefined;
     }
+    case "mentioned": {
+      // A message the subscriber may read that names them now and did not before (Graview HQ feature:f-chat-rooms).
+      const me = subscription.who.id;
+      if (me === undefined) return undefined;
+      const people = mentionablesOf(seen.graph as never, store.schema);
+      const named = touched.filter((id) => {
+        if (kindOf(id) !== MESSAGE_KIND) return false;
+        const now = seen.graph.getNode(id) as unknown as { readonly body?: string; readonly room?: string; readonly removed?: boolean } | undefined;
+        if (!now || now.removed || !mentionsOnIn(store.schema, now.room) || !mentionsIn(now.body ?? "", people).includes(me)) return false;
+        const before = nodeBefore(nodeAfter(store, id, last), id, primitives) as { readonly body?: string } | undefined;
+        return !before || !mentionsIn(before.body ?? "", people).includes(me);
+      });
+      return named.length > 0 ? records(named) : undefined;
+    }
   }
 }
 
@@ -632,12 +651,14 @@ export function watchSubscriptions<S extends AnySchema>(store: Store<S>, options
   const tell = (matches: readonly SubscriptionMatch[]) => {
     for (const match of matches) held.tell(match);
   };
+  // Everybody a commit's messages name is subscribed to their mentions unasked (Graview HQ feature:f-chat-rooms), once.
+  const withMentions = (listed: readonly Subscription[], ops: readonly Operation[]) => [...listed, ...mentionSubscriptions(store as unknown as Store<AnySchema>, ops, listed, options.app)];
   const stop = store.subscribe((_diff, ops) => {
     if (ops.length === 0) return;
     try {
       const listed = options.subscriptions.list();
-      if (Array.isArray(listed)) tell(matchSubscriptions(store, ops, listed as readonly Subscription[], options));
-      else void (listed as Promise<readonly Subscription[]>).then((all) => tell(matchSubscriptions(store, ops, all, options)), report);
+      if (Array.isArray(listed)) tell(matchSubscriptions(store, ops, withMentions(listed as readonly Subscription[], ops), options));
+      else void (listed as Promise<readonly Subscription[]>).then((all) => tell(matchSubscriptions(store, ops, withMentions(all, ops), options)), report);
     } catch (error) {
       report(error);
     }
@@ -647,4 +668,28 @@ export function watchSubscriptions<S extends AnySchema>(store: Store<S>, options
     stop();
     held.flush();
   };
+}
+
+/**
+ * THE MENTIONS A COMMIT MAKES, AS SUBSCRIPTIONS (Graview HQ
+ * feature:f-chat-rooms): each person a message in it names who has no
+ * `mentioned` subscription of their own is given one, as they are in the
+ * graph — their record's name and roles — so they are told as any
+ * subscriber is: judged as they may see it, never of their own message.
+ */
+export function mentionSubscriptions(store: Store<AnySchema>, ops: readonly Operation[], listed: readonly Subscription[], app?: string): Subscription[] {
+  if (!store.schema.tryDefinition(MESSAGE_KIND)) return [];
+  const bodies = ops.flatMap((op) => op.primitives).flatMap((primitive) =>
+    primitive.op === "add-node" && primitive.node.kind === MESSAGE_KIND ? [String((primitive.node as Record<string, unknown>)["body"] ?? "")] : primitive.op === "patch-node" && typeof primitive.after["body"] === "string" ? [primitive.after["body"] as string] : [],
+  );
+  if (bodies.length === 0) return [];
+  const people = mentionablesOf(store.graph as never, store.schema);
+  const named = new Set(bodies.flatMap((body) => mentionsIn(body, people)));
+  const already = new Set(listed.filter((one) => one.when.on === "mentioned").map((one) => one.who.id));
+  return [...named].filter((id) => !already.has(id)).map((id) => {
+    const record = store.graph.getNode(id) as (Record<string, unknown> & { id: string; kind: string }) | undefined;
+    const roles = Array.isArray(record?.["roles"]) ? (record!["roles"] as string[]) : undefined;
+    const name = people.find((one) => one.id === id)?.name;
+    return { id: `mention:${id}`, who: { kind: "human", id, ...(name ? { name } : {}), ...(roles ? { roles } : {}) }, app: app ?? "app", when: { on: "mentioned" }, at: new Date(0).toISOString() } as Subscription;
+  });
 }

@@ -22,6 +22,7 @@ import * as recordBoxes from "../../src/record-boxes.js";
 import * as history from "../../src/history.js";
 import * as jobs from "../../src/jobs.js";
 import * as devices from "../../src/devices.js";
+import * as rooms from "../../src/rooms.js";
 import * as workflows from "../../src/workflows.js";
 import * as learn from "../../src/learn.js";
 import * as told from "../../src/told.js";
@@ -78,6 +79,8 @@ const OFF_THE_PAGE = {
   "@graview/core/forms": { from: forms, names: ["askedFormFields", "changedArgs", "editStart", "formArgs", "formComplete", "formField", "formFields", "keptArguments", "undecidableArguments", "VISITOR_ROLE", "formReceived", "formVisitor", "pickersIn", "visitorForm", "visitorSeesKind"] },
   "@graview/core/import": { from: importing, names: ["coerceCell", "ImportMappingError", "importRows", "parseCsv", "previewImport", "proposeMapping", "readBoolean", "readDateTime", "readDay", "readNumber", "readOption"] },
   // Roadmap f-device-nav-bar: the screens a device offers, read by the e-ink render, the checker and the edits — on no page.
+  // Graview HQ feature:f-chat-rooms: an app's rooms read — what was said, what is unread, whom it mentions — and the support thread's transport; fetched by a page that draws a room.
+  "@graview/core/rooms": { from: rooms, names: ["allMessages", "appRoomFindings", "appRooms", "documentRoomFindings", "EDIT_MESSAGE", "hasRooms", "isPlaceless", "keepRecentFriction", "LONGEST_MESSAGE", "LONGEST_ROOM_TITLE", "mayEdit", "mayPostIn", "mayReadRoom", "mayRemove", "memorySupport", "mentionablesOf", "mentionsIn", "MESSAGE_KIND", "messageKind", "messagesIn", "MOST_ROOMS", "POST_MESSAGE", "readUpToOf", "REMOVE_MESSAGE", "ROOM_ACTS", "roomActs", "roomFindings", "roomKey", "ROOMS_GRANT", "ROOMS_READ_STATE", "roomSights", "roomsFolded", "roomsOf", "roomsPolicy", "roomWorldOfApp", "SUPPORT_CONTEXT_FRICTION", "supportContextOf", "threadOf", "threadsOf", "unfoldedApp", "unreadFor", "withoutTalk", "withRooms"] },
   "@graview/core/devices": { from: devices, names: ["deviceScreensOf", "screenPlaceOf", "screenPlacesNamed", "screenGo", "deviceFindings", "documentDeviceFindings", "screenWords", "JOB_SCREEN_PREFIX", "LONGEST_SCREEN_LABEL", "MOST_DEVICE_SCREENS", "screenLabelWidth", "shortScreenLabel"] },
   "@graview/core/describe": { from: describePlaces, names: ["columnActs", "columnChoices", "columnMoves", "columnOf", "columnReach", "columnSteps", "describePlace", "geoOf", "mapPointOf", "placeText", "resolveFor", "shadowedPageSlots", "statusColumns"] },
   "@graview/core/check": { from: check, names: ["arrangementFindings", "checkApp", "formatFindings", "compileDocument", "instantiateTemplate", "templateFindings", "describeApp", "generateAgentsMd", "generateLlmsTxt", "clockReaders", "designFindings", "citesOf", "seedLinks", "uncitedIn", "uncitedValues"] },
@@ -94,7 +97,7 @@ const OFF_THE_PAGE = {
   "@graview/core/seat": { from: seat, names: ["answerSeenBy", "archivedSeenBy", "archiveFrom", "beginning", "forgetSeatView", "mayRun", "mayRunEach", "placesFrom", "placesOf", "viewPlaceOf"] },
   // Roadmap f-ai-candidate-catalog: what the inline AI may pick from, the state a model reads and what an interaction leaves behind, fetched when somebody first opens it.
   // Roadmap f-notify-subscriptions: what a person asked to be told of, matched against a commit under their sight — the host's and a sheet's, fetched when somebody first subscribes.
-  "@graview/core/subscriptions": { from: subscriptions, names: ["holdTypingRuns", "matchSubscriptions", "subscribersNow", "subscriptionProblem", "subscriptionWords", "TYPING_QUIET_MS", "watchSubscriptions"] },
+  "@graview/core/subscriptions": { from: subscriptions, names: ["holdTypingRuns", "matchSubscriptions", "subscribersNow", "subscriptionProblem", "subscriptionWords", "TYPING_QUIET_MS", "watchSubscriptions", "mentionSubscriptions"] },
   // Roadmap f-app-jobs: an app's jobs resolved and answered as a seat sees it — a design's, a seat's and a host's, fetched when one is drawn.
   "@graview/core/jobs": { from: jobs, names: ["answerJob", "jobIsFor", "jobsFor", "jobsOf", "MOST_JOBS"] },
   // Roadmap f-jobs-declared: what the app does on its own and when — its shape, its step kinds, its schedule, what starts it, what the checker says — a host's and a runner's, on no page.

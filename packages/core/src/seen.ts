@@ -12,7 +12,7 @@ import { PERSON_SEAT } from "./graph/archived.js";
 import { isUnset } from "./graph/primitives.js";
 import { seatsKept, takesBindingBack, unseated } from "./binding-served.js";
 import { presentOf } from "./seat-of.js";
-import { FIELD_SIGHT, fieldsJudged, partialSight, recordsOf, sees, type Judged, type Records } from "./permissions/sight.js";
+import { FIELD_SIGHT, fieldsJudged, partialSight, recordsOf, scopedSight, sees, type Judged, type Records } from "./permissions/sight.js";
 import type { Principal } from "./permissions/types.js";
 import { diffSnapshots } from "./graph/diff.js";
 import { CREATED_BY, isTouchedField, judgedOnTouches, TOUCHED_FIELDS, UPDATED_BY } from "./graph/touched.js";
@@ -63,7 +63,7 @@ export function seesEveryRecord(store: Judged & { readonly schema: { readonly ki
   const acting = actingAs(author);
   // A sight that shows only some fields shows no record until they can be judged: it fails closed here as in `sees`.
   const judged = fieldsJudged(store);
-  const inSight = (kind: string) => !off.has(kind) && (sights.length === 0 || sights.some((sight) => sight.kinds.includes(kind) && grantsTo(sight, acting) && !sight.own && !sight.via && (judged || !partialSight(sight))));
+  const inSight = (kind: string) => !off.has(kind) && (sights.length === 0 || sights.some((sight) => sight.kinds.includes(kind) && grantsTo(sight, acting) && !sight.own && !sight.via && !scopedSight(sight) && (judged || !partialSight(sight))));
   /*
    * AND NONE OF IT WITHHELD WHOLE (`seatLens`): a record whose required
    * field names one the seat may not see is not served to it, so a kind
@@ -89,7 +89,7 @@ export function toldTouches(store: Judged & { readonly schema: { readonly kinds:
   if (!seesEveryRecord(store, principal)()) return false;
   const acting = actingAs(principal);
   const sights = store.policy?.sees ?? [];
-  const whole = (kind: string) => sights.some((sight) => sight.kinds.includes(kind) && grantsTo(sight, acting) && !sight.own && !sight.via && !partialSight(sight));
+  const whole = (kind: string) => sights.some((sight) => sight.kinds.includes(kind) && grantsTo(sight, acting) && !sight.own && !sight.via && !scopedSight(sight) && !partialSight(sight));
   return sights.every((sight) => !partialSight(sight) || !grantsTo(sight, acting) || sight.kinds.every(whole));
 }
 
