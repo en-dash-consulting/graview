@@ -683,6 +683,11 @@ td.pkg { font-family: var(--mono); font-size: 12.5px; color: var(--ink); white-s
 .copy:hover { background: #5CF0D3; }
 .copy[data-copied] { background: var(--paper-light); }
 .cta-line .copy { min-height: 44px; font-size: 15px; padding: 0 18px; }
+/* The prompt is a sentence a person reads before they copy it: set in the
+   body's face, not as code, with the address it names picked out. */
+.cta-line.prompt { padding: 18px 14px 14px 22px; }
+.cta-line.prompt code { font-family: var(--sans); font-size: 17px; font-weight: 500; line-height: 1.55; letter-spacing: 0; color: #FFFFFF; }
+.cta-line.prompt code .url { color: var(--mint); font-weight: 600; }
 .cta-sub { margin: 0; max-width: 62ch; }
 
 /* The stepper: press a step, the left says what was added, the right is the
@@ -806,6 +811,7 @@ main.page > section > .lede { max-width: 60ch; }
 .hero .cta { margin-top: 28px; max-width: 100%; }
 .hero .cta-line { padding: 14px 16px; }
 .hero .cta-line code { font-size: 15.5px; }
+.hero .cta-line.prompt code { font-size: 18px; }
 .hero .copy { min-height: max(2rem, 34px); padding: 0 14px; font-size: 13px; }
 .hero-links { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 14px; font-family: var(--sans); font-size: 14px; font-weight: 600; }
 .hero-links a { text-decoration: none; display: inline-flex; align-items: center; min-height: 28px; gap: 6px; }
@@ -1225,7 +1231,7 @@ html:not(.gl) .cap h2 { font-size: clamp(28px, 4.4vw, 46px); }
   .sheet .lede { font-size: 15px; line-height: 1.5; }
   .how { font-size: 13.5px; gap: 10px; }
   .how i { width: 26px; height: 26px; box-shadow: 0 0 0 4px rgba(0, 229, 185, .2); }
-  .cta-line.prompt code { font-size: 12.5px; }
+  .cta-line.prompt code, .hero .cta-line.prompt code { font-size: 15.5px; }
   .gl .cap h2 { font-size: clamp(26px, 7.4vw, 40px); }
   .gl .cap p { font-size: 15.5px; }
   .gl .facts { display: none; }
@@ -1297,7 +1303,7 @@ html:not(.gl) .cap h2 { font-size: clamp(28px, 4.4vw, 46px); }
       <h1 id="h-home">Any agent can draw the screen. <em>Look behind it.</em></h1>
       <p class="lede">Agents are great at building interfaces. The hard part is knowing what data a screen stands on. Graview is a context-graph dev kit that puts something real behind every one.</p>
       <p class="how"><i aria-hidden="true"></i><span id="how-text">Move your cursor over the app. Then scroll to go through it.</span></p>
-      <div class="cta-line prompt"><code id="prompt">Read https://graview.dev/start.md, then map this repo as a Graview app and show me what&rsquo;s in it.</code><button type="button" class="copy" data-copy="Read https://graview.dev/start.md, then map this repo as a Graview app and show me what's in it.">Copy the prompt</button></div>
+      <div class="cta-line prompt"><code id="prompt">Read <span class="url">https://graview.dev/start.md</span>, then map this repo as a Graview app and show me what&rsquo;s in it.</code><button type="button" class="copy" data-copy="Read https://graview.dev/start.md, then map this repo as a Graview app and show me what's in it.">Copy the prompt</button></div>
     </section>
 
     <nav class="dots" id="dots" aria-label="Scenes"></nav>
@@ -1310,7 +1316,7 @@ html:not(.gl) .cap h2 { font-size: clamp(28px, 4.4vw, 46px); }
       <li class="cap" data-beat="5" data-scene="A button does what it says"><span class="n">Five</span><h2>And a button does what it says.</h2><p>One press runs a declared action. Three guides are written, the docs plot grows by three, the rule holds, and every screen standing on the map updates at once.</p></li>
       <li class="cap" data-beat="6" data-scene="The prompt to copy"><span class="n">Six</span><h2>Give your agent something real to draw on.</h2>
         <div class="more">
-          <div class="cta-line prompt"><code>Read https://graview.dev/start.md, then map this repo as a Graview app and show me what&rsquo;s in it.</code><button type="button" class="copy" data-copy="Read https://graview.dev/start.md, then map this repo as a Graview app and show me what's in it.">Copy the prompt</button></div>
+          <div class="cta-line prompt"><code>Read <span class="url">https://graview.dev/start.md</span>, then map this repo as a Graview app and show me what&rsquo;s in it.</code><button type="button" class="copy" data-copy="Read https://graview.dev/start.md, then map this repo as a Graview app and show me what's in it.">Copy the prompt</button></div>
           <ul class="facts">
             <li><strong data-number="tests">9,764</strong> named tests</li>
             <li><strong data-number="skills">32</strong> skills for your agent</li>

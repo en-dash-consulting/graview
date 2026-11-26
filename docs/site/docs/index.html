@@ -717,6 +717,11 @@ td.pkg { font-family: var(--mono); font-size: 12.5px; color: var(--ink); white-s
 .copy:hover { background: #5CF0D3; }
 .copy[data-copied] { background: var(--paper-light); }
 .cta-line .copy { min-height: 44px; font-size: 15px; padding: 0 18px; }
+/* The prompt is a sentence a person reads before they copy it: set in the
+   body's face, not as code, with the address it names picked out. */
+.cta-line.prompt { padding: 18px 14px 14px 22px; }
+.cta-line.prompt code { font-family: var(--sans); font-size: 17px; font-weight: 500; line-height: 1.55; letter-spacing: 0; color: #FFFFFF; }
+.cta-line.prompt code .url { color: var(--mint); font-weight: 600; }
 .cta-sub { margin: 0; max-width: 62ch; }
 
 /* The stepper: press a step, the left says what was added, the right is the
@@ -840,6 +845,7 @@ main.page > section > .lede { max-width: 60ch; }
 .hero .cta { margin-top: 28px; max-width: 100%; }
 .hero .cta-line { padding: 14px 16px; }
 .hero .cta-line code { font-size: 15.5px; }
+.hero .cta-line.prompt code { font-size: 18px; }
 .hero .copy { min-height: max(2rem, 34px); padding: 0 14px; font-size: 13px; }
 .hero-links { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 14px; font-family: var(--sans); font-size: 14px; font-weight: 600; }
 .hero-links a { text-decoration: none; display: inline-flex; align-items: center; min-height: 28px; gap: 6px; }
