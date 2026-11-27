@@ -8,7 +8,7 @@ import { checkApp, describeApp, compileDocument } from "@graview/core/check";
 import { declaredViews, fetchDeclaredLenses } from "@graview/primitives";
 import { act } from "react";
 import { createRoot } from "react-dom/client";
-import { beforeAll, describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it, vi } from "vitest";
 import { PagesApp } from "../../src/index.js";
 
 /**
@@ -50,6 +50,13 @@ async function rendered(path: string) {
   document.body.appendChild(host);
   const root = createRoot(host);
   await act(async () => root.render(<PagesApp context={{ store: store(), views: declaredViews(app), principal: { kind: "human", id: "m1", roles: ["keeper"] } }} initialPath={path} />));
+  // Wait for the draw, not a fixed time: the one face loads its parts lazily, and on a loaded runner they arrive late.
+  for (let waited = 0; waited < 10_000 && !host.querySelector("[data-graview-page-title]"); waited += 20) {
+    await act(async () => {
+      await vi.dynamicImportSettled();
+      await new Promise((done) => setTimeout(done, 20));
+    });
+  }
   await act(async () => new Promise((done) => setTimeout(done, 20)));
   const done = async () => {
     await act(async () => root.unmount());
@@ -58,7 +65,7 @@ async function rendered(path: string) {
   return { host, done };
 }
 
-describe("a document's declared lenses, on the routed face", () => {
+describe("a document's declared lenses, on the routed face", { timeout: 30_000 }, () => {
   it("are the registry's places — the same list placesOf, check and describe read", () => {
     const views = declaredViews(app);
     const drawn = declaredLenses(app).drawn;

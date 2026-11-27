@@ -78,6 +78,8 @@ async function open(options: { readonly face: "pages" | "scene"; readonly path?:
     await act(async () => handle!.unmount());
     host.remove();
   });
+  // Wait for the bar, not a fixed time: the one face loads its parts lazily, and on a loaded runner they arrive late.
+  for (let waited = 0; waited < 10_000 && !host.querySelector('[data-testid="app-places-open"]'); waited += 30) await settle();
   await settle();
   return { host, kept };
 }
@@ -101,7 +103,7 @@ async function show(kept: KeptViews, what: { readonly view: string } | LensTidyE
   await settle();
 }
 
-describe("a view hidden from the place menu", () => {
+describe("a view hidden from the place menu", { timeout: 30_000 }, () => {
   const cases = [
     { name: "a kind's list", face: "pages", path: "/seats", label: "Seats", what: { op: "set-lens-hidden", title: "seat", hidden: true } },
     { name: "a declared lens", face: "pages", path: "/places/by-day", label: "By day", what: { op: "set-lens-hidden", title: "By day", on: "shift", hidden: true } },
