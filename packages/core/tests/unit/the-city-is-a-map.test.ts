@@ -239,3 +239,13 @@ describe("the checker and describe", () => {
     expect(said).toContain("feature — zone by stands");
   });
 });
+
+describe("a room's messages take no corner of the city", () => {
+  it("lays out an app with rooms as it lays out the same app without them", () => {
+    const talking = defineApp({ name: "talking", schema, mutations: [] as never, rooms: { yard: { title: "Yard" }, "on-a-note": { title: "On a note", about: "note" } } });
+    expect(talking.schema.kinds).toContain("message");
+    const map = cityMap(talking.schema, { order: [...order, "message"] });
+    expect(map.has("message")).toBe(false);
+    expect([...map]).toEqual([...cityMap(schema, { order })]);
+  });
+});

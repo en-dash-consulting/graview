@@ -1,4 +1,5 @@
 import type { AnySchema } from "./schema/schema.js";
+import { isPlaceless } from "./rooms/kind.js";
 
 import { defOf } from "./schema/zod.js";
 
@@ -126,7 +127,8 @@ export function sharedEdges(schema: AnySchema, a: string, b: string): number {
 }
 
 export function cityMap(schema: AnySchema, hints: CityHints = {}): CityMap {
-  const kinds = [...(schema.kinds as readonly string[])];
+  // A room's messages stand on no plot: a district nobody draws would still take a corner another kind stands on.
+  const kinds = (schema.kinds as readonly string[]).filter((kind) => !isPlaceless(schema.tryDefinition(kind)));
   const order = [
     ...(hints.order ?? []).filter((kind) => kinds.includes(kind)),
     ...kinds.filter((kind) => !(hints.order ?? []).includes(kind)).sort(byId),
