@@ -38,6 +38,18 @@ One policy, declared once. The strip, the routed pages and the agent's tools all
 
 Taught by [`graview-permissions`](https://graview.dev/docs/skills/graview-permissions.html).
 
+## Rooms
+
+A room is where the people in an app talk to each other, declared beside the kinds: one for the whole app, or a thread on each record of a kind. What is said is a record, so who may read it, history and undo hold of it as of anything else, a mention tells the person named, and what is new waits on the bell.
+
+Taught by [`graview-chat`](https://graview.dev/docs/skills/graview-chat.html).
+
+## Chat with the host
+
+A host hands the face a support transport, and the person's menu says Chat with it. Each message carries where the person was and what they last could not do, so staff never have to ask, and the thread is theirs alone, never in the app's graph.
+
+Taught by [`graview-chat`](https://graview.dev/docs/skills/graview-chat.html).
+
 ## The seat for a model
 
 An intelligence provider declares what a model may do and how words and pictures reach it. Its turns land in the same log with an author and an intent, and come back out through the same undo.

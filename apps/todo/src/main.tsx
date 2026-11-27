@@ -11,7 +11,8 @@ import { lendViewPressing } from "@graview/guest/host/pressing";
 lendViewPressing(() => import("@graview/guest/headless/pressed-here"));
 import { aiThroughDevServer, type HostAi } from "@graview/tools";
 import { filesAt } from "@graview/ship/browser";
-import { memorySubscriptions, type SubscriptionMatch } from "@graview/core";
+import { memorySubscriptions, type SubscriptionMatch, type SupportDeclaration } from "@graview/core";
+import { memorySupport } from "@graview/core/rooms";
 import type { HistoryHost } from "@graview/core/history";
 import { open } from "./open.js";
 import { todoApp } from "./domain/app.js";
@@ -155,6 +156,16 @@ void import("@graview/core/subscriptions").then(({ watchSubscriptions }) =>
 );
 
 /*
+ * CHAT WITH THE PEOPLE WHO KEEP THINGS (Graview HQ feature:f-support-chat).
+ * In development the person's menu offers "Chat with Things support", its
+ * thread kept in this page by `memorySupport`, which answers a while later
+ * as staff would; Graview Cloud hands its own staff transport instead. A
+ * harness hands its own as `__todoSupport` before the page loads, and a
+ * built page or a driven browser is offered none.
+ */
+const support = (window as unknown as { __todoSupport?: SupportDeclaration }).__todoSupport ?? (dev && !navigator.webdriver ? { title: "Things support", transport: memorySupport({ staffName: "Ada at Things", delayMs: 1500 }) } : undefined);
+
+/*
  * WHAT THE HOST KEEPS OUTSIDE THE LOG (Roadmap f-playback): Things keeps
  * nothing, so a harness that compacts the store hands the archive it made
  * (`HistoryHost.archived`, FR-196) as `__todoHistory` before the page loads.
@@ -252,6 +263,7 @@ if (!sceneOwnFace) {
         ...(ai ? { ai } : {}),
         ...(files ? { files } : {}),
         subscriptions,
+        ...(support ? { support } : {}),
         ...(history ? { history } : {}),
         ...(onProposeChange ? { onProposeChange } : host ? { onProposeChange: host.onProposeChange, composeChange: host.composeChange, onDraftChange: host.onDraftChange } : {}),
         /*

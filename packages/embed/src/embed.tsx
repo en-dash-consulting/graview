@@ -1,3 +1,4 @@
+import { openSupport, supportRowLabel } from "@graview/core";
 import { retryingImport } from "@graview/core/retry";
 import { addressOf, kindPath, OVERVIEW_PATH, pagesTitle, pathWithin, placePath, recordPath, sceneTitle, type AnySchema, type Brand, type GraviewApp, type Person, type Place, type Principal, type Store } from "@graview/core";
 import { EMPTY_VIEW, fromUrl, kindsOf, toUrl, withFocus, withOverview, type ViewState } from "@graview/layout/view";
@@ -706,7 +707,7 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
               home={{ ...(hrefOf?.("/") !== undefined ? { href: hrefOf("/") } : {}), go: () => toPage("/"), current: onPages && pageAt.split("?")[0] === "/" }}
               reach={{ ...(hrefOf ? { href: hrefOf } : {}), go: (place) => toPage(place.path) }}
               standing={standing}
-              hostActions={props.hostActions}
+              hostActions={props.support ? [...(props.hostActions ?? []), { label: supportRowLabel(props.support.title), onSelect: () => void openSupport(props.support!) }] : props.hostActions}
               barActions={props.barActions}
               appMenu={props.appMenu}
               schemeChoice={props.schemeChoice}

@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page",
+  "minified": 8180,
+  "gzipped": 2980,
+  "note": "Raised with the whole 0.2.18 batch together (2026-11-26): rooms an app declares, with the message kind and its three acts, a sight that reads where and follows, the mentioned subscription, a room page at /~rooms/<word> offered from the person's menu and a thread under a record's page, and the host's support panel opened from the person's menu. 8,110 / 2,919 B over; held to 8180 / 2980 for the spread between builds of the same tree. Measured at 743,679 / 258,737 B against 735,569 / 255,819 B.",
+  "changeset": "people-talk-in-the-rooms-an-app-declares.md"
+}

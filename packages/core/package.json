@@ -1,6 +1,6 @@
 {
   "name": "@graview/core",
-  "version": "0.2.17",
+  "version": "0.2.18",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -104,6 +104,10 @@
     "./devices": {
       "types": "./dist/devices.d.ts",
       "default": "./dist/devices.js"
+    },
+    "./rooms": {
+      "types": "./dist/rooms.d.ts",
+      "default": "./dist/rooms.js"
     },
     "./workflows": {
       "types": "./dist/workflows.d.ts",

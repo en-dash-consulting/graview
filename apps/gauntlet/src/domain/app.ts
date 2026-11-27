@@ -19,6 +19,16 @@ export const gauntletApp = defineApp({
   brand: gauntletBrand,
   settings: readerSettings(),
   /*
+   * WHERE THE PROGRAM'S PEOPLE TALK (Graview HQ feature:f-chat-rooms): a
+   * room only the program's own people read, and a thread on each member
+   * of staff, which follows the staff's own sight — a visitor, who sees no
+   * staff, sees none of what is said about them.
+   */
+  rooms: {
+    "program-team": { title: "Program team", read: ["chair", "reviewer", "volunteer", "scheduler"], moderate: ["chair"] },
+    "staff-notes": { title: "Notes on this person", about: "staff", moderate: ["chair"] },
+  },
+  /*
    * TWO PICTURES, DECLARED AND DRAWN (FR-79): each titled, so each is a
    * place the framework draws from these lines; the UI registers neither.
    * The timetable is declared last, so it is what the talks' district draws
@@ -56,7 +66,8 @@ export const gauntletApp = defineApp({
 export type GauntletStore = Store<GauntletSchema>;
 
 export function createStore(options: Partial<StoreOptions<GauntletSchema>> = {}): GauntletStore {
-  return new Store<GauntletSchema>({ schema: gauntletSchema, mutations, invariants, policy, ...options });
+  // The app's own schema, acts and policy: its rooms' message kind, acts and sights folded in (`defineApp`).
+  return new Store<GauntletSchema>({ schema: gauntletApp.schema as GauntletSchema, mutations: gauntletApp.mutations as typeof mutations, invariants, policy: gauntletApp.policy ?? policy, ...options });
 }
 
 export default gauntletApp;

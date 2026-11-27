@@ -1,3 +1,4 @@
+import { ROOM_ACTS } from "../rooms/shape.js";
 import { dayOfMoment, dayOfMonthAsRead, isoToday, wallIn, zoneFor } from "../days.js";
 import { isAutomated, isStopOp } from "./tidying.js";
 import type { Author, Batch, Operation } from "./types.js";
@@ -98,13 +99,16 @@ const runOf = (batch: Batch): string | undefined => batch.ops.find((op) => op.li
  * batches by one automated author folded into one. A person's change and a
  * chat seat's never fold: a chat seat is an agent, but not the app's own
  * actor (`automated`). A batch that is a suggestion or the declining of one
- * is left out — the Suggested tray says those — and does not break a run.
+ * is left out — the Suggested tray says those — and does not break a run;
+ * so is talk in a room, which the room says.
  * A person's consecutive runs of typing into one field are one row (`typed`).
  */
 export function foldDigests(batches: readonly Batch[], find: (id: string) => Operation | undefined = () => undefined): ActivityRow[] {
   const rows: ActivityRow[] = [];
   for (const batch of batches) {
     if (isSuggestionBatch(batch, find)) continue;
+    // Talk in a room is the room's to show, never a row here (Graview HQ feature:f-chat-rooms).
+    if (batch.ops.length > 0 && batch.ops.every((op) => op.mutation !== null && (ROOM_ACTS as readonly string[]).includes(op.mutation.name))) continue;
     if (!isAutomated(batch.author)) {
       const into = typedIn(batch);
       const last = rows.at(-1);

@@ -26,6 +26,7 @@ export * from "./tidying.js";
 export * from "./jobs.js";
 export * from "./devices.js";
 export * from "./workflows.js";
+export * from "./rooms.js";
 export * from "./aliases.js";
 export * from "./cites.js";
 export * from "./touched.js";

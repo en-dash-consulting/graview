@@ -1,3 +1,4 @@
+import { isPlaceless } from "./rooms/kind.js";
 import type { GraviewApp } from "./app.js";
 import { LENSES_THAT_LIST, listsRecords } from "./lenses-that-list.js";
 import { arrangedEntries, bindsOf, declaredLenses, HOME_SLUG, isShippedLens, MOST_STANDING, openingOf, OVERVIEW_PATH, OVERVIEW_SLUG, pagesTitle, sceneTitle, viewReference, type PlaceFinding, type ShippedLensName } from "./places.js";
@@ -269,7 +270,8 @@ export function placesFrom(
   options: { readonly pages?: PagesArrangement; readonly lenses?: readonly { readonly as: string; readonly kinds: readonly string[]; readonly lens: ShippedLensName }[]; readonly home?: boolean } = {},
 ): readonly AppPlace[] {
   const { pages } = options;
-  const kindsDeclared = schema.kinds as readonly string[];
+  // The framework's own kinds — a room's messages — are read in their room, never a list of the app's (Graview HQ feature:f-chat-rooms).
+  const kindsDeclared = (schema.kinds as readonly string[]).filter((kind) => !isPlaceless(schema.tryDefinition(kind)));
   const places = lensPlaces.filter((place) => kindsDeclared.includes(place.kind));
   const opening = openingOf(pages?.first, schema, places);
   const hidden = new Set(pages?.hide ?? []);
